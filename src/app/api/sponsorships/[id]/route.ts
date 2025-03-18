@@ -3,11 +3,12 @@ import { getSponsorships } from '@/lib/services/sponsorService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 正確使用 await 來解決 Next.js 的警告
-    const id = await Promise.resolve(params.id);
+    // 獲取URL參數
+    const params = await context.params;
+    const id = params.id;
     
     // 獲取贊助商的所有贊助
     const sponsorships = await getSponsorships(id);

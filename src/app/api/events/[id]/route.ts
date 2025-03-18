@@ -3,11 +3,12 @@ import { getEventById } from '@/lib/services/eventService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 正確使用 await 來解決 Next.js 的警告
-    const id = await Promise.resolve(params.id);
+    // 獲取 URL 參數
+    const params = await context.params;
+    const id = params.id;
     
     // 獲取事件詳情
     const event = await getEventById(id);

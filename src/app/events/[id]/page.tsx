@@ -133,8 +133,9 @@ export default function EventDetailPage() {
     is_limited: !!plan.max_sponsors,
     benefits: plan.benefits,
     event_id: plan.event_id,
-    created_at: plan.created_at,
-    updated_at: plan.updated_at
+    visibility: 'public',
+    created_at: plan.created_at || new Date().toISOString(),
+    updated_at: plan.updated_at || new Date().toISOString()
   }));
 
   return (

@@ -9,12 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { getEventById, publishEvent } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
 
-export default function EventDetailsPage({ params }: { params: { id: string } }) {
+export default function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
+  const [eventId, setEventId] = useState<string>("");
   const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
@@ -36,20 +37,24 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
 
   // 如果未登錄或不是組織者，則重定向
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isOrganizer)) {
+    if (!isLoading && !isAuthenticated) {
       router.push("/login");
     }
-  }, [isAuthenticated, isOrganizer, router, isLoading]);
+  }, [isAuthenticated, router, isLoading]);
 
   // 獲取活動詳情
   useEffect(() => {
     async function fetchEventDetails() {
-      if (!params.id) return;
-
+      setIsLoading(true);
+      setError("");
+      
       try {
-        setIsLoading(true);
-        const eventData = await getEventById(params.id);
+        // 在 Next.js 15 中需要等待解析params
+        const resolvedParams = await params;
+        const id = resolvedParams.id;
+        setEventId(id); // 保存ID以便後續使用
         
+        const eventData = await getEventById(id);
         if (!eventData) {
           setError("找不到該活動");
           return;
@@ -74,7 +79,7 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
     if (currentUser && isOrganizer) {
       fetchEventDetails();
     }
-  }, [params.id, currentUser, isOrganizer, router]);
+  }, [params, currentUser, isOrganizer, router]);
 
   // 發布活動
   const handlePublishEvent = async () => {
@@ -82,7 +87,8 @@ export default function EventDetailsPage({ params }: { params: { id: string } })
     
     try {
       setIsPublishing(true);
-      const updatedEvent = await publishEvent(event.id);
+      const updatedEvent = await publishEvent(eventId);
+      
       if (updatedEvent) {
         setEvent(updatedEvent);
       }

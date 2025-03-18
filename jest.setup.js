@@ -1,5 +1,5 @@
 // 導入 Jest DOM 擴展
-import '@testing-library/jest-dom';
+require('@testing-library/jest-dom');
 
 // 模擬 localStorage
 class LocalStorageMock {

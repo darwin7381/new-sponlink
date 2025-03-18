@@ -10,12 +10,13 @@ import { Label } from "@/components/ui/label";
 import { getEventById, updateEvent } from "@/services/eventService";
 import { Event, Location } from "@/types/event";
 
-export default function EditEventPage({ params }: { params: { id: string } }) {
+export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
+  const [eventId, setEventId] = useState<string>("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -35,7 +36,6 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
       longitude: undefined as number | undefined
     } as Location
   });
-  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
 
@@ -45,7 +45,6 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
-        setCurrentUser(user);
         setIsAuthenticated(true);
         setIsOrganizer(user.role === 'organizer');
       } catch (e) {
@@ -64,51 +63,50 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   // 獲取活動詳情
   useEffect(() => {
     async function fetchEventDetails() {
-      if (!params.id) return;
-
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        const eventData = await getEventById(params.id);
+        // 在 Next.js 15 中需要等待 params
+        const resolvedParams = await params;
+        const id = resolvedParams.id;
+        setEventId(id); // 存儲 ID 以便後續使用
         
-        if (!eventData) {
-          setError("找不到該活動");
-          return;
+        const fetchedEvent = await getEventById(id);
+        
+        if (!fetchedEvent) {
+          throw new Error("Event not found");
         }
-        
-        // 檢查當前用戶是否為活動的主辦方
-        if (currentUser && eventData.organizer_id !== currentUser.id) {
-          setError("您沒有權限編輯此活動");
-          router.push("/organizer/events");
-          return;
-        }
-        
-        setEvent(eventData);
-        
-        // 設置表單數據
+
+        setEvent(fetchedEvent);
+        // 初始化表單數據
         setFormData({
-          title: eventData.title,
-          description: eventData.description,
-          cover_image: eventData.cover_image,
-          start_time: new Date(eventData.start_time).toISOString().slice(0, 16),
-          end_time: new Date(eventData.end_time).toISOString().slice(0, 16),
-          category: eventData.category,
-          tags: eventData.tags.join(", "),
+          title: fetchedEvent.title,
+          description: fetchedEvent.description,
+          cover_image: fetchedEvent.cover_image,
+          start_time: new Date(fetchedEvent.start_time).toISOString().slice(0, 16),
+          end_time: new Date(fetchedEvent.end_time).toISOString().slice(0, 16),
+          category: fetchedEvent.category || "",
+          tags: fetchedEvent.tags?.join(", ") || "",
           location: {
-            ...eventData.location
+            id: fetchedEvent.location.id || "",
+            name: fetchedEvent.location.name,
+            address: fetchedEvent.location.address,
+            city: fetchedEvent.location.city || "",
+            country: fetchedEvent.location.country || "",
+            postal_code: fetchedEvent.location.postal_code || "",
+            latitude: fetchedEvent.location.latitude,
+            longitude: fetchedEvent.location.longitude
           }
         });
-      } catch (error) {
-        console.error("Error fetching event details:", error);
-        setError("無法加載活動詳情。請稍後再試。");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load event");
+        console.error("Error fetching event:", err);
       } finally {
         setIsLoading(false);
       }
     }
 
-    if (currentUser && isOrganizer) {
-      fetchEventDetails();
-    }
-  }, [params.id, currentUser, isOrganizer, router]);
+    fetchEventDetails();
+  }, [params]);
 
   // 處理表單輸入變化
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -202,7 +200,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">編輯活動</h1>
-          <Button variant="outline" onClick={() => router.push(`/organizer/events/${params.id}`)}>
+          <Button variant="outline" onClick={() => router.push(`/organizer/events/${eventId}`)}>
             取消
           </Button>
         </div>
@@ -369,7 +367,7 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push(`/organizer/events/${params.id}`)}
+                  onClick={() => router.push(`/organizer/events/${eventId}`)}
                 >
                   取消
                 </Button>

@@ -11,12 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { getEventById, getSponsorshipPlans, createSponsorshipPlan } from "@/services/eventService";
 import { Event, SponsorshipPlan } from "@/types/event";
 
-export default function ManagePlansPage({ params }: { params: { id: string } }) {
+export default function ManagePlansPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [plans, setPlans] = useState<SponsorshipPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [eventId, setEventId] = useState<string>("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [newPlan, setNewPlan] = useState({
@@ -27,7 +28,6 @@ export default function ManagePlansPage({ params }: { params: { id: string } }) 
     max_sponsors: 1,
     current_sponsors: 0
   });
-  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
 
@@ -37,7 +37,6 @@ export default function ManagePlansPage({ params }: { params: { id: string } }) 
     if (userJson) {
       try {
         const user = JSON.parse(userJson);
-        setCurrentUser(user);
         setIsAuthenticated(true);
         setIsOrganizer(user.role === 'organizer');
       } catch (e) {
@@ -53,44 +52,40 @@ export default function ManagePlansPage({ params }: { params: { id: string } }) 
     }
   }, [isAuthenticated, isOrganizer, router, isLoading]);
 
-  // 獲取活動詳情和贊助方案
+  // 獲取活動和贊助計劃
   useEffect(() => {
     async function fetchEventAndPlans() {
-      if (!params.id) return;
-
+      setIsLoading(true);
+      setError("");
+      
       try {
-        setIsLoading(true);
-        const eventData = await getEventById(params.id);
+        // 在 Next.js 15 中需要等待解析params
+        const resolvedParams = await params;
+        const id = resolvedParams.id;
+        setEventId(id); // 保存ID以便後續使用
         
+        // 獲取活動詳情
+        const eventData = await getEventById(id);
         if (!eventData) {
           setError("找不到該活動");
           return;
         }
         
-        // 檢查當前用戶是否為活動的主辦方
-        if (currentUser && eventData.organizer_id !== currentUser.id) {
-          setError("您沒有權限管理此活動的贊助方案");
-          router.push("/organizer/events");
-          return;
-        }
-        
         setEvent(eventData);
         
-        // 獲取贊助方案
-        const plansData = await getSponsorshipPlans(params.id);
-        setPlans(plansData);
+        // 獲取贊助計劃
+        const plansData = await getSponsorshipPlans(id);
+        setPlans(plansData || []);
       } catch (error) {
         console.error("Error fetching event and plans:", error);
-        setError("無法加載活動和贊助方案。請稍後再試。");
+        setError("無法加載活動和贊助計劃。請稍後再試。");
       } finally {
         setIsLoading(false);
       }
     }
 
-    if (currentUser && isOrganizer) {
-      fetchEventAndPlans();
-    }
-  }, [params.id, currentUser, isOrganizer, router]);
+    fetchEventAndPlans();
+  }, [params]);
 
   // 處理表單輸入變化
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -109,37 +104,36 @@ export default function ManagePlansPage({ params }: { params: { id: string } }) 
     }
   };
 
-  // 處理創建新贊助方案
+  // 處理創建新贊助計劃
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!event) return;
-    
     try {
       setIsSaving(true);
-      setError("");
       
-      // 處理權益
-      const benefits = newPlan.benefits
-        .split("\n")
+      // 將benefits字串轉換為數組
+      const benefitsArray = newPlan.benefits
+        .split('\n')
         .map(benefit => benefit.trim())
         .filter(benefit => benefit !== "");
       
-      // 創建新贊助方案
+      // 準備新計劃數據
       const planData = {
+        event_id: eventId,
         title: newPlan.title,
+        price: Number(newPlan.price),
         description: newPlan.description,
-        price: newPlan.price,
-        benefits,
-        max_sponsors: newPlan.max_sponsors,
-        current_sponsors: newPlan.current_sponsors
+        benefits: benefitsArray,
+        max_sponsors: Number(newPlan.max_sponsors),
+        current_sponsors: 0
       };
       
-      const createdPlan = await createSponsorshipPlan(event.id, planData);
+      // 創建新計劃
+      const createdPlan = await createSponsorshipPlan(eventId, planData);
       
       if (createdPlan) {
-        // 更新贊助方案列表
-        setPlans(prev => [...prev, createdPlan]);
+        // 更新計劃列表
+        setPlans(prevPlans => [...prevPlans, createdPlan]);
         
         // 重置表單
         setNewPlan({
@@ -153,12 +147,10 @@ export default function ManagePlansPage({ params }: { params: { id: string } }) 
         
         // 關閉對話框
         setIsDialogOpen(false);
-      } else {
-        setError("創建贊助方案時出錯。請稍後再試。");
       }
     } catch (error) {
       console.error("Error creating sponsorship plan:", error);
-      setError("創建贊助方案時出錯。請稍後再試。");
+      setError("無法創建贊助計劃。請稍後再試。");
     } finally {
       setIsSaving(false);
     }

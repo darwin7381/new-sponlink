@@ -8,7 +8,7 @@ import { SocialProvider } from '@/types/auth';
 export default function OAuthCallbackPage({
   params,
 }: {
-  params: { provider: string };
+  params: Promise<{ provider: string }>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,7 +21,9 @@ export default function OAuthCallbackPage({
           throw new Error('Authorization code is missing');
         }
 
-        const provider = params.provider as SocialProvider;
+        // 在 Next.js 15 中，需要等待 params
+        const resolvedParams = await params;
+        const provider = resolvedParams.provider as SocialProvider;
         const profile = await handleOAuthCallback(provider, code);
 
         // 儲存用戶資料到 localStorage
@@ -37,7 +39,7 @@ export default function OAuthCallbackPage({
     };
 
     handleCallback();
-  }, [params.provider, router, searchParams]);
+  }, [params, router, searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

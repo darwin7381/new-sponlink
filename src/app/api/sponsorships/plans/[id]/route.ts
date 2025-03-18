@@ -3,13 +3,14 @@ import { MOCK_SPONSORSHIP_PLANS } from '@/lib/mocks/sponsorships';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
-  // 在 Next.js 15 中，需要先等待 params 對象
-  const { id } = await params;
-  
   try {
-    // 使用已經等待過的 id
+    // 獲取 URL 參數
+    const params = await context.params;
+    const id = params.id;
+    
+    // 查找贊助計劃
     const plan = MOCK_SPONSORSHIP_PLANS.find(plan => plan.id === id);
     
     if (!plan) {

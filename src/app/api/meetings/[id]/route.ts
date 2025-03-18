@@ -3,13 +3,14 @@ import { getSponsorMeetings } from '@/lib/services/sponsorService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 正確使用 await 來解決 Next.js 的警告
-    const id = await Promise.resolve(params.id);
+    // 获取URL参数
+    const params = await context.params;
+    const id = params.id;
     
-    // 獲取贊助商的所有會議
+    // 获取赞助商的所有会议
     const meetings = await getSponsorMeetings(id);
     
     if (!meetings || meetings.length === 0) {

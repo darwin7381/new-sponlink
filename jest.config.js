@@ -1,4 +1,4 @@
-import nextJest from 'next/jest.js';
+const nextJest = require('next/jest.js');
 
 const createJestConfig = nextJest({
   // 指向 Next.js 應用的路徑
@@ -15,4 +15,4 @@ const customJestConfig = {
 };
 
 // 創建並導出 Jest 配置
-export default createJestConfig(customJestConfig); 
+module.exports = createJestConfig(customJestConfig); 
