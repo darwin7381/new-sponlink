@@ -1,3 +1,42 @@
+# EventConnect - 活動贊助平台
+
+EventConnect 是一個連接活動主辦方與潛在贊助商的平台，幫助建立互惠互利的合作關係。
+
+## 專案概述
+
+本平台旨在解決以下問題：
+- 活動主辦方難以找到合適的贊助商
+- 贊助商難以發現符合其目標受眾的活動
+- 缺乏一個高效的贊助管理和交流渠道
+
+## 主要功能
+
+### 活動主辦方功能
+- 創建和管理活動詳情
+- 設定贊助套餐和權益
+- 管理贊助商申請
+- 安排與潛在贊助商的會議
+
+### 贊助商功能
+- 瀏覽活動列表
+- 檢視活動詳情和贊助套餐
+- 購物車管理
+- 與活動主辦方溝通
+
+### 通用功能
+- 會員註冊/登入
+- 個人檔案管理
+- 約會/會議安排
+
+## 技術堆疊
+
+- **前端框架**: Next.js (React)
+- **樣式**: Tailwind CSS
+- **前端狀態管理**: React Context API
+- **後端**: Next.js API 路由
+- **認證**: 自建及社交媒體登入
+- **測試**: Jest & Playwright
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
