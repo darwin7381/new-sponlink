@@ -143,14 +143,29 @@ npm run test:e2e
 2. 導入 GitHub 倉庫
 3. 保持默認設置並部署
 
-## 文檔
+## 文檔審核結果
 
-詳細技術文檔和設計說明位於 `docs/` 目錄：
+在整合過去文檔後，我們對所有文檔進行了審核和評估，以確保它們與當前專案結構和需求保持一致。
 
-- [專案概述](docs/PROJECT_OVERVIEW.md)
-- [活動管理平台需求文檔](docs/活動管理平台_PRD.md)
-- [主辦方與贊助方平台串接文檔](docs/sponsor_plan_integration_prd.md)
-- [系統設計文檔](docs/event_management_platform_system_design.md)
+### 📚 建議使用的文檔
+- [活動管理平台需求文檔](docs/活動管理平台_PRD.md) - 與當前專案功能一致
+- [登入系統優化與社交媒體整合需求](docs/login_system_integration_prd.md) - 社交登入功能已實作
+- [登入系統整合系統設計](docs/login_system_integration_system_design.md) - 技術細節參考
+- [專案總覽](PROJECT_OVERVIEW.md) - 重要的專案指南文檔
+
+### 🔄 需要更新的文檔
+- [主辦方與贊助方平台串接文檔](docs/sponsor_plan_integration_prd.md) - 需更新贊助計劃實作
+- [活動管理平台系統設計](docs/event_management_platform_system_design.md) - 需與Next.js架構同步
+- [活動平台系統設計](docs/event_platform_system_design.md) - 需適配現有專案架構
+
+### 🔍 歷史參考文檔
+- [加密貨幣會議平台需求文檔](docs/crypto_conference_platform_prd.md) - 與現有功能有差異
+- [Spongo 系統設計](docs/spongo_system_design.md) - 舊版架構參考
+- [贊助購物車 UI 設計](docs/sponsor_cart_ui_mockup_updated.md) - UI設計參考
+- [贊助商平台需求摘要](docs/sponsor_platform_requirements_summary.md) - 已整合到其他文檔
+- [緊急問題分析](docs/urgent_issues_analysis.md) - 舊版專案問題分析
+
+**注意**：開發時請主要參考「建議使用」和「需要更新」中的文檔。對於「歷史參考」中的文檔，應該在團隊會議中討論是否調整開發方向。
 
 ## License
 
