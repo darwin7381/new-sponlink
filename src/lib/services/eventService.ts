@@ -1,5 +1,6 @@
-import { Event, EVENT_STATUS } from '../types/events';
+import { Event, EventStatus } from '../../types/event';
 import { MOCK_EVENTS } from '../mocks/events';
+import { adaptOldEventsToNew, adaptOldEventToNew } from '../types-adapter';
 
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -7,7 +8,7 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 // Get all events (with optional filters)
 export const getAllEvents = async (filters: {
   title?: string;
-  status?: EVENT_STATUS;
+  status?: EventStatus;
   organizerId?: string;
 } = {}): Promise<Event[]> => {
   try {
@@ -35,7 +36,8 @@ export const getAllEvents = async (filters: {
       );
     }
     
-    return filteredEvents;
+    // 轉換為新版Event類型
+    return adaptOldEventsToNew(filteredEvents);
   } catch (error) {
     console.error("Error getting events:", error);
     throw error;
@@ -54,7 +56,8 @@ export const getEventById = async (eventId: string): Promise<Event> => {
       throw new Error("Event not found");
     }
     
-    return event;
+    // 轉換為新版Event類型
+    return adaptOldEventToNew(event);
   } catch (error) {
     console.error(`Error getting event with ID ${eventId}:`, error);
     throw error;
@@ -85,7 +88,7 @@ export const createEvent = async (eventData: Partial<Event>): Promise<Event> => 
       },
       organizer_id: eventData.organizer_id || '',
       sponsor_ids: [],
-      status: EVENT_STATUS.DRAFT,
+      status: EventStatus.DRAFT,
       cover_image: eventData.cover_image || '',
       deck_url: eventData.deck_url || '',
       sponsorship_plans: []

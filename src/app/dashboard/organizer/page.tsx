@@ -11,6 +11,7 @@ import { getOrganizerMeetings } from "@/lib/services/sponsorService";
 import { getAllEvents } from "@/lib/services/eventService";
 import { Meeting, MEETING_STATUS, USER_ROLES } from "@/lib/types/users";
 import { Event } from "@/lib/types/events";
+import { adaptNewEventsToOld } from "@/lib/types-adapter";
 
 export default function OrganizerDashboardPage() {
   const router = useRouter();
@@ -50,7 +51,7 @@ export default function OrganizerDashboardPage() {
         
         // 獲取活動
         const eventsData = await getAllEvents({ organizerId: userId });
-        setEvents(eventsData);
+        setEvents(adaptNewEventsToOld(eventsData));
         
         // 獲取會議
         const meetingsData = await getOrganizerMeetings(userId);

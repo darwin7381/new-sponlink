@@ -2,7 +2,7 @@
 
 import React from "react";
 import { EventCard } from "./EventCard";
-import { Event } from "@/lib/types/events";
+import { Event } from "@/types/event";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface EventListProps {

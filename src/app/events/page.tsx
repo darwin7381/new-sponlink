@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAllEvents } from "@/lib/services/eventService";
-import { Event, EVENT_STATUS } from "@/lib/types/events";
+import { Event, EventStatus } from "@/types/event";
 
 // 動態導入 EventList 組件
 const EventList = dynamic(() => import('@/components/events/EventList'), {
@@ -41,7 +41,7 @@ export default function EventsPage() {
     async function fetchEvents() {
       try {
         setIsLoading(true);
-        const eventsData = await getAllEvents({ status: EVENT_STATUS.PUBLISHED });
+        const eventsData = await getAllEvents({ status: EventStatus.PUBLISHED });
         setEvents(eventsData);
         setFilteredEvents(eventsData);
       } catch (error) {
