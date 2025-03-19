@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "@/components/ui/use-toast";
-import { getEventById, updateEvent } from "@/lib/services/eventService";
+import { getEventById, updateEvent } from "@/services/eventService";
 import { adaptNewEventToOld } from "@/lib/types-adapter";
 import { Event } from "@/lib/types/events";
 

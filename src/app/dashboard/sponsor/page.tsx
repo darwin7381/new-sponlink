@@ -9,10 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, BarChart3Icon, ClockIcon } from "lucide-react";
 import { getSponsorMeetings, getSponsorships } from "@/lib/services/sponsorService";
-import { getEventById } from "@/lib/services/eventService";
+import { getEventById } from "@/services/eventService";
 import { CartItem, Meeting, MEETING_STATUS } from "@/lib/types/users";
 import { USER_ROLES } from "@/lib/types/users";
-import { SponsorshipPlan } from "@/lib/mocks/sponsorships";
+import { SponsorshipPlan } from "@/types/event";
 import { getCurrentUser, hasRole, isAuthenticated } from "@/lib/services/authService";
 
 // 定義簡化的事件類型，只包含我們需要的屬性

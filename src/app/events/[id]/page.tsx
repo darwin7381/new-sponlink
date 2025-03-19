@@ -9,9 +9,8 @@ import { Button } from "@/components/ui/button";
 import { SponsorshipPlanCard } from "@/components/events/SponsorshipPlanCard";
 import { getEventById } from "@/services/eventService";
 import { addToCart, getCartItems } from "@/services/sponsorService";
-import { Event } from "@/types/event";
+import { Event, SponsorshipPlan } from "@/types/event";
 import { CartItem } from "@/types/sponsor";
-import { SponsorshipPlan } from "@/types/sponsorshipPlan";
 import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
 import { USER_ROLES } from "@/lib/types/users";
 
@@ -29,7 +28,7 @@ export default function EventDetailPage() {
   const [isSponsor, setIsSponsor] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   
-  // 檢查用戶身份
+  // Check user identity
   useEffect(() => {
     const checkAuth = async () => {
       const authenticated = isAuthenticated();
@@ -46,7 +45,7 @@ export default function EventDetailPage() {
               setUserId(userData.id);
             }
           } catch (error) {
-            console.error("獲取用戶數據錯誤:", error);
+            console.error("Error getting user data:", error);
           }
         }
       }
@@ -55,78 +54,108 @@ export default function EventDetailPage() {
     checkAuth();
   }, []);
   
-  // 獲取活動數據
+  // Get event data
   useEffect(() => {
     async function fetchEvent() {
       try {
         setIsLoading(true);
         const eventData = await getEventById(eventId);
-        setEvent(eventData);
         
-        // 如果用戶是贊助商，也獲取他們的購物車項目
-        if (isUserAuthenticated && isSponsor && userId) {
-          const items = await getCartItems(userId);
-          setCartItems(items);
+        if (!eventData) {
+          setError("Event not found");
+          return;
         }
+        
+        setEvent(eventData);
       } catch (error) {
-        console.error("獲取活動錯誤:", error);
-        setError("無法加載活動詳情。請稍後再試。");
+        console.error("Error fetching event:", error);
+        setError("Failed to load event data");
       } finally {
         setIsLoading(false);
       }
     }
     
     fetchEvent();
-  }, [eventId, isUserAuthenticated, isSponsor, userId]);
+  }, [eventId]);
   
-  const handleScheduleMeeting = () => {
-    router.push(`/meetings?eventId=${eventId}`);
-  };
+  // Get cart items for sponsor
+  useEffect(() => {
+    if (isSponsor && userId) {
+      async function fetchCartItems() {
+        try {
+          const items = await getCartItems(userId);
+          setCartItems(items);
+        } catch (error) {
+          console.error("Error fetching cart items:", error);
+        }
+      }
+      
+      fetchCartItems();
+    }
+  }, [isSponsor, userId]);
   
-  const handleAddToCart = async (planId: string) => {
-    if (!isUserAuthenticated || !isSponsor) {
-      router.push("/login");
+  // Handle add to cart
+  const handleAddToCart = async (plan: SponsorshipPlan) => {
+    if (!isUserAuthenticated) {
+      router.push('/login');
       return;
     }
     
+    if (!isSponsor) {
+      alert("Only sponsors can add sponsorship plans to cart");
+      return;
+    }
+    
+    if (!userId) return;
+    
     try {
       setAddingToCart(true);
-      await addToCart(userId as string, planId);
       
-      // 刷新購物車項目
-      const updatedItems = await getCartItems(userId as string);
+      // Check if plan is already in cart
+      const alreadyInCart = cartItems.some(item => item.sponsorship_plan_id === plan.id);
+      
+      if (alreadyInCart) {
+        alert("This sponsorship plan is already in your cart");
+        return;
+      }
+      
+      await addToCart(userId, plan.id);
+      
+      // Update cart items
+      const updatedItems = await getCartItems(userId);
       setCartItems(updatedItems);
-      
+      alert("Sponsorship plan added to cart successfully");
     } catch (error) {
-      console.error("添加到購物車錯誤:", error);
-      alert("無法將項目添加到購物車。請重試。");
+      console.error("Error adding to cart:", error);
+      alert("Failed to add sponsorship plan to cart");
     } finally {
       setAddingToCart(false);
     }
   };
   
+  // Check if plan is in cart
   const isPlanInCart = (planId: string) => {
     return cartItems.some(item => item.sponsorship_plan_id === planId);
   };
-  
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
   
   if (error || !event) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center">
-        <h1 className="text-3xl font-bold text-gray-900">錯誤</h1>
-        <p className="mt-4 text-lg text-gray-600">{error || "找不到活動"}</p>
-        <Link href="/events">
-          <Button variant="default" className="mt-6">
-            返回活動列表
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-destructive">Error</h1>
+          <p className="mt-2">{error || "Event not found"}</p>
+          <Button variant="default" className="mt-4" asChild>
+            <Link href="/events">Back to Events</Link>
           </Button>
-        </Link>
+        </div>
       </div>
     );
   }
@@ -178,7 +207,7 @@ export default function EventDetailPage() {
               <ol className="flex items-center space-x-2">
                 <li>
                   <Link href="/events" className="text-muted-foreground hover:text-foreground">
-                    活動
+                    Events
                   </Link>
                 </li>
                 <li className="flex items-center">
@@ -205,7 +234,13 @@ export default function EventDetailPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>{event.location?.name || "地點待定"}</span>
+                <span>
+                  {event.location?.name 
+                    ? (event.location.city 
+                        ? `${event.location.name}, ${event.location.city}` 
+                        : event.location.name)
+                    : "地點待定"}
+                </span>
               </div>
             </div>
             
@@ -220,7 +255,9 @@ export default function EventDetailPage() {
               <div className="mt-8">
                 <h2 className="text-xl font-bold text-foreground mb-4">地點</h2>
                 <div className="bg-secondary p-4 rounded-lg">
+                  <p className="text-secondary-foreground">{event.location.name}</p>
                   <p className="text-secondary-foreground">{event.location.address}</p>
+                  <p className="text-secondary-foreground">{event.location.city}, {event.location.country} {event.location.postal_code}</p>
                 </div>
               </div>
             )}
@@ -246,40 +283,44 @@ export default function EventDetailPage() {
             <div className="mt-10">
               <Button
                 variant="default"
-                onClick={handleScheduleMeeting}
+                onClick={() => router.push(`/meetings?eventId=${eventId}`)}
                 className="w-full sm:w-auto"
               >
-                與組織者安排會議
+                Schedule Meeting with Organizer
               </Button>
             </div>
           </div>
           
-          {/* 贊助方案側邊欄 */}
+          {/* Sponsorship Plans */}
           <div className="mt-8 lg:mt-0">
             <div className="bg-secondary p-6 rounded-lg">
-              <h2 className="text-xl font-bold text-foreground mb-6">贊助方案</h2>
+              <h2 className="text-xl font-bold text-foreground mb-6">Sponsorship Plans</h2>
               
-              {convertedPlans.length > 0 ? (
+              {event.sponsorship_plans && event.sponsorship_plans.length > 0 ? (
                 <div className="space-y-6">
-                  {convertedPlans.map(plan => (
+                  {event.sponsorship_plans.map(plan => (
                     <SponsorshipPlanCard
                       key={plan.id}
                       plan={plan}
-                      onAddToCart={handleAddToCart}
+                      onAddToCart={(planId) => {
+                        if (userId) {
+                          handleAddToCart(plan);
+                        }
+                      }}
                       isInCart={isPlanInCart(plan.id)}
                       isLoading={addingToCart}
                     />
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500">目前沒有可用的贊助方案。</p>
+                <p className="text-gray-500">No sponsorship plans available at this time.</p>
               )}
               
               {isUserAuthenticated && isSponsor && cartItems.length > 0 && (
                 <div className="mt-8 text-center">
                   <Link href="/cart">
                     <Button variant="outline">
-                      查看購物車 ({cartItems.length})
+                      View Cart ({cartItems.length})
                     </Button>
                   </Link>
                 </div>

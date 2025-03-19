@@ -218,9 +218,9 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   <div>
                     <h3 className="text-lg font-medium text-gray-900">地點</h3>
                     <div className="mt-2 text-gray-600">
-                      <p>{event.location.name}</p>
+                      <p>{event.location.name}, {event.location.city}</p>
                       <p>{event.location.address}</p>
-                      <p>{event.location.city}, {event.location.country} {event.location.postal_code}</p>
+                      <p>{event.location.country} {event.location.postal_code}</p>
                     </div>
                   </div>
                   

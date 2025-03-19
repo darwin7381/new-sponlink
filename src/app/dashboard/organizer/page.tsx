@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, BarChart3Icon, UsersIcon } from "lucide-react";
 import { getOrganizerMeetings } from "@/lib/services/sponsorService";
-import { getAllEvents } from "@/lib/services/eventService";
+import { getAllEvents } from "@/services/eventService";
 import { Meeting, MEETING_STATUS, USER_ROLES } from "@/lib/types/users";
 import { Event } from "@/lib/types/events";
 import { adaptNewEventsToOld } from "@/lib/types-adapter";

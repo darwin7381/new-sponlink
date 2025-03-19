@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getEventById } from '@/lib/services/eventService';
+import { getEventById } from '@/services/eventService';
 
 export async function GET(
   request: NextRequest,

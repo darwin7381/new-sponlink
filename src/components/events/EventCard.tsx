@@ -15,7 +15,7 @@ export function EventCard({ event }: EventCardProps) {
   // Format date for display
   const formattedDate = event.start_time ? 
     format(new Date(event.start_time), "MMM d, yyyy") : 
-    "日期待定";
+    "Date TBD";
 
   return (
     <Card className="overflow-hidden h-full flex flex-col">
@@ -45,8 +45,8 @@ export function EventCard({ event }: EventCardProps) {
           <div className="flex-shrink-0">
             <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
               {event.location ? 
-                `${event.location.name}${event.location.city ? `, ${event.location.city}` : ''}` : 
-                "地點待定"}
+                (event.location.city && event.location.country ? `${event.location.city}, ${event.location.country}` : event.location.name) : 
+                "Location TBD"}
             </span>
           </div>
         </div>

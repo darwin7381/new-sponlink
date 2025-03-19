@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MOCK_SPONSORSHIP_PLANS } from '@/lib/mocks/sponsorships';
+import { mockSponsorshipPlans } from '@/mocks/sponsorshipData';
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +11,7 @@ export async function GET(
     const id = params.id;
     
     // 查找贊助計劃
-    const plan = MOCK_SPONSORSHIP_PLANS.find(plan => plan.id === id);
+    const plan = mockSponsorshipPlans.find(plan => plan.id === id);
     
     if (!plan) {
       return NextResponse.json(

@@ -1,8 +1,12 @@
 import { Event as NewEvent, EventStatus } from '../types/event';
 import { Event as OldEvent, EVENT_STATUS } from './types/events';
+import { mockEvents } from '../mocks/eventData';
 
 // 將舊版Event轉換為新版Event
 export function adaptOldEventToNew(oldEvent: OldEvent): NewEvent {
+  // 從mockEvents中查找對應的事件
+  const mockEvent = mockEvents.find(event => event.id === oldEvent.id);
+  
   return {
     ...oldEvent,
     category: '',
@@ -17,9 +21,9 @@ export function adaptOldEventToNew(oldEvent: OldEvent): NewEvent {
       id: oldEvent.location?.name || '',
       name: oldEvent.location?.name || '',
       address: oldEvent.location?.address || '',
-      city: '',
-      country: '',
-      postal_code: '',
+      city: mockEvent?.location?.city || '', // 使用mockEvent的city屬性
+      country: mockEvent?.location?.country || '', // 使用mockEvent的country屬性
+      postal_code: mockEvent?.location?.postal_code || '',
       latitude: oldEvent.location?.latitude,
       longitude: oldEvent.location?.longitude
     },
@@ -72,4 +76,20 @@ export function adaptOldEventsToNew(oldEvents: OldEvent[]): NewEvent[] {
 // 批量轉換新版Event數組為舊版Event數組
 export function adaptNewEventsToOld(newEvents: NewEvent[]): OldEvent[] {
   return newEvents.map(adaptNewEventToOld);
+}
+
+// 輔助函數：從地址中解析城市
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function extractCityFromAddress(_address: string): string {
+  // 嘗試直接使用城市名稱，而不是從地址解析
+  // 這裡我們返回空字符串，讓MOCK_EVENTS中的city和country直接使用
+  return '';
+}
+
+// 輔助函數：從地址中解析國家
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function extractCountryFromAddress(_address: string): string {
+  // 嘗試直接使用國家名稱，而不是從地址解析
+  // 這裡我們返回空字符串，讓MOCK_EVENTS中的city和country直接使用
+  return '';
 } 

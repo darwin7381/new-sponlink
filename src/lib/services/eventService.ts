@@ -1,6 +1,5 @@
 import { Event, EventStatus } from '../../types/event';
-import { MOCK_EVENTS } from '../mocks/events';
-import { adaptOldEventsToNew, adaptOldEventToNew } from '../types-adapter';
+import { mockEvents } from '../../mocks/eventData';
 
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -15,7 +14,7 @@ export const getAllEvents = async (filters: {
     // Simulate API call
     await delay(500);
     
-    let filteredEvents = [...MOCK_EVENTS];
+    let filteredEvents = [...mockEvents];
     
     // Apply filters
     if (filters.title) {
@@ -36,8 +35,8 @@ export const getAllEvents = async (filters: {
       );
     }
     
-    // 轉換為新版Event類型
-    return adaptOldEventsToNew(filteredEvents);
+    // 已經是統一格式，不需要轉換
+    return filteredEvents;
   } catch (error) {
     console.error("Error getting events:", error);
     throw error;
@@ -50,14 +49,14 @@ export const getEventById = async (eventId: string): Promise<Event> => {
     // Simulate API call
     await delay(300);
     
-    const event = MOCK_EVENTS.find(e => e.id === eventId);
+    const event = mockEvents.find(e => e.id === eventId);
     
     if (!event) {
       throw new Error("Event not found");
     }
     
-    // 轉換為新版Event類型
-    return adaptOldEventToNew(event);
+    // 已經是統一格式，不需要轉換
+    return event;
   } catch (error) {
     console.error(`Error getting event with ID ${eventId}:`, error);
     throw error;
@@ -71,7 +70,7 @@ export const createEvent = async (eventData: Partial<Event>): Promise<Event> => 
     await delay(800);
     
     // Generate new ID
-    const newId = String(parseInt(MOCK_EVENTS[MOCK_EVENTS.length - 1].id) + 1);
+    const newId = String(parseInt(mockEvents[mockEvents.length - 1].id) + 1);
     
     // Create new event object
     const newEvent: Event = {
@@ -81,8 +80,12 @@ export const createEvent = async (eventData: Partial<Event>): Promise<Event> => 
       start_time: eventData.start_time || new Date().toISOString(),
       end_time: eventData.end_time || new Date().toISOString(),
       location: eventData.location || {
+        id: '',
         name: '',
         address: '',
+        city: '',
+        country: '',
+        postal_code: '',
         latitude: 0,
         longitude: 0
       },
@@ -91,11 +94,15 @@ export const createEvent = async (eventData: Partial<Event>): Promise<Event> => 
       status: EventStatus.DRAFT,
       cover_image: eventData.cover_image || '',
       deck_url: eventData.deck_url || '',
-      sponsorship_plans: []
+      category: eventData.category || '',
+      tags: eventData.tags || [],
+      sponsorship_plans: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     };
     
     // Add to mock data
-    MOCK_EVENTS.push(newEvent);
+    mockEvents.push(newEvent);
     
     return newEvent;
   } catch (error) {
@@ -111,7 +118,7 @@ export const updateEvent = async (eventId: string, eventData: Partial<Event>): P
     await delay(600);
     
     // Find event index
-    const eventIndex = MOCK_EVENTS.findIndex(e => e.id === eventId);
+    const eventIndex = mockEvents.findIndex(e => e.id === eventId);
     
     if (eventIndex === -1) {
       throw new Error("Event not found");
@@ -119,12 +126,13 @@ export const updateEvent = async (eventId: string, eventData: Partial<Event>): P
     
     // Update event
     const updatedEvent = {
-      ...MOCK_EVENTS[eventIndex],
-      ...eventData
+      ...mockEvents[eventIndex],
+      ...eventData,
+      updated_at: new Date().toISOString()
     };
     
     // Replace in mock data
-    MOCK_EVENTS[eventIndex] = updatedEvent;
+    mockEvents[eventIndex] = updatedEvent;
     
     return updatedEvent;
   } catch (error) {
@@ -140,14 +148,14 @@ export const deleteEvent = async (eventId: string): Promise<boolean> => {
     await delay(500);
     
     // Find event index
-    const eventIndex = MOCK_EVENTS.findIndex(e => e.id === eventId);
+    const eventIndex = mockEvents.findIndex(e => e.id === eventId);
     
     if (eventIndex === -1) {
       throw new Error("Event not found");
     }
     
     // Remove from mock data
-    MOCK_EVENTS.splice(eventIndex, 1);
+    mockEvents.splice(eventIndex, 1);
     
     return true;
   } catch (error) {

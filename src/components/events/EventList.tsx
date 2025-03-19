@@ -33,8 +33,8 @@ export default function EventList({ events, isLoading = false }: EventListProps)
   if (!events || events.length === 0) {
     return (
       <div className="text-center py-12">
-        <h3 className="text-lg font-medium text-foreground">沒有找到活動</h3>
-        <p className="mt-2 text-sm text-muted-foreground">請稍後再試或調整您的搜索條件。</p>
+        <h3 className="text-lg font-medium text-foreground">No events found</h3>
+        <p className="mt-2 text-sm text-muted-foreground">Please try again later or adjust your search criteria.</p>
       </div>
     );
   }

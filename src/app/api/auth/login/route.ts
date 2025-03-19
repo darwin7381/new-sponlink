@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MOCK_USERS } from '@/lib/mocks/users';
+import { mockUsers } from '@/mocks/userData';
 import { USER_ROLES } from '@/lib/types/users';
 
 export async function POST(request: Request) {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     }
     
     // 找到對應的用戶
-    const user = MOCK_USERS.find(u => u.email === email);
+    const user = mockUsers.find(u => u.email === email);
     
     if (!user) {
       console.error(`找不到用戶: ${email}`);

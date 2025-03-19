@@ -5,10 +5,10 @@ import dynamic from 'next/dynamic';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getAllEvents } from "@/lib/services/eventService";
+import { getAllEvents } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
 
-// 動態導入 EventList 組件
+// Dynamic import of EventList component
 const EventList = dynamic(() => import('@/components/events/EventList'), {
   loading: () => (
     <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -36,7 +36,7 @@ export default function EventsPage() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   
-  // 獲取活動數據
+  // Fetch event data
   useEffect(() => {
     async function fetchEvents() {
       try {
@@ -45,8 +45,8 @@ export default function EventsPage() {
         setEvents(eventsData);
         setFilteredEvents(eventsData);
       } catch (error) {
-        console.error("獲取活動錯誤:", error);
-        setError("無法加載活動。請稍後再試。");
+        console.error("Error fetching events:", error);
+        setError("Unable to load events. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -55,7 +55,7 @@ export default function EventsPage() {
     fetchEvents();
   }, []);
   
-  // 當搜索詞變化時過濾活動
+  // Filter events when search term changes
   useEffect(() => {
     if (searchTerm.trim() === "") {
       setFilteredEvents(events);
@@ -65,7 +65,8 @@ export default function EventsPage() {
     const filtered = events.filter(event => 
       event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (event.location?.name && event.location.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      (event.location?.name && event.location.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (event.location?.city && event.location.city.toLowerCase().includes(searchTerm.toLowerCase()))
     );
     
     setFilteredEvents(filtered);
@@ -73,20 +74,20 @@ export default function EventsPage() {
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // useEffect 會處理實際的過濾
+    // useEffect will handle the actual filtering
   };
 
   return (
     <div className="bg-background min-h-screen pt-16 pb-12">
-      {/* 帶有搜索的英雄部分 */}
+      {/* Hero section with search */}
       <div className="bg-primary py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-3xl font-extrabold text-primary-foreground sm:text-4xl">
-              探索活動
+              Explore Events
             </h1>
             <p className="mt-3 max-w-2xl mx-auto text-xl text-primary-foreground/80 sm:mt-4">
-              尋找與您的品牌和目標相符的贊助機會
+              Find sponsorship opportunities that align with your brand and goals
             </p>
             
             <form className="mt-6 max-w-xl mx-auto" onSubmit={handleSearch}>
@@ -95,7 +96,7 @@ export default function EventsPage() {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="按標題、描述或位置搜索活動"
+                  placeholder="Search events by title, description, or location"
                   className="rounded-l-md rounded-r-none"
                 />
                 <Button
@@ -103,7 +104,7 @@ export default function EventsPage() {
                   variant="secondary"
                   className="rounded-l-none"
                 >
-                  搜索
+                  Search
                 </Button>
               </div>
             </form>
@@ -111,7 +112,7 @@ export default function EventsPage() {
         </div>
       </div>
       
-      {/* 活動列表部分 */}
+      {/* Events list section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {error ? (
           <div className="text-center py-12">
@@ -121,14 +122,14 @@ export default function EventsPage() {
               className="mt-4"
               onClick={() => window.location.reload()}
             >
-              重試
+              Retry
             </Button>
           </div>
         ) : (
           <>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-foreground">
-                {searchTerm ? `搜索結果 (${filteredEvents.length})` : `所有活動 (${filteredEvents.length})`}
+                {searchTerm ? `Search Results (${filteredEvents.length})` : `All Events (${filteredEvents.length})`}
               </h2>
             </div>
             

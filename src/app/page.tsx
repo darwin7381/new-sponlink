@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getCurrentUser } from "@/lib/services/authService";
 import { User, USER_ROLES } from "@/lib/types/users";
-import { getAllEvents } from "@/lib/services/eventService";
+import { getAllEvents } from "@/services/eventService";
 
 interface FeaturedEvent {
   id: string;
@@ -37,7 +37,9 @@ export default function Home() {
           description: event.description.substring(0, 120) + '...',
           image: event.cover_image || '/images/event-placeholder.jpg',
           date: new Date(event.start_time).toISOString().split('T')[0],
-          location: event.location.name
+          location: event.location.city && event.location.country ? 
+            `${event.location.city}, ${event.location.country}` : 
+            event.location.name
         }));
         
         setFeaturedEvents(formattedEvents);
