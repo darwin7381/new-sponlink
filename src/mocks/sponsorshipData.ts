@@ -80,5 +80,22 @@ export const mockSponsorshipPlans: SponsorshipPlan[] = [
     current_sponsors: 8,
     created_at: '2024-05-12T12:00:00Z',
     updated_at: '2024-05-12T12:00:00Z'
+  },
+  {
+    id: 'plan-6',
+    event_id: '2',
+    title: '創新贊助 / Innovation Sponsorship',
+    description: '專為科技與創新企業設計的贊助方案 / Sponsorship package designed for tech and innovation companies',
+    price: 45000,
+    benefits: [
+      '創新展示區 / Innovation showcase area',
+      '產品演示機會 / Product demonstration opportunity',
+      '與參與者的互動環節 / Interactive session with attendees',
+      '品牌在活動網站上展示 / Brand displayed on event website'
+    ],
+    max_sponsors: 4,
+    current_sponsors: 2,
+    created_at: '2024-03-15T10:00:00Z',
+    updated_at: '2024-03-15T10:00:00Z'
   }
 ]; 

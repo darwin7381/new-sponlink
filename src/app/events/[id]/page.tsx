@@ -83,6 +83,8 @@ export default function EventDetailPage() {
     if (isSponsor && userId) {
       async function fetchCartItems() {
         try {
+          if (!userId) return;
+          
           const items = await getCartItems(userId);
           setCartItems(items);
         } catch (error) {
@@ -169,20 +171,6 @@ export default function EventDetailPage() {
       ? `${format(startDate, "MMMM d, yyyy")} • ${format(startDate, "h:mm a")} - ${format(endDate, "h:mm a")}`
       : `${format(startDate, "MMMM d, yyyy")} - ${format(endDate, "MMMM d, yyyy")}`
     : "日期待定";
-
-  // 將 Event 中的 sponsorship_plans 轉換為 SponsorshipPlan 類型
-  const convertedPlans: SponsorshipPlan[] = event.sponsorship_plans.map(plan => ({
-    id: plan.id,
-    name: plan.title,
-    description: plan.description,
-    price: plan.price,
-    is_limited: !!plan.max_sponsors,
-    benefits: plan.benefits,
-    event_id: plan.event_id,
-    visibility: 'public',
-    created_at: plan.created_at || new Date().toISOString(),
-    updated_at: plan.updated_at || new Date().toISOString()
-  }));
 
   return (
     <div className="bg-background min-h-screen pt-16 pb-12">
@@ -302,7 +290,7 @@ export default function EventDetailPage() {
                     <SponsorshipPlanCard
                       key={plan.id}
                       plan={plan}
-                      onAddToCart={(planId) => {
+                      onAddToCart={() => {
                         if (userId) {
                           handleAddToCart(plan);
                         }

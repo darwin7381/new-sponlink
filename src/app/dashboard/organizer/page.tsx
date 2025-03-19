@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, BarChart3Icon, UsersIcon } from "lucide-react";
 import { getOrganizerMeetings } from "@/lib/services/sponsorService";
-import { getAllEvents } from "@/services/eventService";
+import { getOrganizerEvents } from "@/services/eventService";
 import { Meeting, MEETING_STATUS, USER_ROLES } from "@/lib/types/users";
 import { Event } from "@/lib/types/events";
 import { adaptNewEventsToOld } from "@/lib/types-adapter";
@@ -61,7 +61,7 @@ export default function OrganizerDashboardPage() {
         setIsLoading(true);
         
         // 獲取活動
-        const eventsData = await getAllEvents({ organizerId: userId });
+        const eventsData = await getOrganizerEvents(userId);
         setEvents(adaptNewEventsToOld(eventsData));
         
         // 獲取會議

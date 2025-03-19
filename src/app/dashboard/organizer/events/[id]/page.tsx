@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { toast } from "@/components/ui/use-toast";
-import { getEventById, updateEvent } from "@/services/eventService";
+import { useParams } from "next/navigation";
+import { toast } from "sonner";
+import { getEventById } from "@/services/eventService";
 import { adaptNewEventToOld } from "@/lib/types-adapter";
 import { Event } from "@/lib/types/events";
 
@@ -19,14 +19,14 @@ export default function EventDetailsPage() {
         if (params.id) {
           setIsLoading(true);
           const fetchedEvent = await getEventById(params.id as string);
-          setEvent(adaptNewEventToOld(fetchedEvent));
+          if (fetchedEvent) {
+            setEvent(adaptNewEventToOld(fetchedEvent));
+          }
         }
       } catch (error) {
         console.error("Error fetching event:", error);
-        toast({
-          title: "獲取活動失敗",
-          description: "無法加載活動信息。請稍後再試。",
-          variant: "destructive",
+        toast.error("獲取活動失敗", {
+          description: "無法加載活動信息。請稍後再試。"
         });
       } finally {
         setIsLoading(false);
