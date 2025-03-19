@@ -6,6 +6,7 @@ import Image from "next/image";
 import { getCurrentUser } from "@/lib/services/authService";
 import { User, USER_ROLES } from "@/lib/types/users";
 import { getAllEvents } from "@/services/eventService";
+import { EventStatus } from "@/types/event";
 
 interface FeaturedEvent {
   id: string;
@@ -28,7 +29,7 @@ export default function Home() {
         setUser(currentUser);
 
         // Get events
-        const events = await getAllEvents();
+        const events = await getAllEvents({ status: EventStatus.PUBLISHED });
         
         // Format for frontend display
         const formattedEvents = events.map(event => ({
