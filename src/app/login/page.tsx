@@ -6,6 +6,7 @@ import { LoginForm } from '@/components/auth/LoginForm'
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 import { SocialProvider } from '@/types/auth'
 import { USER_ROLES } from '@/lib/types/users'
+import { getCurrentUser, login as authLogin, isAuthenticated } from '@/lib/services/authService'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -15,23 +16,21 @@ export default function LoginPage() {
 
   // 檢查是否已登入
   useEffect(() => {
-    const checkLoginStatus = () => {
-      const userJson = localStorage.getItem('currentUser');
-      if (userJson) {
+    const checkLoginStatus = async () => {
+      if (isAuthenticated()) {
         try {
-          const user = JSON.parse(userJson);
+          const user = await getCurrentUser();
           console.log('Already logged in as:', user);
           // 根據用戶角色重定向
-          if (user.role === USER_ROLES.SPONSOR) {
+          if (user?.role === USER_ROLES.SPONSOR) {
             router.push('/dashboard/sponsor');
-          } else if (user.role === USER_ROLES.ORGANIZER) {
+          } else if (user?.role === USER_ROLES.ORGANIZER) {
             router.push('/dashboard/organizer');
           } else {
             router.push('/dashboard');
           }
         } catch (e) {
-          console.error('Error parsing user data:', e);
-          localStorage.removeItem('currentUser');
+          console.error('Error checking login status:', e);
         }
       }
     };
@@ -40,10 +39,12 @@ export default function LoginPage() {
   }, [router]);
 
   // 檢查是否有錯誤參數
-  const errorParam = searchParams.get('error')
-  if (errorParam === 'auth_failed' && !error) {
-    setError('社交登入失敗，請稍後再試')
-  }
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam === 'auth_failed' && !error) {
+      setError('社交登入失敗，請稍後再試')
+    }
+  }, [searchParams, error]);
 
   const handleLogin = async (email: string, password: string) => {
     setLoading(true)
@@ -51,29 +52,54 @@ export default function LoginPage() {
 
     try {
       console.log('Attempting login with:', email, password);
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      })
+      
+      // 使用 authService 進行登入
+      try {
+        const user = await authLogin(email, password);
+        console.log('Login successful:', user);
 
-      if (!response.ok) {
-        throw new Error('帳號或密碼錯誤')
+        // 根據用戶角色重定向
+        if (user.role === USER_ROLES.SPONSOR) {
+          router.push('/dashboard/sponsor');
+        } else {
+          router.push('/dashboard/organizer');
+        }
+      } catch (authError) {
+        console.error('AuthService login failed, trying API:', authError);
+        
+        // 如果 authService 登入失敗，嘗試API登入
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API login error:', errorText);
+          throw new Error('帳號或密碼錯誤');
+        }
+
+        const user = await response.json();
+        console.log('API Login successful:', user);
+
+        // 儲存用戶資料到 localStorage
+        try {
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('authToken', `mock-token-${Date.now()}`);
+        } catch (e) {
+          console.error('Error storing user data:', e);
+        }
+
+        // 使用 router 進行重定向
+        if (user.role === USER_ROLES.SPONSOR) {
+          router.push('/dashboard/sponsor');
+        } else {
+          router.push('/dashboard/organizer');
+        }
       }
-
-      const user = await response.json()
-      console.log('Login successful:', user);
-
-      // 儲存用戶資料到 localStorage
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      localStorage.setItem('authToken', `mock-token-${Date.now()}`);
-
-      // 強制重新加載頁面以更新全局狀態
-      window.location.href = user.role === USER_ROLES.SPONSOR 
-        ? '/dashboard/sponsor' 
-        : '/dashboard/organizer';
     } catch (error) {
       console.error('Login error:', error);
       setError(error instanceof Error ? error.message : '登入失敗，請稍後再試')

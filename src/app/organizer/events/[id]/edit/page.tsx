@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { getEventById, updateEvent } from "@/services/eventService";
 import { Event, Location } from "@/types/event";
+import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
+import { USER_ROLES } from "@/lib/types/users";
 
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -36,39 +38,48 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       longitude: undefined as number | undefined
     } as Location
   });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isOrganizer, setIsOrganizer] = useState(false);
 
-  // 檢查用戶身份
+  // Check user authentication
   useEffect(() => {
-    const userJson = localStorage.getItem('user');
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        setIsAuthenticated(true);
-        setIsOrganizer(user.role === 'organizer');
-      } catch (e) {
-        console.error("Error parsing user data:", e);
-      }
-    }
-  }, []);
-
-  // 如果未登錄或不是組織者，則重定向
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isOrganizer)) {
-      router.push("/login");
-    }
-  }, [isAuthenticated, isOrganizer, router, isLoading]);
-
-  // 獲取活動詳情
-  useEffect(() => {
-    async function fetchEventDetails() {
+    const checkAuth = async () => {
       setIsLoading(true);
       try {
-        // 在 Next.js 15 中需要等待 params
+        if (!isAuthenticated()) {
+          router.push('/login');
+          return;
+        }
+        
+        if (!hasRole(USER_ROLES.ORGANIZER)) {
+          router.push('/login');
+          return;
+        }
+        
+        const userData = await getCurrentUser();
+        if (!userData) {
+          router.push('/login');
+          return;
+        }
+      } catch (e) {
+        console.error("Error checking authentication:", e);
+        router.push('/login');
+      }
+    };
+    
+    checkAuth();
+  }, [router]);
+
+  // Get event details
+  useEffect(() => {
+    async function fetchEventDetails() {
+      if (!isAuthenticated() || !hasRole(USER_ROLES.ORGANIZER)) {
+        return; // If user is not authenticated or not an organizer, don't fetch details
+      }
+      
+      try {
+        // In Next.js 15, we need to await params
         const resolvedParams = await params;
         const id = resolvedParams.id;
-        setEventId(id); // 存儲 ID 以便後續使用
+        setEventId(id); // Store ID for later use
         
         const fetchedEvent = await getEventById(id);
         
@@ -77,7 +88,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         }
 
         setEvent(fetchedEvent);
-        // 初始化表單數據
+        // Initialize form data
         setFormData({
           title: fetchedEvent.title,
           description: fetchedEvent.description,
@@ -108,7 +119,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     fetchEventDetails();
   }, [params]);
 
-  // 處理表單輸入變化
+  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
@@ -129,7 +140,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     }
   };
 
-  // 處理表單提交
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -139,13 +150,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       setIsSaving(true);
       setError("");
       
-      // 處理標籤
+      // Process tags
       const tags = formData.tags
         .split(",")
         .map(tag => tag.trim())
         .filter(tag => tag !== "");
       
-      // 準備更新數據
+      // Prepare update data
       const updateData = {
         title: formData.title,
         description: formData.description,
@@ -162,11 +173,11 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       if (updatedEvent) {
         router.push(`/organizer/events/${event.id}`);
       } else {
-        setError("更新活動時出錯。請稍後再試。");
+        setError("Error updating event. Please try again later.");
       }
     } catch (error) {
       console.error("Error updating event:", error);
-      setError("更新活動時出錯。請稍後再試。");
+      setError("Error updating event. Please try again later.");
     } finally {
       setIsSaving(false);
     }
@@ -175,20 +186,20 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error && !event) {
     return (
-      <div className="bg-gray-50 min-h-screen pt-24 pb-12">
+      <div className="bg-background text-foreground min-h-screen pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-            <p className="text-red-600">{error}</p>
+          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 mb-6">
+            <p className="text-destructive">{error}</p>
           </div>
           <Button variant="outline" onClick={() => router.push("/organizer/events")}>
-            返回活動列表
+            Back to Events
           </Button>
         </div>
       </div>
@@ -196,38 +207,39 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen pt-24 pb-12">
+    <div className="bg-background text-foreground min-h-screen pt-24 pb-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">編輯活動</h1>
+          <h1 className="text-3xl font-bold">Edit Event</h1>
           <Button variant="outline" onClick={() => router.push(`/organizer/events/${eventId}`)}>
-            取消
+            Cancel
           </Button>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-            <p className="text-red-600">{error}</p>
+          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 mb-6">
+            <p className="text-destructive">{error}</p>
           </div>
         )}
 
-        <Card>
+        <Card className="border border-border bg-card text-card-foreground">
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title">活動標題</Label>
+                  <Label htmlFor="title">Event Title</Label>
                   <Input
                     id="title"
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
                     required
+                    className="bg-background"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="description">活動描述</Label>
+                  <Label htmlFor="description">Event Description</Label>
                   <Textarea
                     id="description"
                     name="description"
@@ -235,23 +247,25 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                     onChange={handleInputChange}
                     rows={5}
                     required
+                    className="bg-background"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="cover_image">封面圖片 URL</Label>
+                  <Label htmlFor="cover_image">Cover Image URL</Label>
                   <Input
                     id="cover_image"
                     name="cover_image"
                     value={formData.cover_image}
                     onChange={handleInputChange}
                     required
+                    className="bg-background"
                   />
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="start_time">開始時間</Label>
+                    <Label htmlFor="start_time">Start Time</Label>
                     <Input
                       id="start_time"
                       name="start_time"
@@ -259,11 +273,12 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                       value={formData.start_time}
                       onChange={handleInputChange}
                       required
+                      className="bg-background"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="end_time">結束時間</Label>
+                    <Label htmlFor="end_time">End Time</Label>
                     <Input
                       id="end_time"
                       name="end_time"
@@ -271,92 +286,100 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                       value={formData.end_time}
                       onChange={handleInputChange}
                       required
+                      className="bg-background"
                     />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="category">分類</Label>
+                    <Label htmlFor="category">Category</Label>
                     <Input
                       id="category"
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
                       required
+                      className="bg-background"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="tags">標籤（以逗號分隔）</Label>
+                    <Label htmlFor="tags">Tags (comma separated)</Label>
                     <Input
                       id="tags"
                       name="tags"
                       value={formData.tags}
                       onChange={handleInputChange}
-                      placeholder="科技, 創新, AI"
+                      placeholder="Technology, Innovation, AI"
+                      className="bg-background"
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">地點信息</h3>
+                  <h3 className="text-lg font-medium mb-4">Location Information</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="location.name">場地名稱</Label>
+                      <Label htmlFor="location.name">Venue Name</Label>
                       <Input
                         id="location.name"
                         name="location.name"
                         value={formData.location.name}
                         onChange={handleInputChange}
                         required
+                        className="bg-background"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="location.address">地址</Label>
+                      <Label htmlFor="location.address">Address</Label>
                       <Input
                         id="location.address"
                         name="location.address"
                         value={formData.location.address}
                         onChange={handleInputChange}
                         required
+                        className="bg-background"
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     <div>
-                      <Label htmlFor="location.city">城市</Label>
+                      <Label htmlFor="location.city">City</Label>
                       <Input
                         id="location.city"
                         name="location.city"
                         value={formData.location.city}
                         onChange={handleInputChange}
                         required
+                        className="bg-background"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="location.country">國家</Label>
+                      <Label htmlFor="location.country">Country</Label>
                       <Input
                         id="location.country"
                         name="location.country"
                         value={formData.location.country}
                         onChange={handleInputChange}
                         required
+                        className="bg-background"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="location.postal_code">郵政編碼</Label>
+                      <Label htmlFor="location.postal_code">Postal Code</Label>
                       <Input
                         id="location.postal_code"
                         name="location.postal_code"
                         value={formData.location.postal_code}
                         onChange={handleInputChange}
                         required
+                        className="bg-background"
                       />
                     </div>
                   </div>
@@ -369,13 +392,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                   variant="outline"
                   onClick={() => router.push(`/organizer/events/${eventId}`)}
                 >
-                  取消
+                  Cancel
                 </Button>
                 <Button
                   type="submit"
                   disabled={isSaving}
                 >
-                  {isSaving ? "保存中..." : "保存更改"}
+                  {isSaving ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </form>

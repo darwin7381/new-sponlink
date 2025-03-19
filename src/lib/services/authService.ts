@@ -4,20 +4,50 @@ import { MOCK_USERS } from '../mocks/users';
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// Storage key constants
+const USER_STORAGE_KEY = 'user';
+const AUTH_TOKEN_KEY = 'authToken';
+
+// Helper functions for type-safe localStorage access
+const setStoredUser = (user: User) => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+    } catch (e) {
+      console.error('Error storing user data:', e);
+    }
+  }
+};
+
+const getStoredUser = (): User | null => {
+  if (typeof window !== 'undefined') {
+    try {
+      const userJson = localStorage.getItem(USER_STORAGE_KEY);
+      if (!userJson) return null;
+      return JSON.parse(userJson);
+    } catch (e) {
+      console.error('Error parsing user data:', e);
+      return null;
+    }
+  }
+  return null;
+};
+
+const removeStoredUser = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    } catch (e) {
+      console.error('Error removing user data:', e);
+    }
+  }
+};
+
 // Get current user from localStorage or session
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
     // In a real app, this would validate the token with the backend
-    if (typeof window !== 'undefined') {
-      const userJson = localStorage.getItem('currentUser');
-      
-      if (!userJson) {
-        return null;
-      }
-      
-      return JSON.parse(userJson);
-    }
-    return null;
+    return getStoredUser();
   } catch (error) {
     console.error("Error getting current user:", error);
     return null;
@@ -53,9 +83,13 @@ export const login = async (email: string, password: string): Promise<User> => {
     }
     
     // Store user in localStorage
+    setStoredUser(user);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      localStorage.setItem('authToken', `mock-token-${Date.now()}`);
+      try {
+        localStorage.setItem(AUTH_TOKEN_KEY, `mock-token-${Date.now()}`);
+      } catch (e) {
+        console.error('Error storing auth token:', e);
+      }
     }
     
     return user;
@@ -92,9 +126,13 @@ export const register = async (email: string, password: string, role: USER_ROLES
     MOCK_USERS.push(newUser);
     
     // Store user in localStorage
+    setStoredUser(newUser);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('currentUser', JSON.stringify(newUser));
-      localStorage.setItem('authToken', `mock-token-${Date.now()}`);
+      try {
+        localStorage.setItem(AUTH_TOKEN_KEY, `mock-token-${Date.now()}`);
+      } catch (e) {
+        console.error('Error storing auth token:', e);
+      }
     }
     
     return newUser;
@@ -111,9 +149,13 @@ export const logout = async (): Promise<boolean> => {
     await delay(300);
     
     // Clear localStorage
+    removeStoredUser();
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('authToken');
+      try {
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      } catch (e) {
+        console.error('Error removing auth token:', e);
+      }
     }
     
     return true;
@@ -144,9 +186,7 @@ export const updateProfile = async (userData: Partial<User>): Promise<User> => {
     };
     
     // Update localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-    }
+    setStoredUser(updatedUser);
     
     return updatedUser;
   } catch (error) {
@@ -176,9 +216,7 @@ export const changeLanguage = async (language: string): Promise<User> => {
     };
     
     // Update localStorage
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-    }
+    setStoredUser(updatedUser);
     
     return updatedUser;
   } catch (error) {
@@ -195,13 +233,39 @@ export const verifyToken = async (token: string): Promise<boolean> => {
     
     // In a real app, this would validate with the backend
     if (typeof window !== 'undefined') {
-      const storedToken = localStorage.getItem('authToken');
-      return storedToken === token;
+      try {
+        const storedToken = localStorage.getItem(AUTH_TOKEN_KEY);
+        return storedToken === token;
+      } catch (e) {
+        console.error('Error verifying token:', e);
+        return false;
+      }
     }
     
     return false;
   } catch (error) {
     console.error("Verify token error:", error);
     throw error;
+  }
+};
+
+// 檢查用戶是否有特定角色
+export const hasRole = (role: USER_ROLES): boolean => {
+  try {
+    const user = getStoredUser();
+    return !!user && user.role === role;
+  } catch (e) {
+    console.error('Error checking user role:', e);
+    return false;
+  }
+};
+
+// 檢查用戶是否已登入
+export const isAuthenticated = (): boolean => {
+  try {
+    return !!getStoredUser();
+  } catch (e) {
+    console.error('Error checking authentication:', e);
+    return false;
   }
 }; 

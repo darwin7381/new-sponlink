@@ -9,10 +9,22 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { createEvent } from "@/services/eventService";
 import { EventStatus, Location } from "@/types/event";
+import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
+import { USER_ROLES } from "@/lib/types/users";
+
+// 贊助方案類型定義
+interface SponsorshipPlanForm {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  max_sponsors: number;
+  benefits: string[];
+}
 
 export default function CreateEventPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     title: "",
@@ -33,31 +45,73 @@ export default function CreateEventPage() {
       longitude: undefined as number | undefined
     } as Location
   });
+  // 初始化贊助方案
+  const [sponsorshipPlans, setSponsorshipPlans] = useState<SponsorshipPlanForm[]>([]);
+  const [newBenefit, setNewBenefit] = useState("");
+  
   const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isOrganizer, setIsOrganizer] = useState(false);
+  const [authState, setAuthState] = useState<'loading' | 'authenticated' | 'unauthorized'>('loading');
 
   // 檢查用戶身份
   useEffect(() => {
-    const userJson = localStorage.getItem('currentUser');
-    if (userJson) {
+    let isMounted = true;
+    
+    const checkAuth = async () => {
       try {
-        const user = JSON.parse(userJson);
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-        setIsOrganizer(user.role === 'organizer');
-      } catch (e) {
-        console.error("Error parsing user data:", e);
+        // 為了確保 localStorage 資料已載入，添加短暫延遲
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // 檢查身份驗證狀態
+        const authenticated = isAuthenticated();
+        if (!authenticated) {
+          if (isMounted) {
+            setAuthState('unauthorized');
+            router.push('/login');
+          }
+          return;
+        }
+        
+        // 檢查角色權限
+        const isOrganizerRole = hasRole(USER_ROLES.ORGANIZER);
+        if (!isOrganizerRole) {
+          if (isMounted) {
+            setAuthState('unauthorized');
+            router.push('/login');
+          }
+          return;
+        }
+        
+        // 獲取當前用戶
+        const user = await getCurrentUser();
+        if (!user) {
+          if (isMounted) {
+            setAuthState('unauthorized');
+            router.push('/login');
+          }
+          return;
+        }
+        
+        if (isMounted) {
+          setCurrentUser(user);
+          setAuthState('authenticated');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
+        if (isMounted) {
+          setError("驗證過程中發生錯誤");
+          setAuthState('unauthorized');
+          setIsLoading(false);
+        }
       }
-    }
-  }, []);
-
-  // 如果未登錄或不是組織者，則重定向
-  useEffect(() => {
-    if (!isLoading && (!isAuthenticated || !isOrganizer)) {
-      router.push("/login");
-    }
-  }, [isAuthenticated, isOrganizer, router, isLoading]);
+    };
+    
+    checkAuth();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   // 處理表單輸入變化
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -80,6 +134,65 @@ export default function CreateEventPage() {
     }
   };
 
+  // 添加贊助方案
+  const addSponsorshipPlan = () => {
+    const newPlan: SponsorshipPlanForm = {
+      id: `temp_${Date.now()}`,
+      title: "",
+      description: "",
+      price: 0,
+      max_sponsors: 1,
+      benefits: []
+    };
+    
+    setSponsorshipPlans([...sponsorshipPlans, newPlan]);
+  };
+
+  // 更新贊助方案
+  const updateSponsorshipPlan = (index: number, field: string, value: string | number) => {
+    const updatedPlans = [...sponsorshipPlans];
+    updatedPlans[index] = {
+      ...updatedPlans[index],
+      [field]: value
+    };
+    setSponsorshipPlans(updatedPlans);
+  };
+
+  // 刪除贊助方案
+  const removeSponsorshipPlan = (index: number) => {
+    const updatedPlans = [...sponsorshipPlans];
+    updatedPlans.splice(index, 1);
+    setSponsorshipPlans(updatedPlans);
+  };
+
+  // 添加福利項目
+  const addBenefit = (index: number) => {
+    if (newBenefit.trim() === "") return;
+    
+    const updatedPlans = [...sponsorshipPlans];
+    updatedPlans[index] = {
+      ...updatedPlans[index],
+      benefits: [...updatedPlans[index].benefits, newBenefit.trim()]
+    };
+    
+    setSponsorshipPlans(updatedPlans);
+    setNewBenefit("");
+  };
+
+  // 刪除福利項目
+  const removeBenefit = (planIndex: number, benefitIndex: number) => {
+    const updatedPlans = [...sponsorshipPlans];
+    const updatedBenefits = [...updatedPlans[planIndex].benefits];
+    updatedBenefits.splice(benefitIndex, 1);
+    
+    updatedPlans[planIndex] = {
+      ...updatedPlans[planIndex],
+      benefits: updatedBenefits
+    };
+    
+    setSponsorshipPlans(updatedPlans);
+  };
+
   // 處理表單提交
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,6 +209,17 @@ export default function CreateEventPage() {
         .map(tag => tag.trim())
         .filter(tag => tag !== "");
       
+      // 處理贊助方案
+      const formattedSponsorshipPlans = sponsorshipPlans.map(plan => ({
+        ...plan,
+        price: Number(plan.price),
+        max_sponsors: Number(plan.max_sponsors),
+        current_sponsors: 0,
+        event_id: "", // 這將在創建時由服務器填充
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }));
+      
       // 準備創建數據
       const eventData = {
         organizer_id: currentUser.id,
@@ -108,7 +232,7 @@ export default function CreateEventPage() {
         status: EventStatus.DRAFT,
         category: formData.category,
         tags,
-        sponsorship_plans: []
+        sponsorship_plans: formattedSponsorshipPlans
       };
       
       const createdEvent = await createEvent(eventData);
@@ -126,39 +250,65 @@ export default function CreateEventPage() {
     }
   };
 
+  // 如果在載入中，顯示載入狀態
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-background">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+          <h2 className="text-2xl font-semibold mb-2 text-foreground">載入中...</h2>
+          <p className="text-muted-foreground">正在驗證您的身份</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (authState === 'unauthorized') {
+    // 僅顯示重定向消息，實際重定向由 useEffect 處理
+    return null;
+  }
+
   return (
-    <div className="bg-gray-50 min-h-screen pt-24 pb-12">
+    <div className="bg-background min-h-screen pt-24 pb-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">創建新活動</h1>
-          <Button variant="outline" onClick={() => router.push("/organizer/events")}>
+          <h1 className="text-3xl font-bold text-foreground">創建新活動</h1>
+          <Button variant="outline" onClick={() => router.push("/organizer/events")} className="border-border hover:bg-accent">
             取消
           </Button>
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
-            <p className="text-red-600">{error}</p>
-          </div>
+          <Card className="border-red-300 dark:border-red-800 mb-6">
+            <CardContent className="p-4">
+              <div className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600 dark:text-red-400 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <p className="text-red-600 dark:text-red-400">{error}</p>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-        <Card>
+        <Card className="border border-border">
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="title">活動標題</Label>
+                  <Label htmlFor="title" className="text-foreground">活動標題</Label>
                   <Input
                     id="title"
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
                     required
+                    className="mt-1 bg-background border-border"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="description">活動描述</Label>
+                  <Label htmlFor="description" className="text-foreground">活動描述</Label>
                   <Textarea
                     id="description"
                     name="description"
@@ -166,23 +316,35 @@ export default function CreateEventPage() {
                     onChange={handleInputChange}
                     rows={5}
                     required
+                    className="mt-1 bg-background border-border"
                   />
                 </div>
                 
                 <div>
-                  <Label htmlFor="cover_image">封面圖片 URL</Label>
+                  <Label htmlFor="cover_image" className="text-foreground">封面圖片 URL</Label>
                   <Input
                     id="cover_image"
                     name="cover_image"
                     value={formData.cover_image}
                     onChange={handleInputChange}
                     required
+                    className="mt-1 bg-background border-border"
                   />
+                  {formData.cover_image && (
+                    <div className="mt-2 rounded-md overflow-hidden h-36">
+                      <img 
+                        src={formData.cover_image} 
+                        alt="封面預覽" 
+                        className="w-full h-full object-cover"
+                        onError={(e) => (e.target as HTMLImageElement).src = "https://via.placeholder.com/800x400?text=預覽不可用"}
+                      />
+                    </div>
+                  )}
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="start_time">開始時間</Label>
+                    <Label htmlFor="start_time" className="text-foreground">開始時間</Label>
                     <Input
                       id="start_time"
                       name="start_time"
@@ -190,11 +352,12 @@ export default function CreateEventPage() {
                       value={formData.start_time}
                       onChange={handleInputChange}
                       required
+                      className="mt-1 bg-background border-border"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="end_time">結束時間</Label>
+                    <Label htmlFor="end_time" className="text-foreground">結束時間</Label>
                     <Input
                       id="end_time"
                       name="end_time"
@@ -202,111 +365,272 @@ export default function CreateEventPage() {
                       value={formData.end_time}
                       onChange={handleInputChange}
                       required
+                      className="mt-1 bg-background border-border"
                     />
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="category">分類</Label>
+                    <Label htmlFor="category" className="text-foreground">分類</Label>
                     <Input
                       id="category"
                       name="category"
                       value={formData.category}
                       onChange={handleInputChange}
                       required
+                      className="mt-1 bg-background border-border"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="tags">標籤（以逗號分隔）</Label>
+                    <Label htmlFor="tags" className="text-foreground">標籤（以逗號分隔）</Label>
                     <Input
                       id="tags"
                       name="tags"
                       value={formData.tags}
                       onChange={handleInputChange}
                       placeholder="科技, 創新, AI"
+                      className="mt-1 bg-background border-border"
                     />
                   </div>
                 </div>
                 
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">地點信息</h3>
+                <div className="mt-6 pt-6 border-t border-border">
+                  <h3 className="text-lg font-medium text-foreground mb-4">地點信息</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="location.name">場地名稱</Label>
+                      <Label htmlFor="location.name" className="text-foreground">場地名稱</Label>
                       <Input
                         id="location.name"
                         name="location.name"
                         value={formData.location.name}
                         onChange={handleInputChange}
                         required
+                        className="mt-1 bg-background border-border"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="location.address">地址</Label>
+                      <Label htmlFor="location.address" className="text-foreground">地址</Label>
                       <Input
                         id="location.address"
                         name="location.address"
                         value={formData.location.address}
                         onChange={handleInputChange}
                         required
+                        className="mt-1 bg-background border-border"
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                     <div>
-                      <Label htmlFor="location.city">城市</Label>
+                      <Label htmlFor="location.city" className="text-foreground">城市</Label>
                       <Input
                         id="location.city"
                         name="location.city"
                         value={formData.location.city}
                         onChange={handleInputChange}
                         required
+                        className="mt-1 bg-background border-border"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="location.country">國家</Label>
+                      <Label htmlFor="location.country" className="text-foreground">國家</Label>
                       <Input
                         id="location.country"
                         name="location.country"
                         value={formData.location.country}
                         onChange={handleInputChange}
                         required
+                        className="mt-1 bg-background border-border"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="location.postal_code">郵政編碼</Label>
+                      <Label htmlFor="location.postal_code" className="text-foreground">郵政編碼</Label>
                       <Input
                         id="location.postal_code"
                         name="location.postal_code"
                         value={formData.location.postal_code}
                         onChange={handleInputChange}
                         required
+                        className="mt-1 bg-background border-border"
                       />
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="flex justify-end gap-3">
+              <div className="mt-6 pt-6 border-t border-border">
+                <h3 className="text-lg font-medium text-foreground mb-4">贊助方案</h3>
+                
+                {sponsorshipPlans.length === 0 ? (
+                  <div className="text-center py-8 border border-dashed border-border rounded-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-muted-foreground mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a4 4 0 00-4-4H8a4 4 0 00-4 4v12h8zm0 0V5.5A2.5 2.5 0 0114.5 3h1A2.5 2.5 0 0118 5.5V8m-6 0h6m0 0v12a2 2 0 01-2 2h-4a2 2 0 01-2-2z" />
+                    </svg>
+                    <p className="text-muted-foreground mb-4">您還沒有添加任何贊助方案</p>
+                    <Button onClick={addSponsorshipPlan} type="button">
+                      添加贊助方案
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {sponsorshipPlans.map((plan, index) => (
+                      <div key={plan.id} className="p-5 border border-border rounded-md relative">
+                        <button
+                          type="button"
+                          onClick={() => removeSponsorshipPlan(index)}
+                          className="absolute right-3 top-3 text-muted-foreground hover:text-destructive"
+                          aria-label="刪除贊助方案"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        
+                        <h4 className="text-md font-semibold mb-4">贊助方案 {index + 1}</h4>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <Label htmlFor={`plan-title-${index}`}>方案名稱</Label>
+                            <Input
+                              id={`plan-title-${index}`}
+                              value={plan.title}
+                              onChange={(e) => updateSponsorshipPlan(index, 'title', e.target.value)}
+                              placeholder="鑽石贊助商"
+                              required
+                              className="mt-1 bg-background border-border"
+                            />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor={`plan-price-${index}`}>價格 (TWD)</Label>
+                            <Input
+                              id={`plan-price-${index}`}
+                              type="number"
+                              min="0"
+                              value={plan.price}
+                              onChange={(e) => updateSponsorshipPlan(index, 'price', e.target.value)}
+                              placeholder="50000"
+                              required
+                              className="mt-1 bg-background border-border"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="mb-4">
+                          <Label htmlFor={`plan-description-${index}`}>方案描述</Label>
+                          <Textarea
+                            id={`plan-description-${index}`}
+                            value={plan.description}
+                            onChange={(e) => updateSponsorshipPlan(index, 'description', e.target.value)}
+                            placeholder="提供最高級別的品牌曝光和獨家權益..."
+                            rows={2}
+                            required
+                            className="mt-1 bg-background border-border"
+                          />
+                        </div>
+                        
+                        <div className="mb-4">
+                          <Label htmlFor={`plan-max-sponsors-${index}`}>最大贊助商數量</Label>
+                          <Input
+                            id={`plan-max-sponsors-${index}`}
+                            type="number"
+                            min="1"
+                            value={plan.max_sponsors}
+                            onChange={(e) => updateSponsorshipPlan(index, 'max_sponsors', e.target.value)}
+                            required
+                            className="mt-1 bg-background border-border"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label>權益與福利</Label>
+                          <div className="mt-2 space-y-2">
+                            {plan.benefits.map((benefit, benefitIndex) => (
+                              <div key={benefitIndex} className="flex items-center gap-2">
+                                <div className="bg-primary/10 text-primary rounded-md px-3 py-1 flex-grow flex items-center">
+                                  <span>{benefit}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeBenefit(index, benefitIndex)}
+                                    className="ml-auto text-muted-foreground hover:text-destructive"
+                                    aria-label="移除權益"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                            
+                            <div className="flex items-center gap-2">
+                              <Input
+                                placeholder="如：主舞台演講機會、VIP晚宴席位等"
+                                value={newBenefit}
+                                onChange={(e) => setNewBenefit(e.target.value)}
+                                className="flex-grow bg-background border-border"
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => addBenefit(index)}
+                                className="shrink-0"
+                              >
+                                添加
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={addSponsorshipPlan}
+                      className="w-full border-dashed"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      添加另一個贊助方案
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex justify-end gap-3 pt-6 border-t border-border mt-6">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => router.push("/organizer/events")}
+                  className="border-border hover:bg-accent"
                 >
                   取消
                 </Button>
                 <Button
                   type="submit"
                   disabled={isLoading}
+                  className="relative"
                 >
-                  {isLoading ? "創建中..." : "創建活動"}
+                  {isLoading ? (
+                    <>
+                      <span className="opacity-0">創建活動</span>
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </span>
+                    </>
+                  ) : "創建活動"}
                 </Button>
               </div>
             </form>

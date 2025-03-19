@@ -10,6 +10,8 @@ import { getCartItems, removeFromCart, checkout } from "@/services/sponsorServic
 import { CartItem, CartItemStatus, CheckoutResult } from "@/types/sponsor";
 import { SponsorshipPlan } from "@/types/sponsorshipPlan";
 import { getEventById } from "@/services/eventService";
+import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
+import { USER_ROLES } from "@/lib/types/users";
 
 export default function CartPage() {
   const router = useRouter();
@@ -26,22 +28,32 @@ export default function CartPage() {
 
   // 檢查用戶身份
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
+    const checkAuth = async () => {
+      if (!isAuthenticated()) {
+        router.push('/login');
+        return;
+      }
+      
+      if (!hasRole(USER_ROLES.SPONSOR)) {
+        router.push('/login');
+        return;
+      }
+      
       try {
-        const userData = JSON.parse(user);
-        if (userData.role !== 'sponsor') {
+        const userData = await getCurrentUser();
+        if (!userData) {
           router.push('/login');
           return;
         }
+        
         setUserId(userData.id);
       } catch (e) {
-        console.error("解析用戶數據錯誤:", e);
+        console.error("獲取用戶數據錯誤:", e);
         router.push('/login');
       }
-    } else {
-      router.push('/login');
-    }
+    };
+    
+    checkAuth();
   }, [router]);
 
   // 獲取購物車項目

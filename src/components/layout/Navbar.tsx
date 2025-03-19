@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { USER_ROLES } from "@/lib/types/users";
+import { getCurrentUser, logout, isAuthenticated, hasRole } from "@/lib/services/authService";
 
 interface User {
   id: string;
@@ -15,7 +16,7 @@ interface User {
 
 export default function Navbar() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [isSponsor, setIsSponsor] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,29 +41,32 @@ export default function Navbar() {
 
   // Check authentication status
   useEffect(() => {
-    const userJson = localStorage.getItem('currentUser');
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-        setIsSponsor(user.role === USER_ROLES.SPONSOR);
-        setIsOrganizer(user.role === USER_ROLES.ORGANIZER);
-      } catch (e) {
-        console.error("Error parsing user data:", e);
+    const checkAuth = async () => {
+      if (isAuthenticated()) {
+        try {
+          const user = await getCurrentUser();
+          if (user) {
+            setCurrentUser(user);
+            setIsUserAuthenticated(true);
+            setIsSponsor(hasRole(USER_ROLES.SPONSOR));
+            setIsOrganizer(hasRole(USER_ROLES.ORGANIZER));
+          }
+        } catch (e) {
+          console.error("Error getting user data:", e);
+        }
       }
-    }
+    };
+    
+    checkAuth();
   }, []);
 
   const handleLogout = async () => {
     try {
-      // Clear user data from localStorage
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('authToken');
+      await logout();
       
       // Reset state
       setCurrentUser(null);
-      setIsAuthenticated(false);
+      setIsUserAuthenticated(false);
       setIsSponsor(false);
       setIsOrganizer(false);
       
@@ -144,7 +148,7 @@ export default function Navbar() {
           </div>
           
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
-            {isAuthenticated ? (
+            {isUserAuthenticated ? (
               <div className="ml-3 relative z-50">
                 <div className="flex items-center">
                   <span className="mr-4 text-sm text-gray-700">
@@ -296,45 +300,32 @@ export default function Navbar() {
         </div>
         
         <div className="pt-4 pb-3 border-t border-gray-200">
-          {isAuthenticated ? (
-            <div className="flex items-center px-4">
-              <div className="flex-shrink-0">
-                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
-                  <span className="text-indigo-800 font-medium">
-                    {currentUser?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              </div>
-              <div className="ml-3">
-                <div className="text-base font-medium text-gray-800">{currentUser?.email}</div>
-                <div className="text-sm font-medium text-gray-500">
-                  {currentUser?.role === USER_ROLES.SPONSOR ? 'Sponsor' : 'Organizer'}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center space-x-4 px-4 py-2">
-              <Link href="/login" className="w-full">
-                <Button variant="outline" className="w-full">
-                  Login
-                </Button>
-              </Link>
-              <Link href="/register" className="w-full">
-                <Button variant="default" className="w-full">
-                  Register
-                </Button>
-              </Link>
-            </div>
-          )}
-          
-          {isAuthenticated && (
+          {isUserAuthenticated ? (
             <div className="mt-3 space-y-1">
+              <div className="block px-4 py-2 text-base font-medium text-gray-500">
+                {currentUser?.email}
+              </div>
               <button
                 onClick={handleLogout}
-                className="block w-full text-left px-4 py-2 text-base font-medium text-red-600 hover:bg-gray-100"
+                className="block w-full text-left pl-3 pr-4 py-2 border-l-4 text-base font-medium text-red-700 border-transparent hover:bg-red-50 hover:border-red-300"
               >
                 Logout
               </button>
+            </div>
+          ) : (
+            <div className="mt-3 space-y-1 px-2">
+              <Link
+                href="/login"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+              >
+                Login
+              </Link>
+              <Link
+                href="/register"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+              >
+                Register
+              </Link>
             </div>
           )}
         </div>

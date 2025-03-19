@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { SponsorshipPlan } from "@/types/sponsorshipPlan";
+import { isAuthenticated, hasRole } from "@/lib/services/authService";
+import { USER_ROLES } from "@/lib/types/users";
 
 interface SponsorshipPlanCardProps {
   plan: SponsorshipPlan;
@@ -19,17 +21,18 @@ export function SponsorshipPlanCard({
   isInCart = false,
   isLoading = false
 }: SponsorshipPlanCardProps) {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [isUserAuthenticated, setIsUserAuthenticated] = React.useState(false);
   const [isSponsor, setIsSponsor] = React.useState(false);
 
   // 檢查用戶身份
   React.useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      const userData = JSON.parse(user);
-      setIsAuthenticated(true);
-      setIsSponsor(userData.role === 'sponsor');
-    }
+    const checkAuth = () => {
+      const authenticated = isAuthenticated();
+      setIsUserAuthenticated(authenticated);
+      setIsSponsor(authenticated && hasRole(USER_ROLES.SPONSOR));
+    };
+    
+    checkAuth();
   }, []);
 
   const handleAddToCart = () => {
@@ -62,7 +65,7 @@ export function SponsorshipPlanCard({
       </CardContent>
       
       <CardFooter className="p-6 pt-0">
-        {isAuthenticated && isSponsor ? (
+        {isUserAuthenticated && isSponsor ? (
           <Button
             variant={isInCart ? "outline" : "default"}
             className="w-full"

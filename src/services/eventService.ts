@@ -151,6 +151,55 @@ export const createSponsorshipPlan = async (
 };
 
 /**
+ * Update sponsorship plan
+ */
+export const updateSponsorshipPlan = async (
+  eventId: string,
+  planId: string,
+  planData: Partial<Omit<SponsorshipPlan, 'id' | 'event_id' | 'created_at' | 'updated_at'>>
+): Promise<SponsorshipPlan | null> => {
+  await delay(500);
+  
+  const event = mockEvents.find(event => event.id === eventId);
+  if (!event || !event.sponsorship_plans) return null;
+  
+  const planIndex = event.sponsorship_plans.findIndex(plan => plan.id === planId);
+  if (planIndex === -1) return null;
+  
+  // 更新方案
+  const updatedPlan: SponsorshipPlan = {
+    ...event.sponsorship_plans[planIndex],
+    ...planData,
+    updated_at: new Date().toISOString()
+  };
+  
+  event.sponsorship_plans[planIndex] = updatedPlan;
+  
+  return updatedPlan;
+};
+
+/**
+ * Delete sponsorship plan
+ */
+export const deleteSponsorshipPlan = async (
+  eventId: string,
+  planId: string
+): Promise<boolean> => {
+  await delay(500);
+  
+  const event = mockEvents.find(event => event.id === eventId);
+  if (!event || !event.sponsorship_plans) return false;
+  
+  const planIndex = event.sponsorship_plans.findIndex(plan => plan.id === planId);
+  if (planIndex === -1) return false;
+  
+  // 刪除方案
+  event.sponsorship_plans.splice(planIndex, 1);
+  
+  return true;
+};
+
+/**
  * Get organizer events
  */
 export const getOrganizerEvents = async (organizerId: string, status?: EventStatus): Promise<Event[]> => {

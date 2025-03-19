@@ -7,6 +7,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { email, password } = body;
 
+    console.log(`嘗試登入: ${email}`);
+
     // 定義有效的登入憑證
     const validCredentials = [
       { email: 'sponsor@example.com', password: 'sponsor123', role: USER_ROLES.SPONSOR },
@@ -19,22 +21,33 @@ export async function POST(request: Request) {
     );
     
     if (!credential) {
-      console.error(`Invalid login attempt: ${email}`);
-      return new NextResponse('Invalid credentials', { status: 401 });
+      console.error(`無效的登入嘗試: ${email}`);
+      return new NextResponse(JSON.stringify({ error: 'Invalid credentials' }), { 
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
     
     // 找到對應的用戶
     const user = MOCK_USERS.find(u => u.email === email);
     
     if (!user) {
-      console.error(`User not found: ${email}`);
-      return new NextResponse('User not found', { status: 404 });
+      console.error(`找不到用戶: ${email}`);
+      return new NextResponse(JSON.stringify({ error: 'User not found' }), { 
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
+    
+    console.log(`登入成功: ${email}, 角色: ${user.role}`);
     
     // 返回用戶資料
     return NextResponse.json(user);
   } catch (error) {
-    console.error('Login error:', error);
-    return new NextResponse('Internal server error', { status: 500 });
+    console.error('登入錯誤:', error);
+    return new NextResponse(JSON.stringify({ error: 'Internal server error' }), { 
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 } 

@@ -3,7 +3,7 @@ import { Event, EventStatus } from '@/types/event';
 export const mockEvents: Event[] = [
   {
     id: "1",
-    organizer_id: "org1",
+    organizer_id: "2",
     title: "Tech Innovation Summit 2023",
     description: "An annual gathering of global technology leaders and innovators to explore the latest technology trends and future development directions.",
     cover_image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
@@ -53,7 +53,7 @@ export const mockEvents: Event[] = [
   },
   {
     id: "2",
-    organizer_id: "org1",
+    organizer_id: "2",
     title: "Sustainable Development Forum",
     description: "An international forum discussing environmental protection, social responsibility, and sustainable economic development.",
     cover_image: "https://images.unsplash.com/photo-1569851935018-9c7bbd95f0fc?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
@@ -91,7 +91,7 @@ export const mockEvents: Event[] = [
   },
   {
     id: "3",
-    organizer_id: "org1",
+    organizer_id: "2",
     title: "Digital Marketing Conference",
     description: "A professional conference focused on the latest digital marketing trends, strategies, and tools.",
     cover_image: "https://images.unsplash.com/photo-1551818255-e6e10975bc17?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",

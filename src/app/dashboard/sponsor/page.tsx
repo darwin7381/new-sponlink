@@ -13,6 +13,7 @@ import { getEventById } from "@/lib/services/eventService";
 import { CartItem, Meeting, MEETING_STATUS } from "@/lib/types/users";
 import { USER_ROLES } from "@/lib/types/users";
 import { SponsorshipPlan } from "@/lib/mocks/sponsorships";
+import { getCurrentUser, hasRole, isAuthenticated } from "@/lib/services/authService";
 
 // 定義簡化的事件類型，只包含我們需要的屬性
 interface EventData {
@@ -48,22 +49,32 @@ export default function SponsorDashboardPage() {
   
   // 檢查用戶身份
   useEffect(() => {
-    const user = localStorage.getItem('currentUser');
-    if (user) {
+    const checkAuth = async () => {
+      if (!isAuthenticated()) {
+        router.push('/login');
+        return;
+      }
+      
+      if (!hasRole(USER_ROLES.SPONSOR)) {
+        router.push('/login');
+        return;
+      }
+      
       try {
-        const userData = JSON.parse(user);
-        if (userData.role !== USER_ROLES.SPONSOR) {
+        const userData = await getCurrentUser();
+        if (!userData) {
           router.push('/login');
           return;
         }
+        
         setUserId(userData.id);
       } catch (e) {
-        console.error("解析用戶數據錯誤:", e);
+        console.error("獲取用戶數據錯誤:", e);
         router.push('/login');
       }
-    } else {
-      router.push('/login');
-    }
+    };
+    
+    checkAuth();
   }, [router]);
   
   // 獲取贊助和會議數據

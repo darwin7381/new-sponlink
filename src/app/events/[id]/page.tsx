@@ -12,6 +12,8 @@ import { addToCart, getCartItems } from "@/services/sponsorService";
 import { Event } from "@/types/event";
 import { CartItem } from "@/types/sponsor";
 import { SponsorshipPlan } from "@/types/sponsorshipPlan";
+import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
+import { USER_ROLES } from "@/lib/types/users";
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -23,19 +25,34 @@ export default function EventDetailPage() {
   const [error, setError] = useState("");
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [addingToCart, setAddingToCart] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [isSponsor, setIsSponsor] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   
   // 檢查用戶身份
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
-      const userData = JSON.parse(user);
-      setIsAuthenticated(true);
-      setIsSponsor(userData.role === 'sponsor');
-      setUserId(userData.id);
-    }
+    const checkAuth = async () => {
+      const authenticated = isAuthenticated();
+      setIsUserAuthenticated(authenticated);
+      
+      if (authenticated) {
+        const sponsor = hasRole(USER_ROLES.SPONSOR);
+        setIsSponsor(sponsor);
+        
+        if (sponsor) {
+          try {
+            const userData = await getCurrentUser();
+            if (userData) {
+              setUserId(userData.id);
+            }
+          } catch (error) {
+            console.error("獲取用戶數據錯誤:", error);
+          }
+        }
+      }
+    };
+    
+    checkAuth();
   }, []);
   
   // 獲取活動數據
@@ -47,7 +64,7 @@ export default function EventDetailPage() {
         setEvent(eventData);
         
         // 如果用戶是贊助商，也獲取他們的購物車項目
-        if (isAuthenticated && isSponsor && userId) {
+        if (isUserAuthenticated && isSponsor && userId) {
           const items = await getCartItems(userId);
           setCartItems(items);
         }
@@ -60,14 +77,14 @@ export default function EventDetailPage() {
     }
     
     fetchEvent();
-  }, [eventId, isAuthenticated, isSponsor, userId]);
+  }, [eventId, isUserAuthenticated, isSponsor, userId]);
   
   const handleScheduleMeeting = () => {
     router.push(`/meetings?eventId=${eventId}`);
   };
   
   const handleAddToCart = async (planId: string) => {
-    if (!isAuthenticated || !isSponsor) {
+    if (!isUserAuthenticated || !isSponsor) {
       router.push("/login");
       return;
     }
@@ -139,7 +156,7 @@ export default function EventDetailPage() {
   }));
 
   return (
-    <div className="bg-white min-h-screen pt-16 pb-12">
+    <div className="bg-background min-h-screen pt-16 pb-12">
       {/* 活動頭部與封面圖片 */}
       <div className="relative">
         <div className="w-full h-64 md:h-80 lg:h-96 relative">
@@ -160,31 +177,31 @@ export default function EventDetailPage() {
             <nav className="flex mb-4" aria-label="Breadcrumb">
               <ol className="flex items-center space-x-2">
                 <li>
-                  <Link href="/events" className="text-gray-500 hover:text-gray-700">
+                  <Link href="/events" className="text-muted-foreground hover:text-foreground">
                     活動
                   </Link>
                 </li>
                 <li className="flex items-center">
-                  <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="h-5 w-5 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                   </svg>
-                  <span className="ml-2 text-gray-700 font-medium truncate">{event.title}</span>
+                  <span className="ml-2 text-foreground font-medium truncate">{event.title}</span>
                 </li>
               </ol>
             </nav>
             
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900">{event.title}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">{event.title}</h1>
             
-            <div className="mt-4 flex flex-wrap items-center text-gray-600 gap-4">
+            <div className="mt-4 flex flex-wrap items-center text-muted-foreground gap-4">
               <div className="flex items-center">
-                <svg className="h-5 w-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 text-muted-foreground mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 <span>{formattedDate}</span>
               </div>
               
               <div className="flex items-center">
-                <svg className="h-5 w-5 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 text-muted-foreground mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -193,17 +210,17 @@ export default function EventDetailPage() {
             </div>
             
             <div className="mt-8">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">關於此活動</h2>
-              <div className="prose max-w-none text-gray-700">
+              <h2 className="text-xl font-bold text-foreground mb-4">關於此活動</h2>
+              <div className="prose max-w-none text-muted-foreground">
                 <p className="whitespace-pre-line">{event.description}</p>
               </div>
             </div>
             
             {event.location?.address && (
               <div className="mt-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">地點</h2>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-700">{event.location.address}</p>
+                <h2 className="text-xl font-bold text-foreground mb-4">地點</h2>
+                <div className="bg-secondary p-4 rounded-lg">
+                  <p className="text-secondary-foreground">{event.location.address}</p>
                 </div>
               </div>
             )}
@@ -211,7 +228,7 @@ export default function EventDetailPage() {
             {/* 如果有活動資料，顯示下載按鈕 */}
             {event.deck_url && (
               <div className="mt-8">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">活動資料</h2>
+                <h2 className="text-xl font-bold text-foreground mb-4">活動資料</h2>
                 <a 
                   href={event.deck_url} 
                   target="_blank" 
@@ -239,8 +256,8 @@ export default function EventDetailPage() {
           
           {/* 贊助方案側邊欄 */}
           <div className="mt-8 lg:mt-0">
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">贊助方案</h2>
+            <div className="bg-secondary p-6 rounded-lg">
+              <h2 className="text-xl font-bold text-foreground mb-6">贊助方案</h2>
               
               {convertedPlans.length > 0 ? (
                 <div className="space-y-6">
@@ -258,7 +275,7 @@ export default function EventDetailPage() {
                 <p className="text-gray-500">目前沒有可用的贊助方案。</p>
               )}
               
-              {isAuthenticated && isSponsor && cartItems.length > 0 && (
+              {isUserAuthenticated && isSponsor && cartItems.length > 0 && (
                 <div className="mt-8 text-center">
                   <Link href="/cart">
                     <Button variant="outline">

@@ -1,18 +1,16 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { CalendarIcon, PlusIcon, MinusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { isAuthenticated } from "@/lib/services/authService";
 import Link from "next/link";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
 
 const MeetingsPage = () => {
   // State for login modal
@@ -30,9 +28,8 @@ const MeetingsPage = () => {
   
   // Check if user is logged in
   useEffect(() => {
-    // Mock authentication check
-    const user = localStorage.getItem('user');
-    setIsLoggedIn(!!user);
+    // 使用 authService
+    setIsLoggedIn(isAuthenticated());
   }, []);
   
   // Add time slot
@@ -74,19 +71,19 @@ const MeetingsPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4">
-      <h1 className="text-3xl font-bold mb-8 mt-8">Meeting Schedule</h1>
+    <div className="max-w-7xl mx-auto px-4 bg-background">
+      <h1 className="text-3xl font-bold mb-8 mt-8 text-foreground">Meeting Schedule</h1>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left side - Schedule meeting form */}
-        <div className="lg:col-span-2 bg-white p-8 rounded-lg shadow-sm border">
-          <h2 className="text-xl font-semibold mb-6">Schedule a New Meeting</h2>
+        <div className="lg:col-span-2 bg-card p-8 rounded-lg shadow-sm border">
+          <h2 className="text-xl font-semibold mb-6 text-foreground">Schedule a New Meeting</h2>
           
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Select Event</label>
+              <label className="block text-sm font-medium mb-2 text-foreground">Select Event</label>
               <select 
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-primary"
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:border-primary bg-background text-foreground"
                 value={selectedEvent}
                 onChange={(e) => setSelectedEvent(e.target.value)}
               >
@@ -98,7 +95,7 @@ const MeetingsPage = () => {
             </div>
             
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Meeting Title <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium mb-2 text-foreground">Meeting Title <span className="text-red-500">*</span></label>
               <Input 
                 type="text" 
                 placeholder="e.g., Sponsorship Discussion"
@@ -110,7 +107,7 @@ const MeetingsPage = () => {
             </div>
             
             <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Meeting Description</label>
+              <label className="block text-sm font-medium mb-2 text-foreground">Meeting Description</label>
               <Textarea 
                 placeholder="Describe what you'd like to discuss in this meeting"
                 value={meetingDescription}
@@ -121,9 +118,9 @@ const MeetingsPage = () => {
             
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium">Proposed Times</label>
+                <label className="block text-sm font-medium text-foreground">Proposed Times</label>
               </div>
-              <p className="text-sm text-gray-500 mb-4">Suggest multiple times that work for you. The organizer will select one.</p>
+              <p className="text-sm text-muted-foreground mb-4">Suggest multiple times that work for you. The organizer will select one.</p>
               
               {proposedDates.map((slot, index) => (
                 <div key={index} className="flex items-center mb-3">
@@ -178,14 +175,14 @@ const MeetingsPage = () => {
         </div>
         
         {/* Right side - Meeting list */}
-        <div className="bg-white p-8 rounded-lg shadow-sm border">
-          <h2 className="text-xl font-semibold mb-6">Your Meetings</h2>
+        <div className="bg-card p-8 rounded-lg shadow-sm border">
+          <h2 className="text-xl font-semibold mb-6 text-foreground">Your Meetings</h2>
           
           <div className="text-center py-10">
-            <p className="text-gray-500 mb-6">No meetings scheduled yet.</p>
+            <p className="text-muted-foreground mb-6">No meetings scheduled yet.</p>
             
             <div className="mb-4">
-              <Button asChild variant="outline" className="w-full border-gray-300">
+              <Button asChild variant="outline" className="w-full border-input">
                 <Link href="/events">Browse Events</Link>
               </Button>
             </div>

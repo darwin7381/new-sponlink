@@ -12,6 +12,7 @@ import { getAllEvents } from "@/lib/services/eventService";
 import { Meeting, MEETING_STATUS, USER_ROLES } from "@/lib/types/users";
 import { Event } from "@/lib/types/events";
 import { adaptNewEventsToOld } from "@/lib/types-adapter";
+import { getCurrentUser, hasRole, isAuthenticated } from "@/lib/services/authService";
 
 export default function OrganizerDashboardPage() {
   const router = useRouter();
@@ -23,22 +24,32 @@ export default function OrganizerDashboardPage() {
   
   // 檢查用戶身份
   useEffect(() => {
-    const user = localStorage.getItem('currentUser');
-    if (user) {
+    const checkAuth = async () => {
+      if (!isAuthenticated()) {
+        router.push('/login');
+        return;
+      }
+      
+      if (!hasRole(USER_ROLES.ORGANIZER)) {
+        router.push('/login');
+        return;
+      }
+      
       try {
-        const userData = JSON.parse(user);
-        if (userData.role !== USER_ROLES.ORGANIZER) {
+        const userData = await getCurrentUser();
+        if (!userData) {
           router.push('/login');
           return;
         }
+        
         setUserId(userData.id);
       } catch (e) {
-        console.error("解析用戶數據錯誤:", e);
+        console.error("獲取用戶數據錯誤:", e);
         router.push('/login');
       }
-    } else {
-      router.push('/login');
-    }
+    };
+    
+    checkAuth();
   }, [router]);
   
   // 獲取活動和會議數據

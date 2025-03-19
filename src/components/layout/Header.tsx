@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { getCurrentUser } from '@/lib/services/authService';
+import { getCurrentUser, logout } from '@/lib/services/authService';
 import { User, USER_ROLES } from '@/lib/types/users';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import migrateLegacyAuth from '@/lib/utils/migrateLegacyAuth';
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
@@ -28,6 +29,11 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // 遷移舊版身份驗證數據
+  useEffect(() => {
+    migrateLegacyAuth();
+  }, []);
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -43,9 +49,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      // In a real application, this would call a logout function
-      localStorage.removeItem('currentUser');
-      localStorage.removeItem('authToken');
+      await logout();
       router.push('/login');
     } catch (error) {
       console.error('Error logging out:', error);
@@ -261,15 +265,15 @@ export default function Header() {
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="sm:hidden bg-background" id="mobile-menu">
+        <div className="sm:hidden bg-background border-t border-border" id="mobile-menu">
           <div className="pt-2 pb-3 space-y-1">
             <Link
               href="/events"
               className={`${
-                pathname === "/events" || pathname.startsWith("/events/") 
-                  ? "border-primary text-foreground" 
-                  : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-              } inline-flex items-center px-3 py-2 rounded-md text-base font-medium`}
+                pathname === "/events" || pathname.startsWith("/events/")
+                  ? "bg-primary/10 border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:bg-accent hover:border-gray-300 hover:text-foreground"
+              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
               onClick={() => setIsMenuOpen(false)}
             >
               Events
@@ -279,10 +283,10 @@ export default function Header() {
                 <Link
                   href="/organizer/events"
                   className={`${
-                    pathname === "/organizer/events" || pathname.startsWith("/organizer/events/") 
-                      ? "border-primary text-foreground" 
-                      : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                  } inline-flex items-center px-3 py-2 rounded-md text-base font-medium`}
+                    pathname === "/organizer/events" || pathname.startsWith("/organizer/events/")
+                      ? "bg-primary/10 border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-accent hover:border-gray-300 hover:text-foreground"
+                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   My Events
@@ -290,10 +294,10 @@ export default function Header() {
                 <Link
                   href="/organizer/events/create"
                   className={`${
-                    pathname === "/organizer/events/create" 
-                      ? "border-primary text-foreground" 
-                      : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                  } inline-flex items-center px-3 py-2 rounded-md text-base font-medium`}
+                    pathname === "/organizer/events/create"
+                      ? "bg-primary/10 border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-accent hover:border-gray-300 hover:text-foreground"
+                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Create Event
@@ -305,10 +309,10 @@ export default function Header() {
                 <Link
                   href="/sponsor/sponsorships"
                   className={`${
-                    pathname === "/sponsor/sponsorships" || pathname.startsWith("/sponsor/sponsorships/") 
-                      ? "border-primary text-foreground" 
-                      : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                  } inline-flex items-center px-3 py-2 rounded-md text-base font-medium`}
+                    pathname === "/sponsor/sponsorships" || pathname.startsWith("/sponsor/sponsorships/")
+                      ? "bg-primary/10 border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-accent hover:border-gray-300 hover:text-foreground"
+                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   My Sponsorships
@@ -316,10 +320,10 @@ export default function Header() {
                 <Link
                   href="/cart"
                   className={`${
-                    pathname === "/cart" 
-                      ? "border-primary text-foreground" 
-                      : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                  } inline-flex items-center px-3 py-2 rounded-md text-base font-medium`}
+                    pathname === "/cart"
+                      ? "bg-primary/10 border-primary text-foreground"
+                      : "border-transparent text-muted-foreground hover:bg-accent hover:border-gray-300 hover:text-foreground"
+                  } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Cart
@@ -329,10 +333,10 @@ export default function Header() {
             <Link
               href="/meetings"
               className={`${
-                pathname === "/meetings" 
-                  ? "border-primary text-foreground" 
-                  : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-              } inline-flex items-center px-3 py-2 rounded-md text-base font-medium`}
+                pathname === "/meetings"
+                  ? "bg-primary/10 border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:bg-accent hover:border-gray-300 hover:text-foreground"
+              } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
               onClick={() => setIsMenuOpen(false)}
             >
               Meetings
@@ -350,55 +354,59 @@ export default function Header() {
                   <div className="ml-3">
                     <div className="text-base font-medium text-foreground">{user.email}</div>
                     <div className="text-sm font-medium text-muted-foreground">
-                      {user.role === USER_ROLES.SPONSOR ? 'Sponsor' : 'Event Organizer'}
+                      {user.role === USER_ROLES.SPONSOR ? 'Sponsor' : 'Organizer'}
                     </div>
+                  </div>
+                  <div className="ml-auto">
+                    <ThemeToggle />
                   </div>
                 </div>
                 <div className="mt-3 space-y-1">
                   <Link
                     href={user.role === USER_ROLES.SPONSOR ? "/dashboard/sponsor" : "/dashboard/organizer"}
-                    className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                    className="block px-4 py-2 text-base font-medium text-foreground hover:bg-accent"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Dashboard
                   </Link>
                   <Link
                     href="/profile"
-                    className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                    className="block px-4 py-2 text-base font-medium text-foreground hover:bg-accent"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Profile
                   </Link>
                   <button
-                    className="block w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
                     onClick={() => {
                       setIsMenuOpen(false);
                       handleLogout();
                     }}
+                    className="block w-full text-left px-4 py-2 text-base font-medium text-foreground hover:bg-accent"
                   >
                     Sign out
                   </button>
                 </div>
               </>
             ) : (
-              <>
-                <div className="flex items-center justify-around">
-                  <Link
-                    href="/login"
-                    className="px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="px-4 py-2 text-base font-medium bg-primary text-primary-foreground rounded-md"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Sign up
-                  </Link>
+              <div className="flex flex-col space-y-2 px-4">
+                <Link
+                  href="/login"
+                  className="text-center block w-full py-2 text-sm font-medium text-muted-foreground bg-accent rounded-md hover:bg-accent/80"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/register"
+                  className="text-center block w-full py-2 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Sign up
+                </Link>
+                <div className="flex justify-center py-2">
+                  <ThemeToggle />
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
