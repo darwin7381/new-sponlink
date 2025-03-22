@@ -14,6 +14,8 @@ export interface Location {
   postal_code: string;
   latitude?: number;
   longitude?: number;
+  isVirtual?: boolean;
+  platformName?: string;
 }
 
 export interface SponsorshipPlan {

@@ -32,6 +32,55 @@ interface LocationSelectorProps {
   onChange: (location: Location) => void;
 }
 
+// 虛擬會議平台匹配規則
+const VIRTUAL_PLATFORMS = [
+  { name: 'Zoom', regex: /zoom\.us|zoomus\.cn/i },
+  { name: 'Google Meet', regex: /meet\.google\.com/i },
+  { name: 'Microsoft Teams', regex: /teams\.microsoft\.com|teams\.live\.com/i },
+  { name: 'Webex', regex: /webex\.com/i },
+  { name: 'Skype', regex: /skype\.com/i },
+  { name: 'Discord', regex: /discord\.com|discord\.gg/i },
+  { name: 'Slack', regex: /slack\.com/i },
+]
+
+// 檢測URL是否為虛擬會議連結
+const detectVirtualPlatform = (url: string): { isVirtual: boolean, platformName: string } => {
+  // 如果輸入非常短或明顯不是URL，直接返回非虛擬
+  if (!url || url.length < 4 || !url.includes('.')) {
+    return { isVirtual: false, platformName: '' };
+  }
+
+  // 嘗試添加協議前綴以正確解析URL
+  let normalizedUrl = url;
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    normalizedUrl = `https://${url}`;
+  }
+
+  try {
+    const urlObj = new URL(normalizedUrl);
+    const hostname = urlObj.hostname;
+    
+    // 不要將明顯是搜索詞的內容識別為URL
+    // 例如： "café in paris" 不應該被視為URL，即使它包含點
+    if (hostname.includes(' ') || !hostname.includes('.')) {
+      return { isVirtual: false, platformName: '' };
+    }
+    
+    // 檢查是否匹配已知的虛擬平台
+    for (const platform of VIRTUAL_PLATFORMS) {
+      if (platform.regex.test(hostname)) {
+        return { isVirtual: true, platformName: platform.name };
+      }
+    }
+    
+    // 檢查是否為有效URL但非已知會議平台
+    return { isVirtual: true, platformName: 'Virtual' };
+  } catch {
+    // 解析URL失敗，可能不是有效的URL
+    return { isVirtual: false, platformName: '' };
+  }
+};
+
 const LocationSelector: React.FC<LocationSelectorProps> = ({
   location,
   onChange
@@ -39,6 +88,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [isVirtual, setIsVirtual] = useState(false);
+  const [platformName, setPlatformName] = useState('');
 
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -65,26 +116,38 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       country: placeDetails.country,
       postal_code: placeDetails.postal_code,
       latitude: placeDetails.latitude,
-      longitude: placeDetails.longitude
+      longitude: placeDetails.longitude,
+      isVirtual: false,
+      platformName: ''
     });
     
     // 選擇後關閉面板
     setIsExpanded(false);
+    setIsVirtual(false);
+    setPlatformName('');
   };
   
-  // 處理使用自定義地址
+  // 處理使用自定義地址或虛擬連結
   const handleUseCustomAddress = () => {
     if (inputValue.trim()) {
+      // 檢測是否為虛擬會議連結
+      const { isVirtual, platformName } = detectVirtualPlatform(inputValue);
+      
       onChange({
         ...location,
-        name: inputValue,
+        name: isVirtual ? (platformName !== 'Virtual' ? platformName : '') : inputValue,
         address: inputValue,
         city: '',
         country: '',
         postal_code: '',
         latitude: undefined,
-        longitude: undefined
+        longitude: undefined,
+        isVirtual: isVirtual,
+        platformName: isVirtual ? platformName : ''
       });
+      
+      setIsVirtual(isVirtual);
+      setPlatformName(platformName);
       setIsExpanded(false);
     }
   };
@@ -110,8 +173,12 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       country: "",
       postal_code: "",
       latitude: undefined,
-      longitude: undefined
+      longitude: undefined,
+      isVirtual: false,
+      platformName: ''
     });
+    setIsVirtual(false);
+    setPlatformName('');
   };
   
   // 切換展開狀態
@@ -146,26 +213,39 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     };
   }, [isExpanded]);
   
-  // 自動設置inputValue值
+  // 自動設置inputValue值並檢測虛擬連結狀態
   useEffect(() => {
     // 初始設置為當前地址
     if (location.address) {
       setInputValue(location.address);
+      
+      // 檢測是否為虛擬會議連結
+      const { isVirtual, platformName } = detectVirtualPlatform(location.address);
+      setIsVirtual(location.isVirtual || isVirtual);
+      setPlatformName(location.platformName || platformName);
     } else if (location.name) {
       setInputValue(location.name);
+      setIsVirtual(!!location.isVirtual);
+      setPlatformName(location.platformName || '');
     }
-  }, [location.address, location.name]);
+  }, [location.address, location.name, location.isVirtual, location.platformName]);
   
   // 處理輸入變化
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
     
+    // 檢測是否為虛擬會議連結
+    // 注意：這裡只是檢測但不做任何處理，所以不需要存儲結果
+    detectVirtualPlatform(value);
+    
+    // 如果輸入為空，就不顯示預測
     if (!value.trim()) {
       setPredictions([]);
       return;
     }
     
+    // 即使是虛擬連結，也嘗試獲取地點預測，確保選項一致性
     fetchPredictions(value);
   };
   
@@ -297,15 +377,31 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       >
         <div className="flex items-center w-full">
           <div className="flex-shrink-0 mr-3 text-white">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="10" r="3" />
-              <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z" />
-            </svg>
+            {isVirtual ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 7l-7 5 7 5V7z"></path>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="10" r="3" />
+                <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z" />
+              </svg>
+            )}
           </div>
           <div className="flex-1">
             {getDisplayAddress() ? (
               <div className="flex items-center justify-between w-full">
-                <span className="text-white">{getDisplayAddress()}</span>
+                <div className="text-white">
+                  {isVirtual && platformName ? (
+                    <div>
+                      <div className="text-white font-normal">{platformName}</div>
+                      <div className="text-sm text-gray-400 truncate">{getDisplayAddress()}</div>
+                    </div>
+                  ) : (
+                    <span>{getDisplayAddress()}</span>
+                  )}
+                </div>
                 <span 
                   role="button"
                   tabIndex={0}
@@ -354,41 +450,79 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
             />
           </div>
           
-          {/* 顯示搜索預測結果 */}
-          {inputValue.trim() && predictions.length > 0 ? (
-            <div className="border-t border-neutral-700">
-              {predictions.map((prediction) => (
-                <div
-                  key={prediction.id}
-                  onClick={() => handlePredictionSelect(prediction)}
-                  className="flex items-start px-4 py-3 cursor-pointer hover:bg-zinc-800"
-                >
-                  <div className="flex-shrink-0 mr-2 mt-1 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="10" r="3" />
-                      <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z" />
-                    </svg>
-                  </div>
-                  <div className="flex flex-col overflow-hidden">
-                    <span className="text-white text-sm">{prediction.mainText || prediction.name}</span>
-                    <span className="text-gray-400 text-xs truncate">{prediction.secondaryText || prediction.address}</span>
+          {/* 顯示搜索預測結果或選項 */}
+          {inputValue.trim() ? (
+            <div>
+              {/* 搜索預測結果 */}
+              {predictions.length > 0 && (
+                <div className="border-t border-neutral-700">
+                  {predictions.map((prediction) => (
+                    <div
+                      key={prediction.id}
+                      onClick={() => handlePredictionSelect(prediction)}
+                      className="flex items-start px-4 py-3 cursor-pointer hover:bg-zinc-800"
+                    >
+                      <div className="flex-shrink-0 mr-2 mt-1 text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="10" r="3" />
+                          <path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 6.9 8 11.7z" />
+                        </svg>
+                      </div>
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="text-white text-sm">{prediction.mainText || prediction.name}</span>
+                        <span className="text-gray-400 text-xs truncate">{prediction.secondaryText || prediction.address}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* 虛擬會議選項 - 當輸入可能是虛擬連結時顯示 */}
+              {detectVirtualPlatform(inputValue).isVirtual && (
+                <div className={`${predictions.length > 0 ? 'border-t' : ''} border-neutral-700`}>
+                  <div 
+                    onClick={handleUseCustomAddress}
+                    className="flex items-start px-4 py-3 cursor-pointer hover:bg-zinc-800"
+                  >
+                    <div className="flex-shrink-0 mr-2 mt-1 text-gray-400">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 7l-7 5 7 5V7z"></path>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                      </svg>
+                    </div>
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="text-white text-sm">
+                        {detectVirtualPlatform(inputValue).platformName}
+                      </span>
+                      <span className="text-gray-400 text-xs truncate">{inputValue}</span>
+                    </div>
                   </div>
                 </div>
-              ))}
+              )}
               
-              {/* 使用自定義文字選項 - 在推薦結果底部顯示 */}
-              <div className="border-t border-neutral-700">
+              {/* 使用自定義文字選項 - 始終顯示在底部 */}
+              <div className={`${predictions.length > 0 || detectVirtualPlatform(inputValue).isVirtual ? 'border-t' : ''} border-neutral-700`}>
                 <div 
                   onClick={handleUseCustomAddress}
                   className="flex items-start px-4 py-3 cursor-pointer hover:bg-zinc-800"
                 >
                   <div className="flex-shrink-0 mr-2 mt-1 text-gray-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
-                    </svg>
+                    {detectVirtualPlatform(inputValue).isVirtual ? (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M23 7l-7 5 7 5V7z"></path>
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
+                      </svg>
+                    )}
                   </div>
                   <div className="flex flex-col overflow-hidden">
                     <span className="text-white text-sm">Use &quot;{inputValue}&quot;</span>
+                    {detectVirtualPlatform(inputValue).isVirtual && detectVirtualPlatform(inputValue).platformName !== 'Virtual' && (
+                      <span className="text-gray-400 text-xs">{detectVirtualPlatform(inputValue).platformName}</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -400,13 +534,12 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
             </div>
           ) : (
             <>
-              {/* 最近位置區域 */}
+              {/* 無輸入時顯示最近位置和虛擬選項 */}
               <div className="px-4 py-2 border-t border-neutral-700">
                 <div className="text-sm text-white mb-2">Recent Locations</div>
                 <div className="text-sm text-gray-400">No recently used locations.</div>
               </div>
               
-              {/* 虛擬選項區域 */}
               <div className="px-4 py-2 border-t border-neutral-700">
                 <div className="text-sm text-white mb-2">Virtual Options</div>
                 <button 
@@ -433,22 +566,6 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                   If you have a virtual event link, you can enter or paste it above.
                 </div>
               </div>
-              
-              {/* 自定義地址選項 - 當沒有預測結果顯示時 */}
-              {inputValue.trim() && (
-                <div className="px-4 py-2 border-t border-neutral-700">
-                  <button 
-                    type="button"
-                    onClick={handleUseCustomAddress}
-                    className="w-full flex items-center px-0 py-2 text-left text-white hover:bg-zinc-800 text-sm"
-                  >
-                    <svg className="mr-2 text-gray-400" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
-                    </svg>
-                    Use &quot;{inputValue}&quot;
-                  </button>
-                </div>
-              )}
             </>
           )}
         </div>
