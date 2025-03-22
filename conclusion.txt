@@ -1,0 +1,42 @@
+==== 結論：要抓取 Luma 活動資料的關鍵部分 ====
+
+基於對 Luma 頁面的分析，以下是抓取各關鍵資訊的方法：
+
+1. 標題：
+   - 從 JSON 數據中的 props.pageProps.initialData.data.event.name
+   - 或在 HTML 中找到帶有 data-next-head 的 title 標籤
+
+2. 時間：
+   - 開始時間：props.pageProps.initialData.data.event.start_at (ISO 格式)
+   - 結束時間：props.pageProps.initialData.data.event.end_at (ISO 格式)
+   - 需注意時區問題，通常可從 event.timezone 獲取
+
+3. 地點：
+   - 完整地址：props.pageProps.initialData.data.event.geo_address_info.full_address
+   - 地點名稱：props.pageProps.initialData.data.event.geo_address_info.address
+   - 詳細說明：props.pageProps.initialData.data.event.geo_address_info.description
+   - 可能還有經緯度信息：event.geo_latitude 和 event.geo_longitude
+
+4. 封面圖片：
+   - URL：props.pageProps.initialData.data.event.cover_url
+
+5. 活動描述：
+   - JSON 結構化：props.pageProps.initialData.data.description_mirror
+   - 這是一個複雜的 JSON 結構，包含各種段落、列表等，需要解析
+
+6. 主辦方：
+   - 從 props.pageProps.initialData.data.hosts 數組中獲取
+   - 包含主辦方姓名、頭像等信息
+
+7. 分類標籤：
+   - 從 props.pageProps.initialData.data.categories 獲取
+
+8. 價格與票種：
+   - 從 props.pageProps.initialData.data.ticket_types 獲取
+
+抓取方法：
+1. 直接請求 Luma 頁面，從返回的 HTML 中提取 __NEXT_DATA__ 腳本內容
+2. 解析該腳本中的 JSON 數據
+3. 從解析後的 JSON 中按上述路徑提取所需信息
+
+這種方法比使用選擇器抓取 HTML 元素更穩定，因為即使頁面布局改變，數據結構可能相對穩定。

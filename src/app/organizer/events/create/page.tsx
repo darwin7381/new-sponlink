@@ -12,6 +12,17 @@ import { EventStatus, Location } from "@/types/event";
 import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
 import { USER_ROLES } from "@/lib/types/users";
 import LocationSelector from "@/components/maps/LocationSelector";
+import { scrapeLumaEvent } from "@/services/lumaService";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter
+} from "@/components/ui/dialog";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // 贊助方案類型定義
 interface SponsorshipPlanForm {
@@ -27,6 +38,10 @@ export default function CreateEventPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [lumaImportDialogOpen, setLumaImportDialogOpen] = useState(false);
+  const [lumaUrl, setLumaUrl] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [importError, setImportError] = useState("");
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -132,6 +147,56 @@ export default function CreateEventPage() {
         ...prev,
         [name]: value
       }));
+    }
+  };
+
+  // 處理 Luma 導入對話框開關
+  const handleLumaImportDialog = (isOpen: boolean) => {
+    setLumaImportDialogOpen(isOpen);
+    if (!isOpen) {
+      setLumaUrl("");
+      setImportError("");
+    }
+  };
+
+  // 處理從 Luma 導入
+  const handleImportFromLuma = async () => {
+    if (!lumaUrl || !lumaUrl.includes('lu.ma') || !currentUser) {
+      setImportError("請提供有效的 Luma 活動 URL");
+      return;
+    }
+
+    try {
+      setIsImporting(true);
+      setImportError("");
+
+      // 抓取 Luma 活動數據
+      const eventData = await scrapeLumaEvent(lumaUrl, currentUser.id);
+      
+      if (!eventData) {
+        setImportError("無法從提供的 URL 導入活動數據");
+        return;
+      }
+      
+      // 更新表單數據
+      setFormData({
+        title: eventData.title,
+        description: eventData.description,
+        cover_image: eventData.cover_image || formData.cover_image,
+        start_time: new Date(eventData.start_time).toISOString().slice(0, 16),
+        end_time: new Date(eventData.end_time).toISOString().slice(0, 16),
+        category: eventData.category,
+        tags: eventData.tags.join(", "),
+        location: eventData.location
+      });
+      
+      // 關閉對話框
+      handleLumaImportDialog(false);
+    } catch (error) {
+      console.error("Luma import error:", error);
+      setImportError("導入過程中發生錯誤。請稍後再試。");
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -278,6 +343,80 @@ export default function CreateEventPage() {
             取消
           </Button>
         </div>
+        
+        {/* 從 Luma 導入按鈕 */}
+        <div className="mb-6">
+          <Button 
+            variant="outline" 
+            className="w-full border-dashed border-primary text-primary hover:bg-primary/10"
+            onClick={() => handleLumaImportDialog(true)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            從 Luma 導入
+          </Button>
+        </div>
+
+        {/* Luma 導入對話框 */}
+        <Dialog open={lumaImportDialogOpen} onOpenChange={handleLumaImportDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>從 Luma 導入活動</DialogTitle>
+              <DialogDescription>
+                輸入 Luma 活動網址以自動填充活動詳情
+              </DialogDescription>
+            </DialogHeader>
+            
+            {importError && (
+              <Alert variant="destructive" className="my-2">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{importError}</AlertDescription>
+              </Alert>
+            )}
+            
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="luma-url">Luma 活動 URL</Label>
+                <Input
+                  id="luma-url"
+                  placeholder="例如：https://lu.ma/aiuc25-designer-day"
+                  value={lumaUrl}
+                  onChange={(e) => setLumaUrl(e.target.value)}
+                  disabled={isImporting}
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => handleLumaImportDialog(false)}
+                disabled={isImporting}
+              >
+                取消
+              </Button>
+              <Button
+                type="button"
+                onClick={handleImportFromLuma}
+                disabled={isImporting}
+              >
+                {isImporting ? (
+                  <>
+                    <span className="opacity-0">導入</span>
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    </span>
+                  </>
+                ) : "導入"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {error && (
           <Card className="border-red-300 dark:border-red-800 mb-6">
