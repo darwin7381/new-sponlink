@@ -306,16 +306,24 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
             {getDisplayAddress() ? (
               <div className="flex items-center justify-between w-full">
                 <span className="text-white">{getDisplayAddress()}</span>
-                <button 
-                  type="button"
+                <span 
+                  role="button"
+                  tabIndex={0}
                   onClick={handleClearLocation}
-                  className="ml-2 text-gray-500 hover:text-red-500"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleClearLocation(e as unknown as React.MouseEvent);
+                    }
+                  }}
+                  className="ml-2 text-gray-500 hover:text-red-500 cursor-pointer"
+                  aria-label="清除位置"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                   </svg>
-                </button>
+                </span>
               </div>
             ) : (
               <div>
