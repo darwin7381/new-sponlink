@@ -45,7 +45,18 @@ export default function Header() {
     };
 
     fetchUser();
-  }, []);
+    
+    // 監聽登入狀態變更的自定義事件
+    const handleAuthChange = () => {
+      fetchUser();
+    };
+    
+    window.addEventListener('authChange', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('authChange', handleAuthChange);
+    };
+  }, [pathname, router]); // 添加pathname和router作為依賴項，確保路由變更時重新獲取用戶資訊
 
   const handleLogout = async () => {
     try {

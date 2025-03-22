@@ -6,6 +6,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Event } from "@/types/event";
+import { formatLocation } from "@/utils/languageUtils";
 
 interface EventCardProps {
   event: Event;
@@ -16,6 +17,13 @@ export function EventCard({ event }: EventCardProps) {
   const formattedDate = event.start_time ? 
     format(new Date(event.start_time), "MMM d, yyyy") : 
     "Date TBD";
+
+  // 格式化地點，標準格式顯示
+  const locationDisplay = event.location ? 
+    (event.location.city || event.location.country ? 
+      formatLocation(event.location.city, event.location.country) : 
+      event.location.name) : 
+    "Location TBD";
 
   return (
     <Card className="overflow-hidden h-full flex flex-col">
@@ -44,9 +52,7 @@ export function EventCard({ event }: EventCardProps) {
         <div className="flex items-center">
           <div className="flex-shrink-0">
             <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
-              {event.location ? 
-                (event.location.city && event.location.country ? `${event.location.city}, ${event.location.country}` : event.location.name) : 
-                "Location TBD"}
+              {locationDisplay}
             </span>
           </div>
         </div>

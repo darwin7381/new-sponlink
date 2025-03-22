@@ -154,175 +154,286 @@ export const mockEvents: Event[] = [
   {
     id: "4",
     organizer_id: "2",
-    title: "亞洲藝術博覽會2025",
-    description: "一年一度的亞洲藝術盛會，展示來自亞洲各地的當代藝術、傳統工藝和文化創新。",
-    cover_image: "https://images.unsplash.com/photo-1572947650440-e8a97ef053b2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
-    start_time: "2025-04-12T10:00:00Z",
-    end_time: "2025-04-18T18:00:00Z",
+    title: "AI & Healthcare Expo 2025",
+    description: "探索人工智能如何徹底改變醫療保健行業的前沿會議。與領先的醫療科技公司、AI專家和醫療專業人士一起了解最新的研究和應用。",
+    cover_image: "https://images.unsplash.com/photo-1587854680352-936b22b91030?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
+    start_time: "2025-09-12T08:30:00Z",
+    end_time: "2025-09-14T17:00:00Z",
     location: {
       id: "loc4",
-      name: "台北南港展覽館",
-      address: "台北市南港區經貿二路1號",
+      name: "台北國際會議中心",
+      address: "台北市信義區信義路五段1號",
       city: "台北",
       country: "台灣",
-      postal_code: "11562",
-      latitude: 25.0550,
-      longitude: 121.6170
+      postal_code: "11049",
+      latitude: 25.0330,
+      longitude: 121.5654
     },
     status: EventStatus.PUBLISHED,
-    category: "Art",
-    tags: ["藝術", "文化", "展覽", "亞洲藝術"],
+    category: "Healthcare & Technology",
+    tags: ["人工智能", "醫療科技", "醫療保健", "創新", "數位健康"],
     sponsorship_plans: [
       {
-        id: "sp7",
+        id: "sp401",
         event_id: "4",
-        title: "鑽石贊助商",
-        description: "最高級別的贊助方案，提供最大的品牌曝光和專屬權益。",
-        price: 500000,
-        benefits: ["開幕式貴賓席位", "專屬藝術品預展", "品牌在所有宣傳材料中突出顯示", "特別收藏家晚宴邀請"],
+        title: "主題贊助",
+        description: "成為AI醫療博覽會的主題贊助商，獲得最大的曝光度和品牌展示機會",
+        price: 75000,
+        benefits: [
+          "主題演講機會",
+          "展示區的優質位置",
+          "獨家工作坊",
+          "VIP晚宴席位",
+          "品牌在所有宣傳材料中突出顯示"
+        ],
         max_sponsors: 2,
-        current_sponsors: 1,
-        created_at: "2024-09-15T08:00:00Z",
-        updated_at: "2024-09-15T08:00:00Z"
+        current_sponsors: 0,
+        created_at: "2024-06-01T08:00:00Z",
+        updated_at: "2024-06-01T08:00:00Z"
       },
       {
-        id: "sp8",
+        id: "sp402",
         event_id: "4",
-        title: "藝術支持者",
-        description: "中級贊助方案，適合希望在藝術領域提升品牌形象的企業。",
-        price: 200000,
-        benefits: ["品牌在主要宣傳材料中展示", "VIP預展入場券", "藝術家見面會邀請"],
-        max_sponsors: 6,
-        current_sponsors: 3,
-        created_at: "2024-09-15T09:30:00Z",
-        updated_at: "2024-09-15T09:30:00Z"
+        title: "創新夥伴",
+        description: "展示您的醫療技術創新並與業內專業人士建立聯繫",
+        price: 45000,
+        benefits: [
+          "產品演示區",
+          "面板討論參與",
+          "在活動網站和應用程序中顯示品牌",
+          "與會者聯絡信息訪問"
+        ],
+        max_sponsors: 5,
+        current_sponsors: 2,
+        created_at: "2024-06-01T08:30:00Z",
+        updated_at: "2024-06-01T08:30:00Z"
       }
     ],
-    created_at: "2024-08-20T11:30:00Z",
-    updated_at: "2024-08-30T16:45:00Z"
+    created_at: "2024-06-01T00:00:00Z",
+    updated_at: "2024-06-10T00:00:00Z"
   },
   {
     id: "5",
-    organizer_id: "3",
-    title: "Blockchain Revolution Summit",
-    description: "The premier global conference exploring the future of blockchain technology and its impact on industries worldwide.",
-    cover_image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
-    start_time: "2025-09-05T09:00:00Z",
-    end_time: "2025-09-07T18:00:00Z",
+    organizer_id: "1",
+    title: "全球永續發展論壇 2025",
+    description: "聚集世界各地的環保領袖、政策制定者和企業家，討論永續發展策略和氣候行動計畫，共同打造更綠色的未來。",
+    cover_image: "https://images.unsplash.com/photo-1553152531-b98a2fc8d3bf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
+    start_time: "2025-05-20T09:00:00Z",
+    end_time: "2025-05-22T18:00:00Z",
     location: {
       id: "loc5",
-      name: "Singapore Expo",
-      address: "1 Expo Drive",
-      city: "Singapore",
-      country: "Singapore",
-      postal_code: "486150",
-      latitude: 1.3350,
-      longitude: 103.9590
+      name: "北京國家會議中心",
+      address: "北京市朝陽區天辰東路7號",
+      city: "北京",
+      country: "中國",
+      postal_code: "100101",
+      latitude: 40.0071,
+      longitude: 116.3876
     },
     status: EventStatus.PUBLISHED,
-    category: "Technology",
-    tags: ["Blockchain", "Cryptocurrency", "Web3", "DeFi"],
+    category: "Sustainability",
+    tags: ["永續發展", "環保", "氣候變化", "綠色經濟", "企業社會責任"],
     sponsorship_plans: [
       {
-        id: "sp9",
+        id: "sp501",
         event_id: "5",
-        title: "Whale Sponsor",
-        description: "Premier sponsorship tier with maximum visibility and exclusive networking opportunities.",
-        price: 120000,
-        benefits: ["Keynote speaking slot", "Private meeting room", "Exclusive dinner with top investors", "Premium booth location"],
+        title: "綠色先鋒",
+        description: "以環保領導者身份支持論壇，展示您公司的永續發展理念和成就",
+        price: 60000,
+        benefits: [
+          "主題演講機會",
+          "專題研討會主辦",
+          "品牌在所有宣傳資料中顯示",
+          "VIP晚宴座位",
+          "獨家媒體採訪機會"
+        ],
         max_sponsors: 3,
-        current_sponsors: 2,
+        current_sponsors: 1,
         created_at: "2024-05-10T10:00:00Z",
         updated_at: "2024-05-10T10:00:00Z"
-      },
-      {
-        id: "sp10",
-        event_id: "5",
-        title: "Builder Sponsor",
-        description: "Ideal for companies looking to showcase their blockchain solutions.",
-        price: 70000,
-        benefits: ["Panel participation", "Demo stage slot", "Branded lounge area", "Developer workshop opportunity"],
-        max_sponsors: 5,
-        current_sponsors: 3,
-        created_at: "2024-05-10T11:15:00Z",
-        updated_at: "2024-05-10T11:15:00Z"
-      },
-      {
-        id: "sp11",
-        event_id: "5",
-        title: "Ecosystem Sponsor",
-        description: "Supporting sponsorship level for emerging blockchain projects.",
-        price: 30000,
-        benefits: ["Exhibition space", "Logo inclusion in all materials", "Social media promotion"],
-        max_sponsors: 10,
-        current_sponsors: 5,
-        created_at: "2024-05-10T12:30:00Z",
-        updated_at: "2024-05-10T12:30:00Z"
       }
     ],
-    created_at: "2024-04-15T14:20:00Z",
-    updated_at: "2024-04-28T09:15:00Z"
+    created_at: "2024-05-01T00:00:00Z",
+    updated_at: "2024-05-15T00:00:00Z"
   },
   {
     id: "6",
-    organizer_id: "1",
-    title: "Global Education Innovation Forum",
-    description: "A forward-thinking conference bringing together educators, policymakers, and EdTech innovators to reshape the future of education.",
-    cover_image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
-    start_time: "2025-11-18T08:30:00Z",
-    end_time: "2025-11-20T17:00:00Z",
+    organizer_id: "2",
+    title: "數位行銷與社群媒體大會 2025",
+    description: "一場專為數位行銷人員、內容創作者和社群媒體專家設計的盛會，探討最新趨勢、最佳實踐和創新策略。",
+    cover_image: "https://images.unsplash.com/photo-1557838923-2985c318be48?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
+    start_time: "2025-07-08T09:30:00Z",
+    end_time: "2025-07-10T17:30:00Z",
     location: {
       id: "loc6",
-      name: "Helsinki Exhibition & Convention Centre",
-      address: "Messuaukio 1",
-      city: "Helsinki",
-      country: "Finland",
-      postal_code: "00520",
-      latitude: 60.2032,
-      longitude: 24.9379
+      name: "新加坡濱海灣金沙會議中心",
+      address: "10 Bayfront Avenue",
+      city: "新加坡",
+      country: "新加坡",
+      postal_code: "018956",
+      latitude: 1.2823,
+      longitude: 103.8588
+    },
+    status: EventStatus.PUBLISHED,
+    category: "Marketing",
+    tags: ["數位行銷", "社群媒體", "內容創作", "品牌建設", "影響力行銷"],
+    sponsorship_plans: [
+      {
+        id: "sp601",
+        event_id: "6",
+        title: "數位領袖",
+        description: "成為大會的主要贊助商，向行業專業人士展示您的品牌和解決方案",
+        price: 55000,
+        benefits: [
+          "主題演講機會",
+          "品牌在所有活動材料上顯示",
+          "專屬工作坊主持",
+          "VIP招待會",
+          "與會者名單"
+        ],
+        max_sponsors: 2,
+        current_sponsors: 1,
+        created_at: "2024-05-20T08:00:00Z",
+        updated_at: "2024-05-20T08:00:00Z"
+      },
+      {
+        id: "sp602",
+        event_id: "6",
+        title: "社群夥伴",
+        description: "展示您的社群媒體和內容平台，接觸目標受眾",
+        price: 35000,
+        benefits: [
+          "展示攤位",
+          "品牌在數位資料中展示",
+          "參與圓桌討論"
+        ],
+        max_sponsors: 6,
+        current_sponsors: 3,
+        created_at: "2024-05-20T09:00:00Z",
+        updated_at: "2024-05-20T09:00:00Z"
+      }
+    ],
+    created_at: "2024-05-05T00:00:00Z",
+    updated_at: "2024-05-25T00:00:00Z"
+  },
+  {
+    id: "7",
+    organizer_id: "1",
+    title: "Web3 與區塊鏈高峰會 2025",
+    description: "探索區塊鏈技術、加密貨幣、NFT和去中心化金融的未來。與行業先驅、開發者和投資者交流，發現下一代網路的無限可能。",
+    cover_image: "https://images.unsplash.com/photo-1639322537228-f710d846310a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
+    start_time: "2025-11-03T09:00:00Z",
+    end_time: "2025-11-05T18:00:00Z",
+    location: {
+      id: "loc7",
+      name: "香港會議展覽中心",
+      address: "香港灣仔博覽道1號",
+      city: "香港",
+      country: "中國香港",
+      postal_code: "",
+      latitude: 22.2813,
+      longitude: 114.1694
+    },
+    status: EventStatus.PUBLISHED,
+    category: "Technology",
+    tags: ["區塊鏈", "加密貨幣", "Web3", "DeFi", "元宇宙", "NFT"],
+    sponsorship_plans: [
+      {
+        id: "sp701",
+        event_id: "7",
+        title: "區塊鏈先驅",
+        description: "以行業領導者的身份支持高峰會，展示您的前沿技術和解決方案",
+        price: 100000,
+        benefits: [
+          "主題演講機會",
+          "專屬展示區",
+          "投資者對接會議",
+          "品牌在所有宣傳材料中顯示",
+          "專訪機會"
+        ],
+        max_sponsors: 3,
+        current_sponsors: 1,
+        created_at: "2024-07-01T08:00:00Z",
+        updated_at: "2024-07-01T08:00:00Z"
+      },
+      {
+        id: "sp702",
+        event_id: "7",
+        title: "Web3 創新者",
+        description: "展示您的去中心化應用和服務，連接潛在用戶和投資者",
+        price: 65000,
+        benefits: [
+          "技術演示時段",
+          "產品展示區",
+          "專家討論參與",
+          "品牌在數位平台上展示"
+        ],
+        max_sponsors: 5,
+        current_sponsors: 2,
+        created_at: "2024-07-01T09:00:00Z",
+        updated_at: "2024-07-01T09:00:00Z"
+      }
+    ],
+    created_at: "2024-07-01T00:00:00Z",
+    updated_at: "2024-07-15T00:00:00Z"
+  },
+  {
+    id: "8",
+    organizer_id: "2",
+    title: "全球教育創新博覽會 2025",
+    description: "匯聚教育者、技術專家和政策制定者，探討教育的未來趨勢和創新方法，推動教育改革和技術整合。",
+    cover_image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
+    start_time: "2025-08-15T09:00:00Z",
+    end_time: "2025-08-17T17:00:00Z",
+    location: {
+      id: "loc8",
+      name: "首爾COEX會議中心",
+      address: "首爾市江南區三成洞159",
+      city: "首爾",
+      country: "韓國",
+      postal_code: "06164",
+      latitude: 37.5118,
+      longitude: 127.0592
     },
     status: EventStatus.PUBLISHED,
     category: "Education",
-    tags: ["Education", "EdTech", "Innovation", "Digital Learning"],
+    tags: ["教育科技", "遠程學習", "STEM教育", "教育創新", "教育政策"],
     sponsorship_plans: [
       {
-        id: "sp12",
-        event_id: "6",
-        title: "Visionary Partner",
-        description: "Lead sponsorship for organizations committed to educational transformation.",
-        price: 85000,
-        benefits: ["Opening address opportunity", "Thought leadership roundtable", "Private meetings with education ministers", "Premium exhibition space"],
-        max_sponsors: 2,
-        current_sponsors: 1,
-        created_at: "2024-07-05T09:00:00Z",
-        updated_at: "2024-07-05T09:00:00Z"
+        id: "sp801",
+        event_id: "8",
+        title: "教育夥伴",
+        description: "支持教育創新，展示您的學習解決方案和平台",
+        price: 40000,
+        benefits: [
+          "專題演講機會",
+          "教育工作坊主持",
+          "品牌在活動材料中展示",
+          "與教育決策者的專屬會議"
+        ],
+        max_sponsors: 4,
+        current_sponsors: 2,
+        created_at: "2024-06-15T10:00:00Z",
+        updated_at: "2024-06-15T10:00:00Z"
       },
       {
-        id: "sp13",
-        event_id: "6",
-        title: "Education Innovator",
-        description: "For organizations showcasing educational solutions and technologies.",
-        price: 45000,
-        benefits: ["Innovation showcase presentation", "Workshop session", "Demonstration area", "Digital content feature"],
-        max_sponsors: 6,
-        current_sponsors: 4,
-        created_at: "2024-07-05T10:15:00Z",
-        updated_at: "2024-07-05T10:15:00Z"
-      },
-      {
-        id: "sp14",
-        event_id: "6",
-        title: "Learning Supporter",
-        description: "Supporting sponsorship level ideal for education-focused organizations.",
+        id: "sp802",
+        event_id: "8",
+        title: "創新學習",
+        description: "展示您的教育科技產品和解決方案，接觸教育工作者和學校代表",
         price: 25000,
-        benefits: ["Exhibition booth", "Brand inclusion in conference materials", "Digital presence on event platform"],
-        max_sponsors: 10,
-        current_sponsors: 7,
-        created_at: "2024-07-05T11:30:00Z",
-        updated_at: "2024-07-05T11:30:00Z"
+        benefits: [
+          "展示區域",
+          "產品演示時段",
+          "品牌在數位資料中顯示"
+        ],
+        max_sponsors: 8,
+        current_sponsors: 5,
+        created_at: "2024-06-15T11:00:00Z",
+        updated_at: "2024-06-15T11:00:00Z"
       }
     ],
-    created_at: "2024-06-10T13:15:00Z",
-    updated_at: "2024-06-25T16:20:00Z"
+    created_at: "2024-06-01T00:00:00Z",
+    updated_at: "2024-06-20T00:00:00Z"
   }
 ]; 

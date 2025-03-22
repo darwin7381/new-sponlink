@@ -87,6 +87,9 @@ export const login = async (email: string, password: string): Promise<User> => {
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem(AUTH_TOKEN_KEY, `mock-token-${Date.now()}`);
+        
+        // 分發登入狀態變更事件
+        window.dispatchEvent(new Event('authChange'));
       } catch (e) {
         console.error('Error storing auth token:', e);
       }
@@ -148,11 +151,14 @@ export const logout = async (): Promise<boolean> => {
     // Simulate API call
     await delay(300);
     
-    // Clear localStorage
+    // Remove user data from local storage
     removeStoredUser();
     if (typeof window !== 'undefined') {
       try {
         localStorage.removeItem(AUTH_TOKEN_KEY);
+        
+        // 分發登出狀態變更事件
+        window.dispatchEvent(new Event('authChange'));
       } catch (e) {
         console.error('Error removing auth token:', e);
       }
@@ -161,7 +167,7 @@ export const logout = async (): Promise<boolean> => {
     return true;
   } catch (error) {
     console.error("Logout error:", error);
-    throw error;
+    return false;
   }
 };
 

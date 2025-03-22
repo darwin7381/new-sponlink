@@ -11,6 +11,7 @@ import { createEvent } from "@/services/eventService";
 import { EventStatus, Location } from "@/types/event";
 import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
 import { USER_ROLES } from "@/lib/types/users";
+import LocationSelector from "@/components/maps/LocationSelector";
 
 // 贊助方案類型定義
 interface SponsorshipPlanForm {
@@ -396,214 +397,156 @@ export default function CreateEventPage() {
                   </div>
                 </div>
                 
-                <div className="mt-6 pt-6 border-t border-border">
-                  <h3 className="text-lg font-medium text-foreground mb-4">地點信息</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="location.name" className="text-foreground">場地名稱</Label>
-                      <Input
-                        id="location.name"
-                        name="location.name"
-                        value={formData.location.name}
-                        onChange={handleInputChange}
-                        required
-                        className="mt-1 bg-background border-border"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="location.address" className="text-foreground">地址</Label>
-                      <Input
-                        id="location.address"
-                        name="location.address"
-                        value={formData.location.address}
-                        onChange={handleInputChange}
-                        required
-                        className="mt-1 bg-background border-border"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <div>
-                      <Label htmlFor="location.city" className="text-foreground">城市</Label>
-                      <Input
-                        id="location.city"
-                        name="location.city"
-                        value={formData.location.city}
-                        onChange={handleInputChange}
-                        required
-                        className="mt-1 bg-background border-border"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="location.country" className="text-foreground">國家</Label>
-                      <Input
-                        id="location.country"
-                        name="location.country"
-                        value={formData.location.country}
-                        onChange={handleInputChange}
-                        required
-                        className="mt-1 bg-background border-border"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="location.postal_code" className="text-foreground">郵政編碼</Label>
-                      <Input
-                        id="location.postal_code"
-                        name="location.postal_code"
-                        value={formData.location.postal_code}
-                        onChange={handleInputChange}
-                        required
-                        className="mt-1 bg-background border-border"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 pt-6 border-t border-border">
-                <h3 className="text-lg font-medium text-foreground mb-4">贊助方案</h3>
+                <LocationSelector 
+                  location={formData.location} 
+                  onChange={(newLocation) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      location: newLocation
+                    }));
+                  }}
+                />
                 
-                {sponsorshipPlans.length === 0 ? (
-                  <div className="text-center py-8 border border-dashed border-border rounded-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-muted-foreground mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a4 4 0 00-4-4H8a4 4 0 00-4 4v12h8zm0 0V5.5A2.5 2.5 0 0114.5 3h1A2.5 2.5 0 0118 5.5V8m-6 0h6m0 0v12a2 2 0 01-2 2h-4a2 2 0 01-2-2z" />
-                    </svg>
-                    <p className="text-muted-foreground mb-4">您還沒有添加任何贊助方案</p>
-                    <Button onClick={addSponsorshipPlan} type="button">
-                      添加贊助方案
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {sponsorshipPlans.map((plan, index) => (
-                      <div key={plan.id} className="p-5 border border-border rounded-md relative">
-                        <button
-                          type="button"
-                          onClick={() => removeSponsorshipPlan(index)}
-                          className="absolute right-3 top-3 text-muted-foreground hover:text-destructive"
-                          aria-label="刪除贊助方案"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                        
-                        <h4 className="text-md font-semibold mb-4">贊助方案 {index + 1}</h4>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                          <div>
-                            <Label htmlFor={`plan-title-${index}`}>方案名稱</Label>
+                <div className="mt-6 pt-6 border-t border-border">
+                  <h3 className="text-lg font-medium text-foreground mb-4">贊助方案</h3>
+                  
+                  {sponsorshipPlans.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-border rounded-md">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-muted-foreground mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a4 4 0 00-4-4H8a4 4 0 00-4 4v12h8zm0 0V5.5A2.5 2.5 0 0114.5 3h1A2.5 2.5 0 0118 5.5V8m-6 0h6m0 0v12a2 2 0 01-2 2h-4a2 2 0 01-2-2z" />
+                      </svg>
+                      <p className="text-muted-foreground mb-4">您還沒有添加任何贊助方案</p>
+                      <Button onClick={addSponsorshipPlan} type="button">
+                        添加贊助方案
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-8">
+                      {sponsorshipPlans.map((plan, index) => (
+                        <div key={plan.id} className="p-5 border border-border rounded-md relative">
+                          <button
+                            type="button"
+                            onClick={() => removeSponsorshipPlan(index)}
+                            className="absolute right-3 top-3 text-muted-foreground hover:text-destructive"
+                            aria-label="刪除贊助方案"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                          
+                          <h4 className="text-md font-semibold mb-4">贊助方案 {index + 1}</h4>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                              <Label htmlFor={`plan-title-${index}`}>方案名稱</Label>
+                              <Input
+                                id={`plan-title-${index}`}
+                                value={plan.title}
+                                onChange={(e) => updateSponsorshipPlan(index, 'title', e.target.value)}
+                                placeholder="鑽石贊助商"
+                                required
+                                className="mt-1 bg-background border-border"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label htmlFor={`plan-price-${index}`}>價格 (TWD)</Label>
+                              <Input
+                                id={`plan-price-${index}`}
+                                type="number"
+                                min="0"
+                                value={plan.price}
+                                onChange={(e) => updateSponsorshipPlan(index, 'price', e.target.value)}
+                                placeholder="50000"
+                                required
+                                className="mt-1 bg-background border-border"
+                              />
+                            </div>
+                          </div>
+                          
+                          <div className="mb-4">
+                            <Label htmlFor={`plan-description-${index}`}>方案描述</Label>
+                            <Textarea
+                              id={`plan-description-${index}`}
+                              value={plan.description}
+                              onChange={(e) => updateSponsorshipPlan(index, 'description', e.target.value)}
+                              placeholder="提供最高級別的品牌曝光和獨家權益..."
+                              rows={2}
+                              required
+                              className="mt-1 bg-background border-border"
+                            />
+                          </div>
+                          
+                          <div className="mb-4">
+                            <Label htmlFor={`plan-max-sponsors-${index}`}>最大贊助商數量</Label>
                             <Input
-                              id={`plan-title-${index}`}
-                              value={plan.title}
-                              onChange={(e) => updateSponsorshipPlan(index, 'title', e.target.value)}
-                              placeholder="鑽石贊助商"
+                              id={`plan-max-sponsors-${index}`}
+                              type="number"
+                              min="1"
+                              value={plan.max_sponsors}
+                              onChange={(e) => updateSponsorshipPlan(index, 'max_sponsors', e.target.value)}
                               required
                               className="mt-1 bg-background border-border"
                             />
                           </div>
                           
                           <div>
-                            <Label htmlFor={`plan-price-${index}`}>價格 (TWD)</Label>
-                            <Input
-                              id={`plan-price-${index}`}
-                              type="number"
-                              min="0"
-                              value={plan.price}
-                              onChange={(e) => updateSponsorshipPlan(index, 'price', e.target.value)}
-                              placeholder="50000"
-                              required
-                              className="mt-1 bg-background border-border"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="mb-4">
-                          <Label htmlFor={`plan-description-${index}`}>方案描述</Label>
-                          <Textarea
-                            id={`plan-description-${index}`}
-                            value={plan.description}
-                            onChange={(e) => updateSponsorshipPlan(index, 'description', e.target.value)}
-                            placeholder="提供最高級別的品牌曝光和獨家權益..."
-                            rows={2}
-                            required
-                            className="mt-1 bg-background border-border"
-                          />
-                        </div>
-                        
-                        <div className="mb-4">
-                          <Label htmlFor={`plan-max-sponsors-${index}`}>最大贊助商數量</Label>
-                          <Input
-                            id={`plan-max-sponsors-${index}`}
-                            type="number"
-                            min="1"
-                            value={plan.max_sponsors}
-                            onChange={(e) => updateSponsorshipPlan(index, 'max_sponsors', e.target.value)}
-                            required
-                            className="mt-1 bg-background border-border"
-                          />
-                        </div>
-                        
-                        <div>
-                          <Label>權益與福利</Label>
-                          <div className="mt-2 space-y-2">
-                            {plan.benefits.map((benefit, benefitIndex) => (
-                              <div key={benefitIndex} className="flex items-center gap-2">
-                                <div className="bg-primary/10 text-primary rounded-md px-3 py-1 flex-grow flex items-center">
-                                  <span>{benefit}</span>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeBenefit(index, benefitIndex)}
-                                    className="ml-auto text-muted-foreground hover:text-destructive"
-                                    aria-label="移除權益"
-                                  >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                  </button>
+                            <Label>權益與福利</Label>
+                            <div className="mt-2 space-y-2">
+                              {plan.benefits.map((benefit, benefitIndex) => (
+                                <div key={benefitIndex} className="flex items-center gap-2">
+                                  <div className="bg-primary/10 text-primary rounded-md px-3 py-1 flex-grow flex items-center">
+                                    <span>{benefit}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => removeBenefit(index, benefitIndex)}
+                                      className="ml-auto text-muted-foreground hover:text-destructive"
+                                      aria-label="移除權益"
+                                    >
+                                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                    </button>
+                                  </div>
                                 </div>
+                              ))}
+                              
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  placeholder="如：主舞台演講機會、VIP晚宴席位等"
+                                  value={newBenefit}
+                                  onChange={(e) => setNewBenefit(e.target.value)}
+                                  className="flex-grow bg-background border-border"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={() => addBenefit(index)}
+                                  className="shrink-0"
+                                >
+                                  添加
+                                </Button>
                               </div>
-                            ))}
-                            
-                            <div className="flex items-center gap-2">
-                              <Input
-                                placeholder="如：主舞台演講機會、VIP晚宴席位等"
-                                value={newBenefit}
-                                onChange={(e) => setNewBenefit(e.target.value)}
-                                className="flex-grow bg-background border-border"
-                              />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => addBenefit(index)}
-                                className="shrink-0"
-                              >
-                                添加
-                              </Button>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                    
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      onClick={addSponsorshipPlan}
-                      className="w-full border-dashed"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      添加另一個贊助方案
-                    </Button>
-                  </div>
-                )}
+                      ))}
+                      
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={addSponsorshipPlan}
+                        className="w-full border-dashed"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                        </svg>
+                        添加另一個贊助方案
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className="flex justify-end gap-3 pt-6 border-t border-border mt-6">

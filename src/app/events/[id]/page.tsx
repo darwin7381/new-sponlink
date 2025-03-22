@@ -13,6 +13,7 @@ import { Event, SponsorshipPlan } from "@/types/event";
 import { CartItem } from "@/types/sponsor";
 import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
 import { USER_ROLES } from "@/lib/types/users";
+import { formatLocation, formatAddress } from "@/utils/languageUtils";
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -172,6 +173,14 @@ export default function EventDetailPage() {
       : `${format(startDate, "MMMM d, yyyy")} - ${format(endDate, "MMMM d, yyyy")}`
     : "日期待定";
 
+  // 格式化地點顯示
+  const formattedLocation = event.location ? 
+    formatLocation(event.location.city, event.location.country) : 
+    "地點待定";
+    
+  // 格式化完整地址
+  const addressDisplay = event.location ? formatAddress(event.location) : "地點待定";
+
   return (
     <div className="bg-background min-h-screen pt-16 pb-12">
       {/* 活動頭部與封面圖片 */}
@@ -224,8 +233,8 @@ export default function EventDetailPage() {
                 </svg>
                 <span>
                   {event.location?.name 
-                    ? (event.location.city 
-                        ? `${event.location.name}, ${event.location.city}` 
+                    ? (event.location.city || event.location.country
+                        ? `${event.location.name}, ${formattedLocation}` 
                         : event.location.name)
                     : "地點待定"}
                 </span>
@@ -243,9 +252,7 @@ export default function EventDetailPage() {
               <div className="mt-8">
                 <h2 className="text-xl font-bold text-foreground mb-4">地點</h2>
                 <div className="bg-secondary p-4 rounded-lg">
-                  <p className="text-secondary-foreground">{event.location.name}</p>
-                  <p className="text-secondary-foreground">{event.location.address}</p>
-                  <p className="text-secondary-foreground">{event.location.city}, {event.location.country} {event.location.postal_code}</p>
+                  <p className="text-secondary-foreground whitespace-pre-line">{addressDisplay}</p>
                 </div>
               </div>
             )}

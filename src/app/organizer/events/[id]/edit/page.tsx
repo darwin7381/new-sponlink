@@ -11,6 +11,7 @@ import { getEventById, updateEvent } from "@/services/eventService";
 import { Event, Location } from "@/types/event";
 import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
 import { USER_ROLES } from "@/lib/types/users";
+import LocationSelector from "@/components/maps/LocationSelector";
 
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -320,69 +321,15 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 <div>
                   <h3 className="text-lg font-medium mb-4">Location Information</h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="location.name">Venue Name</Label>
-                      <Input
-                        id="location.name"
-                        name="location.name"
-                        value={formData.location.name}
-                        onChange={handleInputChange}
-                        required
-                        className="bg-background"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="location.address">Address</Label>
-                      <Input
-                        id="location.address"
-                        name="location.address"
-                        value={formData.location.address}
-                        onChange={handleInputChange}
-                        required
-                        className="bg-background"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                    <div>
-                      <Label htmlFor="location.city">City</Label>
-                      <Input
-                        id="location.city"
-                        name="location.city"
-                        value={formData.location.city}
-                        onChange={handleInputChange}
-                        required
-                        className="bg-background"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="location.country">Country</Label>
-                      <Input
-                        id="location.country"
-                        name="location.country"
-                        value={formData.location.country}
-                        onChange={handleInputChange}
-                        required
-                        className="bg-background"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="location.postal_code">Postal Code</Label>
-                      <Input
-                        id="location.postal_code"
-                        name="location.postal_code"
-                        value={formData.location.postal_code}
-                        onChange={handleInputChange}
-                        required
-                        className="bg-background"
-                      />
-                    </div>
-                  </div>
+                  <LocationSelector 
+                    location={formData.location} 
+                    onChange={(newLocation) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        location: newLocation
+                      }));
+                    }}
+                  />
                 </div>
               </div>
               

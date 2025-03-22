@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/services/authService";
 import { User, USER_ROLES } from "@/lib/types/users";
 import { getAllEvents } from "@/services/eventService";
 import { EventStatus } from "@/types/event";
+import { formatLocation } from "@/utils/languageUtils";
 
 interface FeaturedEvent {
   id: string;
@@ -38,8 +39,8 @@ export default function Home() {
           description: event.description.substring(0, 120) + '...',
           image: event.cover_image || '/images/event-placeholder.jpg',
           date: new Date(event.start_time).toISOString().split('T')[0],
-          location: event.location.city && event.location.country ? 
-            `${event.location.city}, ${event.location.country}` : 
+          location: event.location.city || event.location.country ? 
+            formatLocation(event.location.city, event.location.country) : 
             event.location.name
         }));
         
