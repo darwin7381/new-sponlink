@@ -50,6 +50,13 @@ const detectVirtualPlatform = (url: string): { isVirtual: boolean, platformName:
     return { isVirtual: false, platformName: '' };
   }
 
+  // 避免將純地址或位置名稱誤識別為虛擬連結
+  // 地址內容通常包含數字、逗號、空格等，而非純URL
+  const addressPattern = /\d+.*?(st|rd|ave|blvd|square|plaza|district|road|street|avenue)/i;
+  if (addressPattern.test(url)) {
+    return { isVirtual: false, platformName: '' };
+  }
+
   // 嘗試添加協議前綴以正確解析URL
   let normalizedUrl = url;
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
@@ -399,7 +406,14 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                       <div className="text-sm text-gray-400 truncate">{getDisplayAddress()}</div>
                     </div>
                   ) : (
-                    <span>{getDisplayAddress()}</span>
+                    location.name && location.address && location.name !== location.address ? (
+                      <div>
+                        <div className="text-white font-normal">{location.name}</div>
+                        <div className="text-sm text-gray-400 truncate">{location.address}</div>
+                      </div>
+                    ) : (
+                      <span>{getDisplayAddress()}</span>
+                    )
                   )}
                 </div>
                 <span 
