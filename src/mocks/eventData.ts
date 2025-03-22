@@ -17,7 +17,10 @@ export const mockEvents: Event[] = [
       country: "USA",
       postal_code: "94101",
       latitude: 37.7749,
-      longitude: -122.4194
+      longitude: -122.4194,
+      isVirtual: false,
+      platformName: "",
+      place_id: "ChIJIQBpAG2ahYARs7b1SSjMiKY"
     },
     status: EventStatus.PUBLISHED,
     category: "Technology",
@@ -67,7 +70,10 @@ export const mockEvents: Event[] = [
       country: "USA",
       postal_code: "98101",
       latitude: 47.6114,
-      longitude: -122.3322
+      longitude: -122.3322,
+      isVirtual: false,
+      platformName: "",
+      place_id: "ChIJ7WXdSM1BkFQRJrU2AJVaHp0"
     },
     status: EventStatus.DRAFT,
     category: "Environment",
@@ -105,7 +111,10 @@ export const mockEvents: Event[] = [
       country: "USA",
       postal_code: "10036",
       latitude: 40.7589,
-      longitude: -73.9851
+      longitude: -73.9851,
+      isVirtual: false,
+      platformName: "",
+      place_id: "ChIJmQJIxlVYwokRLgeuocVOGVU"
     },
     status: EventStatus.PUBLISHED,
     category: "Marketing",
@@ -167,7 +176,10 @@ export const mockEvents: Event[] = [
       country: "台灣",
       postal_code: "11049",
       latitude: 25.0330,
-      longitude: 121.5654
+      longitude: 121.5654,
+      isVirtual: false,
+      platformName: "",
+      place_id: "ChIJSSL1Z0mpQjQRhZ9Zs0do7j8"
     },
     status: EventStatus.PUBLISHED,
     category: "Healthcare & Technology",
@@ -228,7 +240,10 @@ export const mockEvents: Event[] = [
       country: "中國",
       postal_code: "100101",
       latitude: 40.0071,
-      longitude: 116.3876
+      longitude: 116.3876,
+      isVirtual: false,
+      platformName: "",
+      place_id: "ChIJLV2lxqhS8DURGNzqJg5SkSA"
     },
     status: EventStatus.PUBLISHED,
     category: "Sustainability",
@@ -272,7 +287,10 @@ export const mockEvents: Event[] = [
       country: "新加坡",
       postal_code: "018956",
       latitude: 1.2823,
-      longitude: 103.8588
+      longitude: 103.8588,
+      isVirtual: false,
+      platformName: "",
+      place_id: "ChIJ64jbrMkZ2jERN_GRBObskXI"
     },
     status: EventStatus.PUBLISHED,
     category: "Marketing",
@@ -332,7 +350,10 @@ export const mockEvents: Event[] = [
       country: "中國香港",
       postal_code: "",
       latitude: 22.2813,
-      longitude: 114.1694
+      longitude: 114.1694,
+      isVirtual: false,
+      platformName: "",
+      place_id: "ChIJyx53KxMABDQRvCyYKrDFPY0"
     },
     status: EventStatus.PUBLISHED,
     category: "Technology",
@@ -393,7 +414,10 @@ export const mockEvents: Event[] = [
       country: "韓國",
       postal_code: "06164",
       latitude: 37.5118,
-      longitude: 127.0592
+      longitude: 127.0592,
+      isVirtual: false,
+      platformName: "",
+      place_id: "ChIJj-lZbx6kfDURMU9Ip-Vkj3Q"
     },
     status: EventStatus.PUBLISHED,
     category: "Education",
@@ -435,5 +459,140 @@ export const mockEvents: Event[] = [
     ],
     created_at: "2024-06-01T00:00:00Z",
     updated_at: "2024-06-20T00:00:00Z"
+  },
+  {
+    id: "loc-google",
+    organizer_id: "1",
+    title: "Location Google",
+    description: "这个活动演示使用 Google 地址作为地点。展示如何利用 Google Maps 的地点 ID 和经纬度数据。",
+    cover_image: "https://images.unsplash.com/photo-1543269664-56d93c1b41a6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
+    start_time: "2025-10-10T10:00:00Z",
+    end_time: "2025-10-12T18:00:00Z",
+    location: {
+      id: "loc-g",
+      name: "台北 101",
+      address: "台灣台北市信義區信義路五段7號",
+      city: "台北市",
+      country: "台灣",
+      postal_code: "110",
+      latitude: 25.0339,
+      longitude: 121.5645,
+      isVirtual: false,
+      platformName: "",
+      place_id: "ChIJIQBpAG2ahYAR_6128GcTUEo"
+    },
+    status: EventStatus.PUBLISHED,
+    category: "Technology",
+    tags: ["活动举例", "地理位置", "Google Maps"],
+    sponsorship_plans: [
+      {
+        id: "sp-g1",
+        event_id: "loc-google",
+        title: "地点演示赞助",
+        description: "支持此演示活动并展示您的品牌",
+        price: 20000,
+        benefits: [
+          "品牌展示",
+          "产品演示",
+          "网站链接"
+        ],
+        max_sponsors: 5,
+        current_sponsors: 1,
+        created_at: "2025-05-01T08:00:00Z",
+        updated_at: "2025-05-01T08:00:00Z"
+      }
+    ],
+    created_at: "2025-05-01T00:00:00Z",
+    updated_at: "2025-05-01T00:00:00Z"
+  },
+  {
+    id: "loc-virtual",
+    organizer_id: "2",
+    title: "Location Virtual",
+    description: "这个活动演示使用虚拟线上会议作为地点。展示如何使用平台名称和会议链接。",
+    cover_image: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
+    start_time: "2025-11-15T14:00:00Z",
+    end_time: "2025-11-15T18:00:00Z",
+    location: {
+      id: "loc-v",
+      name: "Zoom 线上会议",
+      address: "https://zoom.us/j/123456789",
+      city: "",
+      country: "",
+      postal_code: "",
+      latitude: undefined,
+      longitude: undefined,
+      isVirtual: true,
+      platformName: "Zoom",
+      place_id: undefined
+    },
+    status: EventStatus.PUBLISHED,
+    category: "Online",
+    tags: ["线上活动", "虚拟会议", "远程参与"],
+    sponsorship_plans: [
+      {
+        id: "sp-v1",
+        event_id: "loc-virtual",
+        title: "虚拟赞助",
+        description: "在线上活动中展示您的品牌",
+        price: 15000,
+        benefits: [
+          "数字展示区",
+          "线上演讲",
+          "品牌露出"
+        ],
+        max_sponsors: 10,
+        current_sponsors: 2,
+        created_at: "2025-06-01T10:00:00Z",
+        updated_at: "2025-06-01T10:00:00Z"
+      }
+    ],
+    created_at: "2025-06-01T00:00:00Z",
+    updated_at: "2025-06-01T00:00:00Z"
+  },
+  {
+    id: "loc-custom",
+    organizer_id: "3",
+    title: "Location Custom",
+    description: "这个活动演示使用自定义地址作为地点。展示如何处理没有经纬度和地点ID的自定义位置。",
+    cover_image: "https://images.unsplash.com/photo-1560439514-4e9645039924?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
+    start_time: "2025-12-20T16:00:00Z",
+    end_time: "2025-12-20T22:00:00Z",
+    location: {
+      id: "loc-c",
+      name: "地址測試地址測試地址測試試",
+      address: "區塊大廈3樓藝術空間",
+      city: "台中",
+      country: "台灣",
+      postal_code: "",
+      latitude: undefined,
+      longitude: undefined,
+      isVirtual: false,
+      platformName: "",
+      place_id: undefined
+    },
+    status: EventStatus.PUBLISHED,
+    category: "Art",
+    tags: ["艺术活动", "自定义地点", "社区活动"],
+    sponsorship_plans: [
+      {
+        id: "sp-c1",
+        event_id: "loc-custom",
+        title: "艺术赞助",
+        description: "支持艺术活动并展示您的品牌",
+        price: 10000,
+        benefits: [
+          "展示区域",
+          "品牌展示",
+          "艺术家交流"
+        ],
+        max_sponsors: 8,
+        current_sponsors: 3,
+        created_at: "2025-07-01T09:00:00Z",
+        updated_at: "2025-07-01T09:00:00Z"
+      }
+    ],
+    created_at: "2025-07-01T00:00:00Z",
+    updated_at: "2025-07-01T00:00:00Z"
   }
 ]; 

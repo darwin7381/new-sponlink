@@ -16,6 +16,7 @@ export interface Location {
   longitude?: number;
   isVirtual?: boolean;
   platformName?: string;
+  place_id?: string;
 }
 
 export interface SponsorshipPlan {

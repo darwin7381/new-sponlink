@@ -113,6 +113,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     postal_code: string;
     latitude: number;
     longitude: number;
+    place_id?: string;
   }) => {
     // 一次性更新所有位置信息
     onChange({
@@ -125,7 +126,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       latitude: placeDetails.latitude,
       longitude: placeDetails.longitude,
       isVirtual: false,
-      platformName: ''
+      platformName: '',
+      place_id: placeDetails.place_id
     });
     
     // 選擇後關閉面板
@@ -150,7 +152,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         latitude: undefined,
         longitude: undefined,
         isVirtual: isVirtual,
-        platformName: isVirtual ? platformName : ''
+        platformName: isVirtual ? platformName : '',
+        place_id: undefined // 自定義地址或虛擬連結不使用 place_id
       });
       
       setIsVirtual(isVirtual);
@@ -182,7 +185,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       latitude: undefined,
       longitude: undefined,
       isVirtual: false,
-      platformName: ''
+      platformName: '',
+      place_id: undefined
     });
     setIsVirtual(false);
     setPlatformName('');
@@ -343,7 +347,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
           country,
           postal_code,
           latitude: placeData.location?.latitude || 0,
-          longitude: placeData.location?.longitude || 0
+          longitude: placeData.location?.longitude || 0,
+          place_id: prediction.id
         });
       } else {
         // 即使無法獲取完整詳情，也提供基本信息
@@ -354,7 +359,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
           country: '',
           postal_code: '',
           latitude: 0,
-          longitude: 0
+          longitude: 0,
+          place_id: prediction.id
         });
       }
     } catch (error) {
@@ -368,7 +374,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         country: '',
         postal_code: '',
         latitude: 0,
-        longitude: 0
+        longitude: 0,
+        place_id: prediction.id
       });
     }
   };
