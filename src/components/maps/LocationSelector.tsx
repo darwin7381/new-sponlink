@@ -191,14 +191,16 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       const data = await response.json();
       
       if (response.ok && data.places && data.places.length > 0) {
-        // 轉換為我們的預測格式
-        const transformedPredictions = data.places.map((place: PlaceApiPlace) => ({
-          id: place.id,
-          name: place.displayName?.text || '',
-          address: place.formattedAddress || '',
-          mainText: place.displayName?.text || '',
-          secondaryText: place.formattedAddress || ''
-        }));
+        // 轉換為我們的預測格式，並限制最多5個結果
+        const transformedPredictions = data.places
+          .map((place: PlaceApiPlace) => ({
+            id: place.id,
+            name: place.displayName?.text || '',
+            address: place.formattedAddress || '',
+            mainText: place.displayName?.text || '',
+            secondaryText: place.formattedAddress || ''
+          }))
+          .slice(0, 5); // 限制最多5個預測結果
         
         setPredictions(transformedPredictions);
       } else {
@@ -365,7 +367,26 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                   </div>
                 </div>
               ))}
-              <div className="p-2 text-right border-t border-neutral-700">
+              
+              {/* 使用自定義文字選項 - 在推薦結果底部顯示 */}
+              <div className="border-t border-neutral-700">
+                <div 
+                  onClick={handleUseCustomAddress}
+                  className="flex items-start px-4 py-3 cursor-pointer hover:bg-zinc-800"
+                >
+                  <div className="flex-shrink-0 mr-2 mt-1 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
+                    </svg>
+                  </div>
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="text-white text-sm">Use &quot;{inputValue}&quot;</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Google標識 */}
+              <div className="border-t border-neutral-700 p-2 text-right">
                 <span className="text-xs text-gray-500">Powered by Google</span>
               </div>
             </div>
@@ -405,7 +426,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                 </div>
               </div>
               
-              {/* 自定義地址選項 */}
+              {/* 自定義地址選項 - 當沒有預測結果顯示時 */}
               {inputValue.trim() && (
                 <div className="px-4 py-2 border-t border-neutral-700">
                   <button 
