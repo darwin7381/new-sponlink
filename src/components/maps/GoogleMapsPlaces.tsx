@@ -69,6 +69,7 @@ interface GoogleMapsPlacesProps {
   label?: string;
   defaultValue?: string;
   className?: string;
+  onInputChange?: (value: string) => void;
 }
 
 /**
@@ -90,7 +91,8 @@ const GoogleMapsPlaces: React.FC<GoogleMapsPlacesProps> = ({
   placeholder = 'Search for a place',
   label = 'Search for a place',
   defaultValue = '',
-  className = ''
+  className = '',
+  onInputChange
 }) => {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
   const inputRef = useRef<HTMLInputElement>(null);
@@ -103,30 +105,32 @@ const GoogleMapsPlaces: React.FC<GoogleMapsPlacesProps> = ({
   
   // Load Google Maps JavaScript API
   useEffect(() => {
-    // Check if API is already loaded
-    if (window.google && window.google.maps) {
+    // 使用全局變量跟踪加載狀態，避免重複加載
+    if (!window.googleMapsInitialized) {
+      window.googleMapsInitialized = true;
+    } else if (window.google && window.google.maps) {
       console.log('Google Maps API already loaded');
       return;
     }
     
-    // Check if script is already being loaded
-    if (document.getElementById('google-maps-api')) {
-      console.log('Google Maps API script exists, waiting for it to load...');
-      const checkInterval = setInterval(() => {
-        if (window.google && window.google.maps) {
-          console.log('Google Maps API has finished loading');
-          clearInterval(checkInterval);
-        }
-      }, 500);
-      return () => clearInterval(checkInterval);
+    // 檢查是否已經有腳本正在加載
+    const existingScript = document.getElementById('google-maps-api');
+    if (existingScript) {
+      console.log('Google Maps API script already exists');
+      return;
     }
     
     console.log('Starting to load Google Maps API');
     
+    // 定義回調函數以通知加載完成
+    window.initGoogleMapsCallback = () => {
+      console.log('Google Maps initialized via callback');
+    };
+    
     const script = document.createElement('script');
     script.id = 'google-maps-api';
-    // We only need the basic Maps JavaScript API for geocoding
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=Function.prototype`;
+    // 只加載基本的Maps JavaScript API，使用回調函數
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initGoogleMapsCallback`;
     script.async = true;
     script.defer = true;
     
@@ -143,18 +147,17 @@ const GoogleMapsPlaces: React.FC<GoogleMapsPlacesProps> = ({
     script.onerror = (error) => {
       console.error('Failed to load Google Maps API:', error);
       setLoadError('Unable to load map service. Please check: 1) Network connection; 2) API key validity; 3) Billing setup');
+      window.googleMapsInitialized = false; // 重置狀態以允許再次嘗試
     };
     
     document.head.appendChild(script);
     
+    // 清理函數
     return () => {
-      const scriptElement = document.getElementById('google-maps-api');
-      if (scriptElement) {
-        try {
-          document.head.removeChild(scriptElement);
-        } catch (e) {
-          console.error('Error cleaning up Google Maps script:', e);
-        }
+      // 不移除腳本，因為其他組件可能正在使用它
+      // 只移除自定義回調
+      if (window.initGoogleMapsCallback) {
+        window.initGoogleMapsCallback = () => {};
       }
     };
   }, [apiKey]);
@@ -163,6 +166,10 @@ const GoogleMapsPlaces: React.FC<GoogleMapsPlacesProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
+    
+    if (onInputChange) {
+      onInputChange(value);
+    }
     
     if (!value.trim()) {
       setPredictions([]);

@@ -90,4 +90,5 @@ declare namespace google {
 interface Window {
   google: typeof google;
   initGoogleMapsCallback: () => void;
+  googleMapsInitialized?: boolean;
 } 
