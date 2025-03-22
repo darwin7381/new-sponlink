@@ -5,6 +5,12 @@ export enum EventStatus {
   COMPLETED = 'completed'
 }
 
+export enum LocationType {
+  GOOGLE = 'google',  // Google 地點（有 place_id）
+  VIRTUAL = 'virtual', // 虛擬會議連結
+  CUSTOM = 'custom'   // 自定義地址
+}
+
 export interface Location {
   id: string;
   name: string;
@@ -17,6 +23,7 @@ export interface Location {
   isVirtual?: boolean;
   platformName?: string;
   place_id?: string;
+  location_type?: LocationType; // 位置類型
 }
 
 export interface SponsorshipPlan {

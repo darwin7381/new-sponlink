@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Location } from '@/types/event';
+import { Location, LocationType } from '@/types/event';
 
 // 定義推薦位置結構
 interface Prediction {
@@ -127,7 +127,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       longitude: placeDetails.longitude,
       isVirtual: false,
       platformName: '',
-      place_id: placeDetails.place_id
+      place_id: placeDetails.place_id,
+      location_type: LocationType.GOOGLE // 設置位置類型為 Google
     });
     
     // 選擇後關閉面板
@@ -153,7 +154,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         longitude: undefined,
         isVirtual: isVirtual,
         platformName: isVirtual ? platformName : '',
-        place_id: undefined // 自定義地址或虛擬連結不使用 place_id
+        place_id: undefined, // 自定義地址或虛擬連結不使用 place_id
+        location_type: isVirtual ? LocationType.VIRTUAL : LocationType.CUSTOM // 根據是否為虛擬設置位置類型
       });
       
       setIsVirtual(isVirtual);
@@ -186,7 +188,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       longitude: undefined,
       isVirtual: false,
       platformName: '',
-      place_id: undefined
+      place_id: undefined,
+      location_type: undefined // 清除位置類型
     });
     setIsVirtual(false);
     setPlatformName('');
@@ -419,7 +422,14 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                         <div className="text-sm text-gray-400 truncate">{location.address}</div>
                       </div>
                     ) : (
-                      <span>{getDisplayAddress()}</span>
+                      location.location_type === LocationType.CUSTOM ? (
+                        <div>
+                          <div className="text-white font-normal">{getDisplayAddress()}</div>
+                          <div className="text-sm text-gray-400 truncate">Custom Address</div>
+                        </div>
+                      ) : (
+                        <span>{getDisplayAddress()}</span>
+                      )
                     )
                   )}
                 </div>

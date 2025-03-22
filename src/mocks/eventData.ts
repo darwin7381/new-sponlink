@@ -1,4 +1,4 @@
-import { Event, EventStatus } from '@/types/event';
+import { Event, EventStatus, LocationType } from '@/types/event';
 
 export const mockEvents: Event[] = [
   {
@@ -20,7 +20,8 @@ export const mockEvents: Event[] = [
       longitude: -122.4194,
       isVirtual: false,
       platformName: "",
-      place_id: "ChIJIQBpAG2ahYARs7b1SSjMiKY"
+      place_id: "ChIJIQBpAG2ahYARs7b1SSjMiKY",
+      location_type: LocationType.GOOGLE
     },
     status: EventStatus.PUBLISHED,
     category: "Technology",
@@ -73,7 +74,8 @@ export const mockEvents: Event[] = [
       longitude: -122.3322,
       isVirtual: false,
       platformName: "",
-      place_id: "ChIJ7WXdSM1BkFQRJrU2AJVaHp0"
+      place_id: "ChIJ7WXdSM1BkFQRJrU2AJVaHp0",
+      location_type: LocationType.GOOGLE
     },
     status: EventStatus.DRAFT,
     category: "Environment",
@@ -114,7 +116,8 @@ export const mockEvents: Event[] = [
       longitude: -73.9851,
       isVirtual: false,
       platformName: "",
-      place_id: "ChIJmQJIxlVYwokRLgeuocVOGVU"
+      place_id: "ChIJmQJIxlVYwokRLgeuocVOGVU",
+      location_type: LocationType.GOOGLE
     },
     status: EventStatus.PUBLISHED,
     category: "Marketing",
@@ -179,7 +182,8 @@ export const mockEvents: Event[] = [
       longitude: 121.5654,
       isVirtual: false,
       platformName: "",
-      place_id: "ChIJSSL1Z0mpQjQRhZ9Zs0do7j8"
+      place_id: "ChIJSSL1Z0mpQjQRhZ9Zs0do7j8",
+      location_type: LocationType.GOOGLE
     },
     status: EventStatus.PUBLISHED,
     category: "Healthcare & Technology",
@@ -243,7 +247,8 @@ export const mockEvents: Event[] = [
       longitude: 116.3876,
       isVirtual: false,
       platformName: "",
-      place_id: "ChIJLV2lxqhS8DURGNzqJg5SkSA"
+      place_id: "ChIJLV2lxqhS8DURGNzqJg5SkSA",
+      location_type: LocationType.GOOGLE
     },
     status: EventStatus.PUBLISHED,
     category: "Sustainability",
@@ -290,7 +295,8 @@ export const mockEvents: Event[] = [
       longitude: 103.8588,
       isVirtual: false,
       platformName: "",
-      place_id: "ChIJ64jbrMkZ2jERN_GRBObskXI"
+      place_id: "ChIJ64jbrMkZ2jERN_GRBObskXI",
+      location_type: LocationType.GOOGLE
     },
     status: EventStatus.PUBLISHED,
     category: "Marketing",
@@ -353,7 +359,8 @@ export const mockEvents: Event[] = [
       longitude: 114.1694,
       isVirtual: false,
       platformName: "",
-      place_id: "ChIJyx53KxMABDQRvCyYKrDFPY0"
+      place_id: "ChIJyx53KxMABDQRvCyYKrDFPY0",
+      location_type: LocationType.GOOGLE
     },
     status: EventStatus.PUBLISHED,
     category: "Technology",
@@ -417,7 +424,8 @@ export const mockEvents: Event[] = [
       longitude: 127.0592,
       isVirtual: false,
       platformName: "",
-      place_id: "ChIJj-lZbx6kfDURMU9Ip-Vkj3Q"
+      place_id: "ChIJj-lZbx6kfDURMU9Ip-Vkj3Q",
+      location_type: LocationType.GOOGLE
     },
     status: EventStatus.PUBLISHED,
     category: "Education",
@@ -479,7 +487,8 @@ export const mockEvents: Event[] = [
       longitude: 121.5645,
       isVirtual: false,
       platformName: "",
-      place_id: "ChIJIQBpAG2ahYAR_6128GcTUEo"
+      place_id: "ChIJIQBpAG2ahYAR_6128GcTUEo",
+      location_type: LocationType.GOOGLE
     },
     status: EventStatus.PUBLISHED,
     category: "Technology",
@@ -524,7 +533,8 @@ export const mockEvents: Event[] = [
       longitude: undefined,
       isVirtual: true,
       platformName: "Zoom",
-      place_id: undefined
+      place_id: undefined,
+      location_type: LocationType.VIRTUAL
     },
     status: EventStatus.PUBLISHED,
     category: "Online",
@@ -569,7 +579,8 @@ export const mockEvents: Event[] = [
       longitude: undefined,
       isVirtual: false,
       platformName: "",
-      place_id: undefined
+      place_id: undefined,
+      location_type: LocationType.CUSTOM
     },
     status: EventStatus.PUBLISHED,
     category: "Art",
