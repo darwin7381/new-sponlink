@@ -5,7 +5,8 @@ import { LocationType } from '@/types/event';
 import { 
   createVirtualLocation, 
   createGoogleLocation, 
-  createCustomLocation
+  createCustomLocation,
+  ensureStandardLocationFormat
 } from '@/utils/locationUtils';
 
 /**
@@ -130,14 +131,11 @@ export async function GET(request: Request) {
       endAt: eventData.endAt,
       timezone: eventData.timezone,
       location: {
-        name: eventData.location.name,
-        full_address: eventData.location.full_address,
-        city: eventData.location.city,
-        country: eventData.location.country,
-        place_id: eventData.location.place_id,
-        address: eventData.location.address || eventData.location.full_address,
-        postal_code: eventData.location.postal_code,
-        location_type: eventData.location.location_type || LocationType.CUSTOM // 確保始終有一個有效的location_type
+        ...eventData.location,
+        name: eventData.location.name || '',
+        full_address: eventData.location.full_address || '',
+        address: eventData.location.address || eventData.location.full_address || '',
+        location_type: eventData.location.location_type || LocationType.CUSTOM
       },
       category: eventData.category,
       tags: eventData.tags
@@ -152,7 +150,43 @@ export async function GET(request: Request) {
       location_type: eventData.location.location_type
     });
 
-    return NextResponse.json(result);
+    // 使用 ensureStandardLocationFormat 確保返回的地點數據符合標準格式
+    const standardizedLocation = ensureStandardLocationFormat({
+      id: '',
+      name: result.location.name,
+      address: result.location.address || result.location.full_address || '',
+      full_address: result.location.full_address || result.location.address || '',
+      city: result.location.city || '',
+      country: result.location.country || '',
+      postal_code: result.location.postal_code || '',
+      place_id: result.location.place_id,
+      location_type: result.location.location_type
+    });
+
+    // 轉回 LumaLocationData 類型
+    const locationResult: LumaLocationData = {
+      name: standardizedLocation.name || '',
+      full_address: standardizedLocation.full_address || standardizedLocation.address || '',
+      address: standardizedLocation.address || '',
+      city: standardizedLocation.city || '',
+      country: standardizedLocation.country || '',
+      postal_code: standardizedLocation.postal_code || '',
+      place_id: standardizedLocation.place_id || '',
+      description: result.location.description || '',
+      location_type: standardizedLocation.location_type || LocationType.CUSTOM
+    };
+
+    return NextResponse.json({
+      title: result.title,
+      description: result.description,
+      coverImage: result.coverImage,
+      startAt: result.startAt,
+      endAt: result.endAt,
+      timezone: result.timezone,
+      location: locationResult,
+      category: result.category,
+      tags: result.tags
+    });
   } catch (error) {
     console.error('Error scraping Luma event:', error);
     return NextResponse.json({ 
@@ -513,20 +547,20 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
     // 若沒找到具體鏈接，根據關鍵詞判斷平台
     if (!virtualLink) {
       if (htmlContent.toLowerCase().includes('zoom')) {
-        virtualLink = 'Zoom';
+        virtualLink = 'Zoom'; // 使用平台名稱，而非鏈接
       } else if (htmlContent.toLowerCase().includes('google meet')) {
-        virtualLink = 'Google Meet';
+        virtualLink = 'Google Meet'; // 使用平台名稱，而非鏈接
       } else if (htmlContent.toLowerCase().includes('microsoft teams')) {
-        virtualLink = 'Microsoft Teams';
+        virtualLink = 'Microsoft Teams'; // 使用平台名稱，而非鏈接
       } else if (htmlContent.toLowerCase().includes('webex')) {
-        virtualLink = 'Webex';
+        virtualLink = 'Webex'; // 使用平台名稱，而非鏈接
       } else {
         // 尋找任何可能的域名
         const domainMatch = htmlContent.match(/https?:\/\/([^\/"\s]+)/i);
         if (domainMatch && domainMatch[0] && !domainMatch[0].includes('lu.ma')) {
           virtualLink = domainMatch[0];
         } else {
-          virtualLink = 'Virtual';
+          virtualLink = 'Virtual'; // 完全沒有任何鏈接時使用 "Virtual"
         }
       }
     }
@@ -543,7 +577,7 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
       country: virtualLocation.country || '',
       postal_code: virtualLocation.postal_code || '',
       place_id: virtualLocation.place_id || '',
-      description: '', // Location 類型沒有 description 屬性，使用空字串
+      description: '', 
       location_type: LocationType.VIRTUAL
     };
     console.log('已創建虛擬活動地點:', locationResult);
@@ -643,7 +677,7 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
       postal_code: customLocation.postal_code || '',
       place_id: customLocation.place_id || '',
       description: locationDescription || '',
-      location_type: LocationType.GOOGLE
+      location_type: LocationType.CUSTOM
     };
     
   } else if (needsRegistration) {
@@ -771,7 +805,7 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
     }
   }
   
-  return {
+  const event = {
     eventId: '',
     pageUrl: '',
     title,
@@ -786,4 +820,6 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
     category,
     tags
   };
+  
+  return event;
 } 

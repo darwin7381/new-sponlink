@@ -91,28 +91,21 @@ export const createVirtualLocation = (input: string): Location => {
   const { isVirtual, platformName } = detectVirtualPlatform(input);
   
   if (!isVirtual) {
-    return {
-      id: uuidv4(),
-      name: input,
-      address: input,
-      city: '',
-      country: '',
-      postal_code: '',
-      location_type: LocationType.CUSTOM
-    };
+    // 如果不是虛擬地址，則創建自定義地址
+    return createCustomLocation(input);
   }
   
   // 提取顯示域名
   const displayAddress = extractDomainFromUrl(input);
   
   // 遵循 LocationSelector 中的格式：
-  // 1. 平台名顯示在上方 (name)
-  // 2. 網址/域名顯示在下方 (address)
+  // 情況 d: 已知虛擬會議平台 - 上方顯示平台名稱，下方顯示完整會議鏈接
+  // 情況 e: 未知虛擬平台 - 上方顯示「Virtual」，下方顯示網域名稱
   return {
     id: uuidv4(),
-    name: platformName,
-    address: platformName === 'Virtual' ? displayAddress : input,
-    full_address: input,
+    name: platformName, // 上方始終顯示平台名稱
+    address: platformName === 'Virtual' ? displayAddress : input, // 當是未知平台時僅顯示域名，否則顯示完整鏈接
+    full_address: input, // 保存原始輸入
     city: '',
     country: '',
     postal_code: '',
@@ -139,10 +132,12 @@ export const createGoogleLocation = (placeDetails: {
   longitude?: number;
   place_id: string;
 }): Location => {
+  // Google 地點的標準格式：
+  // 1. 情況 b: 上方顯示地點名稱，下方顯示完整地址
   return {
     id: uuidv4(),
-    name: placeDetails.name,
-    address: placeDetails.address || placeDetails.full_address || '',
+    name: placeDetails.name, // 上方顯示地點名稱
+    address: placeDetails.address || placeDetails.full_address || '', // 下方顯示完整地址
     full_address: placeDetails.full_address || placeDetails.address || '',
     city: placeDetails.city || '',
     country: placeDetails.country || '',
@@ -150,7 +145,8 @@ export const createGoogleLocation = (placeDetails: {
     latitude: placeDetails.latitude,
     longitude: placeDetails.longitude,
     place_id: placeDetails.place_id,
-    location_type: LocationType.GOOGLE
+    location_type: LocationType.GOOGLE, // 明確設置為 Google 類型
+    // 注意：不設置 isVirtual 和 platformName，因為這是實體地點而非虛擬會議
   };
 };
 
@@ -163,15 +159,18 @@ export const createGoogleLocation = (placeDetails: {
  * @returns 格式化的 Location 對象
  */
 export const createCustomLocation = (address: string, cityName?: string, countryName?: string): Location => {
+  // 自定義地址的標準格式：
+  // 1. 情況 c: 上方顯示輸入文本，下方顯示「Custom Address」標籤
   return {
     id: uuidv4(),
-    name: address,
-    address: address,
-    full_address: address,
+    name: address, // 上方顯示輸入的地址文本
+    address: address, // 保存完整地址
+    full_address: address, // 保存完整地址
     city: cityName || '',
     country: countryName || '',
     postal_code: '',
-    location_type: LocationType.CUSTOM
+    location_type: LocationType.CUSTOM, // 明確設置為自定義類型
+    // 注意：不設置 isVirtual 和 platformName，因為這是自定義地址而非虛擬會議
   };
 };
 
@@ -239,4 +238,53 @@ export const isRegistrationRequired = (text: string): boolean => {
 export const extractCityFromRegistrationText = (text: string): string => {
   const match = text.match(/\[(\w+)\]/i);
   return match ? match[1] : '';
+};
+
+/**
+ * 確保地點對象符合五種標準顯示格式之一
+ * 這是一個保障函數，用於檢查並修正任何可能導致顯示不一致的地點對象
+ * @param location 需要檢查的地點對象
+ * @returns 修正後符合標準格式的地點對象
+ */
+export const ensureStandardLocationFormat = (location: Location): Location => {
+  // 檢查是否為空地點
+  if (!location || (!location.name && !location.address)) {
+    // 情況 a: 初始形式/內容為空
+    return {
+      id: location?.id || uuidv4(),
+      name: '',
+      address: '',
+      city: '',
+      country: '',
+      postal_code: '',
+      location_type: undefined
+    };
+  }
+
+  // 檢查地點類型
+  if (location.location_type === LocationType.VIRTUAL || location.isVirtual) {
+    // 確保虛擬地點格式正確
+    // 情況 d 和 e: 虛擬會議
+    return {
+      ...location,
+      id: location.id || uuidv4(),
+      name: location.platformName || 'Virtual', // 上方顯示平台名稱或 Virtual
+      address: location.platformName === 'Virtual' ? extractDomainFromUrl(location.address || location.full_address || '') : (location.address || location.full_address || ''), // 下方顯示域名或完整鏈接
+      location_type: LocationType.VIRTUAL
+    };
+  } else if (location.location_type === LocationType.GOOGLE && location.place_id) {
+    // 情況 b: Google 地點
+    return {
+      ...location,
+      id: location.id || uuidv4(),
+      location_type: LocationType.GOOGLE
+    };
+  } else {
+    // 情況 c: 自定義地址
+    return {
+      ...location,
+      id: location.id || uuidv4(),
+      location_type: LocationType.CUSTOM
+    };
+  }
 }; 
