@@ -6,13 +6,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, BarChart3Icon, UsersIcon } from "lucide-react";
-import { getOrganizerMeetings } from "@/lib/services/sponsorService";
+import { CalendarIcon, UserIcon, BarChart3Icon, CheckIcon, ClockIcon } from "lucide-react";
+import { getOrganizerMeetings } from "@/services/meetingService";
 import { getOrganizerEvents } from "@/services/eventService";
 import { Meeting, MEETING_STATUS, USER_ROLES } from "@/lib/types/users";
 import { Event } from "@/lib/types/events";
 import { adaptNewEventsToOld } from "@/lib/types-adapter";
 import { getCurrentUser, hasRole, isAuthenticated } from "@/lib/services/authService";
+import { format } from "date-fns";
 
 export default function OrganizerDashboardPage() {
   const router = useRouter();
@@ -22,6 +23,45 @@ export default function OrganizerDashboardPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   
+  // 格式化時區的函數
+  const formatTimezone = (timezone?: string) => {
+    if (!timezone) return '';
+    
+    // 嘗試獲取時區縮寫
+    try {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = {
+        timeZone: timezone,
+        timeZoneName: 'short'
+      };
+      // 使用en-US來獲取標準化的時區縮寫（如EDT、PDT等）
+      const timeString = new Intl.DateTimeFormat('en-US', options).format(now);
+      
+      // 提取時區縮寫，例如從 "5/24/2023, 8:00 AM EDT" 提取 "EDT"
+      const tzMatch = timeString.match(/[A-Z]{3,4}$/);
+      if (tzMatch) {
+        return tzMatch[0]; // 返回時區縮寫，如 "EDT"
+      }
+      
+      // 如果沒有找到標準縮寫，嘗試獲取GMT偏移
+      const gmtMatch = timeString.match(/GMT[+-]\d+/);
+      return gmtMatch ? gmtMatch[0] : timezone.split('/').pop()?.replace('_', ' ') || timezone;
+    } catch (_) {
+      // 發生錯誤時返回簡化的時區名稱
+      return timezone.includes('/') 
+        ? timezone.split('/').pop()?.replace('_', ' ')
+        : timezone;
+    }
+  };
+
+  // 顯示日期時間及時區
+  const formatDateTime = (dateTimeStr: string, timezone?: string) => {
+    const date = new Date(dateTimeStr);
+    const formattedDate = format(date, "yyyy/MM/dd HH:mm");
+    const timezoneStr = timezone ? ` ${formatTimezone(timezone)}` : '';
+    return `${formattedDate}${timezoneStr}`;
+  };
+
   // 檢查用戶身份
   useEffect(() => {
     const checkAuth = async () => {
@@ -133,7 +173,7 @@ export default function OrganizerDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">贊助商數量</CardTitle>
-              <UsersIcon className="h-4 w-4 text-primary" />
+              <UserIcon className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalSponsors}</div>
@@ -174,8 +214,11 @@ export default function OrganizerDashboardPage() {
                             <div className="mt-4 flex items-center text-sm text-muted-foreground">
                               <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                               <span>
-                                {new Date(event.start_time).toLocaleDateString()}
+                                {formatDateTime(event.start_time, event.timezone)}
                               </span>
+                              {event.timezone && (
+                                <ClockIcon className="h-4 w-4 ml-2 mr-1 text-muted-foreground" />
+                              )}
                             </div>
                           </div>
                           
@@ -231,7 +274,7 @@ export default function OrganizerDashboardPage() {
                               <div className="mt-4 flex items-center text-sm text-muted-foreground">
                                 <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
                                 <span>
-                                  {new Date(meeting.confirmed_time).toLocaleString()}
+                                  {formatDateTime(meeting.confirmed_time, meeting.timezone)}
                                 </span>
                               </div>
                             )}

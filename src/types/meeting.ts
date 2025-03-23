@@ -16,6 +16,7 @@ export interface Meeting {
   confirmed_time: string | null;
   status: MeetingStatus;
   meeting_link: string | null;
+  timezone?: string;
   created_at: string;
   updated_at: string;
 }

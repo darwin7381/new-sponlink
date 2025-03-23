@@ -21,8 +21,10 @@ import {
   DialogDescription,
   DialogFooter
 } from "@/components/ui/dialog";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { convertToDatetimeLocalFormat, getBrowserTimezone } from "@/utils/dateUtils";
+import { TimezoneSelect } from "@/components/ui/timezone-select";
 
 // 贊助方案類型定義
 interface SponsorshipPlanForm {
@@ -50,6 +52,7 @@ export default function CreateEventPage() {
     end_time: "",
     category: "",
     tags: "",
+    timezone: getBrowserTimezone(), // 初始化為瀏覽器時區
     location: {
       id: "",
       name: "",
@@ -178,15 +181,29 @@ export default function CreateEventPage() {
         return;
       }
       
+      // 使用時區處理函數正確轉換時間
+      const timezone = eventData.timezone || 'UTC';
+      console.log('使用時區:', timezone);
+      
+      // 將 ISO 格式的時間轉換為 datetime-local 格式用於表單顯示
+      const startTime = convertToDatetimeLocalFormat(eventData.start_time, timezone);
+      const endTime = convertToDatetimeLocalFormat(eventData.end_time, timezone);
+      
+      console.log('原始開始時間:', eventData.start_time);
+      console.log('轉換後開始時間:', startTime);
+      console.log('原始結束時間:', eventData.end_time);
+      console.log('轉換後結束時間:', endTime);
+      
       // 更新表單數據
       setFormData({
         title: eventData.title,
         description: eventData.description,
         cover_image: eventData.cover_image || formData.cover_image,
-        start_time: new Date(eventData.start_time).toISOString().slice(0, 16),
-        end_time: new Date(eventData.end_time).toISOString().slice(0, 16),
+        start_time: startTime,
+        end_time: endTime,
         category: eventData.category,
         tags: eventData.tags.join(", "),
+        timezone: timezone, // 保存 Luma 原始時區
         location: eventData.location
       });
       
@@ -291,6 +308,11 @@ export default function CreateEventPage() {
         updated_at: new Date().toISOString()
       }));
       
+      // 時區處理 - 使用用戶瀏覽器的時區或前面保存的活動時區
+      // 注意：這個處理主要是為了記錄數據，前面的日期時間轉換已經考慮了時區
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+      console.log('提交時使用的時區:', timezone);
+      
       // 準備創建數據
       const eventData = {
         organizer_id: currentUser.id,
@@ -303,7 +325,8 @@ export default function CreateEventPage() {
         status: EventStatus.DRAFT,
         category: formData.category,
         tags,
-        sponsorship_plans: formattedSponsorshipPlans
+        sponsorship_plans: formattedSponsorshipPlans,
+        timezone: timezone // 添加時區信息以便將來顯示
       };
       
       const createdEvent = await createEvent(eventData);
@@ -319,6 +342,14 @@ export default function CreateEventPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 時區變更處理
+  const handleTimezoneChange = (newTimezone: string) => {
+    setFormData(prev => ({
+      ...prev,
+      timezone: newTimezone
+    }));
   };
 
   // 如果在載入中，顯示載入狀態
@@ -487,31 +518,47 @@ export default function CreateEventPage() {
                   )}
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div>
-                    <Label htmlFor="start_time" className="text-foreground">開始時間</Label>
-                    <Input
-                      id="start_time"
-                      name="start_time"
-                      type="datetime-local"
-                      value={formData.start_time}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1 bg-background border-border"
-                    />
+                    <Label htmlFor="timezone" className="text-foreground">活動時區</Label>
+                    <div className="mt-1">
+                      <TimezoneSelect 
+                        value={formData.timezone} 
+                        onChange={handleTimezoneChange}
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      <Clock className="inline-block mr-1 h-3 w-3" />
+                      選擇活動的主要時區，參與者將根據此時區查看活動時間
+                    </p>
                   </div>
                   
-                  <div>
-                    <Label htmlFor="end_time" className="text-foreground">結束時間</Label>
-                    <Input
-                      id="end_time"
-                      name="end_time"
-                      type="datetime-local"
-                      value={formData.end_time}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1 bg-background border-border"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="start_time" className="text-foreground">開始時間</Label>
+                      <Input
+                        id="start_time"
+                        name="start_time"
+                        type="datetime-local"
+                        value={formData.start_time}
+                        onChange={handleInputChange}
+                        required
+                        className="mt-1 bg-background border-border"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="end_time" className="text-foreground">結束時間</Label>
+                      <Input
+                        id="end_time"
+                        name="end_time"
+                        type="datetime-local"
+                        value={formData.end_time}
+                        onChange={handleInputChange}
+                        required
+                        className="mt-1 bg-background border-border"
+                      />
+                    </div>
                   </div>
                 </div>
                 

@@ -5,6 +5,7 @@
 
 import { Event, EventStatus, Location, LocationType } from '@/types/event';
 import { v4 as uuidv4 } from 'uuid';
+import { convertToDatetimeLocalFormat, getBrowserTimezone } from '@/utils/dateUtils';
 
 /**
  * Luma 活動數據結構（從抓取內容中提取）
@@ -140,6 +141,7 @@ export const parseLumaHTML = (html: string): ScrapedLumaEvent | null => {
 
 /**
  * 格式化爬取的 Luma 數據為 Event 對象
+ * 增加對時區的處理
  */
 export const formatLumaEvent = (
   scrapedData: ScrapedLumaEvent,
@@ -148,19 +150,33 @@ export const formatLumaEvent = (
   // 創建位置對象
   const location = createLocation(scrapedData.location);
   
+  // 處理時區 - 如果 Luma 沒有提供時區，使用瀏覽器的時區作為備用
+  const timezone = scrapedData.timezone || getBrowserTimezone();
+  console.log('活動時區:', timezone);
+  
+  // 將時間轉換為表單可顯示的格式
+  const startTimeLocal = convertToDatetimeLocalFormat(scrapedData.startAt, timezone);
+  const endTimeLocal = convertToDatetimeLocalFormat(scrapedData.endAt, timezone);
+  
+  console.log('原始開始時間:', scrapedData.startAt);
+  console.log('轉換後開始時間:', startTimeLocal);
+  console.log('原始結束時間:', scrapedData.endAt);
+  console.log('轉換後結束時間:', endTimeLocal);
+  
   // 格式化為應用程序的事件格式
   return {
     organizer_id: organizerId,
     title: scrapedData.title,
     description: scrapedData.description,
     cover_image: scrapedData.coverImage,
-    start_time: scrapedData.startAt,  // 直接使用 ISO 時間戳
-    end_time: scrapedData.endAt,      // 直接使用 ISO 時間戳
+    start_time: scrapedData.startAt,  // 保留原始 ISO 時間戳
+    end_time: scrapedData.endAt,      // 保留原始 ISO 時間戳
     location,
     status: EventStatus.DRAFT,
     category: scrapedData.category,
     tags: scrapedData.tags,
-    sponsorship_plans: []
+    sponsorship_plans: [],
+    timezone: timezone  // 保存時區信息，方便後續處理
   };
 };
 

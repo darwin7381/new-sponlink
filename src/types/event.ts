@@ -57,4 +57,5 @@ export interface Event {
   sponsorship_plans: SponsorshipPlan[];
   created_at: string;
   updated_at: string;
+  timezone?: string; // 事件的時區，例如: 'Asia/Taipei', 'America/New_York'
 }

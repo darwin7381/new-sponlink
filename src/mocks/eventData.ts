@@ -9,6 +9,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-06-15T09:00:00Z",
     end_time: "2025-06-17T18:00:00Z",
+    timezone: "America/Los_Angeles",
     location: {
       id: "loc1",
       name: "San Francisco Convention Center",
@@ -63,6 +64,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-08-10T09:00:00Z",
     end_time: "2025-08-12T17:00:00Z",
+    timezone: "America/Los_Angeles",
     location: {
       id: "loc2",
       name: "Seattle Convention Center",
@@ -105,6 +107,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1551818255-e6e10975bc17?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-07-22T09:30:00Z",
     end_time: "2025-07-24T17:30:00Z",
+    timezone: "America/New_York",
     location: {
       id: "loc3",
       name: "New York Marriott Marquis",
@@ -171,6 +174,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1587854680352-936b22b91030?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-09-12T08:30:00Z",
     end_time: "2025-09-14T17:00:00Z",
+    timezone: "Asia/Taipei",
     location: {
       id: "loc4",
       name: "台北國際會議中心",
@@ -236,6 +240,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1553152531-b98a2fc8d3bf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-05-20T09:00:00Z",
     end_time: "2025-05-22T18:00:00Z",
+    timezone: "America/New_York",
     location: {
       id: "loc5",
       name: "北京國家會議中心",
@@ -284,6 +289,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1557838923-2985c318be48?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-07-08T09:30:00Z",
     end_time: "2025-07-10T17:30:00Z",
+    timezone: "Asia/Singapore",
     location: {
       id: "loc6",
       name: "新加坡濱海灣金沙會議中心",
@@ -348,6 +354,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1639322537228-f710d846310a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-11-03T09:00:00Z",
     end_time: "2025-11-05T18:00:00Z",
+    timezone: "Asia/Hong_Kong",
     location: {
       id: "loc7",
       name: "香港會議展覽中心",
@@ -413,6 +420,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-08-15T09:00:00Z",
     end_time: "2025-08-17T17:00:00Z",
+    timezone: "Asia/Seoul",
     location: {
       id: "loc8",
       name: "首爾COEX會議中心",
@@ -476,6 +484,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1543269664-56d93c1b41a6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-10-10T10:00:00Z",
     end_time: "2025-10-12T18:00:00Z",
+    timezone: "Asia/Taipei",
     location: {
       id: "loc-g",
       name: "台北 101",
@@ -522,6 +531,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1609921212029-bb5a28e60960?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-11-15T14:00:00Z",
     end_time: "2025-11-15T18:00:00Z",
+    timezone: "Asia/Taipei",
     location: {
       id: "loc-v",
       name: "Zoom 线上会议",
@@ -568,6 +578,7 @@ export const mockEvents: Event[] = [
     cover_image: "https://images.unsplash.com/photo-1560439514-4e9645039924?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
     start_time: "2025-12-20T16:00:00Z",
     end_time: "2025-12-20T22:00:00Z",
+    timezone: "Asia/Taipei",
     location: {
       id: "loc-c",
       name: "地址測試地址測試地址測試試",

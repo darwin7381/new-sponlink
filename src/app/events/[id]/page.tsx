@@ -13,7 +13,10 @@ import { Event, SponsorshipPlan } from "@/types/event";
 import { CartItem } from "@/types/sponsor";
 import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
 import { USER_ROLES } from "@/lib/types/users";
-import { formatLocation, formatAddress } from "@/utils/languageUtils";
+import { formatAddress } from "@/utils/languageUtils";
+import { Clock } from "lucide-react";
+import { getBrowserTimezone } from "@/utils/dateUtils";
+import LocationDisplay from "@/components/maps/LocationDisplay";
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -173,11 +176,34 @@ export default function EventDetailPage() {
       : `${format(startDate, "MMMM d, yyyy")} - ${format(endDate, "MMMM d, yyyy")}`
     : "日期待定";
 
-  // 格式化地點顯示
-  const formattedLocation = event.location ? 
-    formatLocation(event.location.city, event.location.country) : 
-    "地點待定";
-    
+  // 獲取人性化的時區縮寫顯示
+  const getTimezoneDisplay = (timezone: string): string => {
+    try {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = {
+        timeZone: timezone,
+        timeZoneName: 'short'
+      };
+      // 使用en-US來獲取標準化的時區縮寫（如EDT、PDT等）
+      const timeString = new Intl.DateTimeFormat('en-US', options).format(now);
+      
+      // 提取時區縮寫，例如從 "5/24/2023, 8:00 AM EDT" 提取 "EDT"
+      const tzMatch = timeString.match(/[A-Z]{3,4}$/);
+      if (tzMatch) {
+        return tzMatch[0]; // 返回時區縮寫，如 "EDT"
+      }
+      
+      // 如果沒有找到標準縮寫，嘗試獲取GMT偏移
+      const gmtMatch = timeString.match(/GMT[+-]\d+/);
+      return gmtMatch ? gmtMatch[0] : '';
+    } catch (error) {
+      console.error('獲取時區顯示錯誤:', error);
+      return '';
+    }
+  };
+
+  const timezoneDisplay = event.timezone ? getTimezoneDisplay(event.timezone) : '';
+
   // 格式化完整地址
   const addressDisplay = event.location ? formatAddress(event.location) : "地點待定";
 
@@ -223,23 +249,50 @@ export default function EventDetailPage() {
                 <svg className="h-5 w-5 text-muted-foreground mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                <span>{formattedDate}</span>
+                <span>
+                  {formattedDate}
+                  {timezoneDisplay && (
+                    <span className="ml-1 text-sm text-muted-foreground">{timezoneDisplay}</span>
+                  )}
+                </span>
               </div>
+              
+              {/* 顯示為虛擬活動標記 */}
+              {event.location?.location_type === 'virtual' && (
+                <div className="inline-flex items-center bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                  <svg className="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  虛擬活動
+                </div>
+              )}
               
               <div className="flex items-center">
                 <svg className="h-5 w-5 text-muted-foreground mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
-                <span>
-                  {event.location?.name 
-                    ? (event.location.city || event.location.country
-                        ? `${event.location.name}, ${formattedLocation}` 
-                        : event.location.name)
-                    : "地點待定"}
-                </span>
+                {event.location ? (
+                  <LocationDisplay location={event.location} />
+                ) : (
+                  <span>地點待定</span>
+                )}
               </div>
             </div>
+            
+            {/* 如果瀏覽器時區與活動時區不同，顯示用戶本地時間提示 */}
+            {event.timezone && getBrowserTimezone() !== event.timezone && (
+              <div className="mt-2 p-2 bg-muted/50 text-sm rounded-md">
+                <p className="flex items-center">
+                  <Clock className="h-4 w-4 mr-1" />
+                  <span>當地時間: {
+                    startDate && endDate && startDate.toDateString() === endDate.toDateString()
+                      ? `${format(startDate, "MMM d")} • ${format(startDate, "h:mm a")} - ${format(endDate, "h:mm a")} ${getTimezoneDisplay(getBrowserTimezone())}`
+                      : "轉換時間出錯"
+                  }</span>
+                </p>
+              </div>
+            )}
             
             <div className="mt-8">
               <h2 className="text-xl font-bold text-foreground mb-4">關於此活動</h2>
