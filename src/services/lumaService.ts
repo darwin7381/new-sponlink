@@ -27,6 +27,8 @@ interface ScrapedLumaEvent {
     latitude?: number;
     longitude?: number;
     raw_geo_data?: Record<string, unknown>;
+    location_type?: LocationType;
+    postal_code?: string;
   };
   category: string;
   tags: string[];
@@ -38,12 +40,22 @@ interface ScrapedLumaEvent {
  */
 const createLocation = (locationData: ScrapedLumaEvent['location']): Location => {
   try {
-    // 確定位置類型 - 如果有 Google Place ID 使用 Google 類型
-    const locationType = locationData.place_id 
-      ? LocationType.GOOGLE 
-      : (!locationData.full_address && !locationData.address 
-        ? LocationType.VIRTUAL 
-        : LocationType.CUSTOM);
+    // 確定位置類型 - 優先使用API返回的location_type，否則自動判斷
+    let locationType;
+    
+    if (locationData.location_type !== undefined) {
+      // 優先使用API返回的location_type值
+      locationType = locationData.location_type;
+      console.log('使用API返回的location_type:', locationType);
+    } else {
+      // 自動判斷位置類型 - 如果有Google Place ID使用Google類型
+      locationType = locationData.place_id 
+        ? LocationType.GOOGLE 
+        : (!locationData.full_address && !locationData.address 
+          ? LocationType.VIRTUAL 
+          : LocationType.CUSTOM);
+      console.log('自動判斷的location_type:', locationType);
+    }
     
     // 基本位置對象
     const location: Location = {
@@ -52,7 +64,7 @@ const createLocation = (locationData: ScrapedLumaEvent['location']): Location =>
       address: locationData.full_address || locationData.address || '',
       city: locationData.city || '',
       country: locationData.country || '',
-      postal_code: '',
+      postal_code: locationData.postal_code || '',
       location_type: locationType,
     };
     
@@ -66,6 +78,8 @@ const createLocation = (locationData: ScrapedLumaEvent['location']): Location =>
       location.latitude = locationData.latitude;
       location.longitude = locationData.longitude;
     }
+    
+    console.log('創建的最終位置對象:', location);
     
     return location;
   } catch (error) {
@@ -165,14 +179,43 @@ export const scrapeLumaEvent = async (lumaUrl: string, organizerId: string): Pro
     
     const data = await response.json();
     
-    if (!data.success || !data.eventData) {
+    // 檢查API返回的數據是否有效
+    if (!data || !data.title) {
       throw new Error('抓取 Luma 事件數據無效');
     }
     
-    // 直接使用 API 返回的數據
-    return formatLumaEvent(data.eventData, organizerId);
+    console.log('API返回數據:', JSON.stringify(data).substring(0, 500) + '...');
+    console.log('位置數據:', data.location);
+    
+    // 轉換為ScrapedLumaEvent格式
+    const scrapedData: ScrapedLumaEvent = {
+      title: data.title,
+      description: data.description,
+      coverImage: data.coverImage,
+      startAt: data.startAt,
+      endAt: data.endAt,
+      timezone: data.timezone,
+      location: {
+        name: data.location.name,
+        full_address: data.location.full_address,
+        address: data.location.address,
+        city: data.location.city,
+        country: data.location.country,
+        place_id: data.location.place_id,
+        description: data.location.description,
+        postal_code: data.location.postal_code,
+        location_type: data.location.location_type, // 保留API返回的location_type
+        latitude: data.location.latitude,
+        longitude: data.location.longitude
+      },
+      category: data.category,
+      tags: data.tags || []
+    };
+    
+    // 直接使用 API 返回的數據作為 ScrapedLumaEvent
+    return formatLumaEvent(scrapedData, organizerId);
   } catch (error) {
     console.error('抓取 Luma 事件錯誤:', error);
-    return null;
+    throw error; // 向上拋出錯誤，使呼叫方能夠處理
   }
 }; 

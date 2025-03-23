@@ -24,6 +24,7 @@ export interface Location {
   platformName?: string;
   place_id?: string;
   location_type?: LocationType; // 位置類型
+  full_address?: string; // 完整地址字符串（從Google Places API獲取）
 }
 
 export interface SponsorshipPlan {

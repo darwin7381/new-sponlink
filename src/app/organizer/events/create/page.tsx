@@ -194,7 +194,12 @@ export default function CreateEventPage() {
       handleLumaImportDialog(false);
     } catch (error) {
       console.error("Luma import error:", error);
-      setImportError("導入過程中發生錯誤。請稍後再試。");
+      // 顯示更具體的錯誤信息
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "導入過程中發生未知錯誤";
+      
+      setImportError(`導入失敗: ${errorMessage}`);
     } finally {
       setIsImporting(false);
     }

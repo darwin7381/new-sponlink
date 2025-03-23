@@ -114,12 +114,14 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     latitude: number;
     longitude: number;
     place_id?: string;
+    full_address?: string;
   }) => {
     // 一次性更新所有位置信息
     onChange({
       ...location,
       name: placeDetails.name,
       address: placeDetails.address,
+      full_address: placeDetails.full_address || placeDetails.address,
       city: placeDetails.city,
       country: placeDetails.country,
       postal_code: placeDetails.postal_code,
@@ -128,7 +130,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       isVirtual: false,
       platformName: '',
       place_id: placeDetails.place_id,
-      location_type: LocationType.GOOGLE // 設置位置類型為 Google
+      location_type: LocationType.GOOGLE // 明確設置位置類型為 Google
     });
     
     // 選擇後關閉面板
@@ -346,6 +348,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         handlePlaceSelect({
           name: placeData.displayName?.text || prediction.name || '',
           address: placeData.formattedAddress || prediction.address || '',
+          full_address: placeData.formattedAddress || prediction.address || '',
           city,
           country,
           postal_code,
@@ -358,6 +361,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
         handlePlaceSelect({
           name: prediction.name || '',
           address: prediction.address || '',
+          full_address: prediction.address || '',
           city: '',
           country: '',
           postal_code: '',
@@ -373,6 +377,7 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       handlePlaceSelect({
         name: prediction.name || '',
         address: prediction.address || '',
+        full_address: prediction.address || '',
         city: '',
         country: '',
         postal_code: '',
@@ -422,7 +427,12 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
                         <div className="text-sm text-gray-400 truncate">{location.address}</div>
                       </div>
                     ) : (
-                      location.location_type === LocationType.CUSTOM ? (
+                      location.location_type === LocationType.GOOGLE ? (
+                        <div>
+                          <div className="text-white font-normal">{location.name || getDisplayAddress()}</div>
+                          <div className="text-sm text-gray-400 truncate">{location.address || location.full_address}</div>
+                        </div>
+                      ) : location.location_type === LocationType.CUSTOM ? (
                         <div>
                           <div className="text-white font-normal">{getDisplayAddress()}</div>
                           <div className="text-sm text-gray-400 truncate">Custom Address</div>
