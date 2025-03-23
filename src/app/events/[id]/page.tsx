@@ -15,8 +15,106 @@ import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authSer
 import { USER_ROLES } from "@/lib/types/users";
 import { formatAddress } from "@/utils/languageUtils";
 import { Clock } from "lucide-react";
-import { getBrowserTimezone } from "@/utils/dateUtils";
+import { getBrowserTimezone, getTimezoneDisplay } from "@/utils/dateUtils";
 import LocationDisplay from "@/components/maps/LocationDisplay";
+
+/**
+ * 將時間從源時區轉換為目標時區
+ * @param isoString 時間的ISO字符串
+ * @param sourceTimezone 源時區
+ * @param targetTimezone 目標時區
+ * @returns 轉換後的時間ISO字符串
+ */
+const formatToLocalTime = (
+  isoString: string | undefined,
+  sourceTimezone: string | undefined,
+  targetTimezone: string
+): string => {
+  if (!isoString || !sourceTimezone) return '';
+  
+  try {
+    // 1. 將ISO字符串解析為UTC日期
+    const date = new Date(isoString);
+    
+    // 2. 將源時區的時間映射到UTC時間
+    const originalTimezoneFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: sourceTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    const sourceTimeParts = originalTimezoneFormatter.formatToParts(date);
+    const sourceTimeMap: Record<string, string> = {};
+    sourceTimeParts.forEach(part => {
+      sourceTimeMap[part.type] = part.value;
+    });
+    
+    // 3. 重建日期對象
+    const sourceYear = parseInt(sourceTimeMap.year);
+    const sourceMonth = parseInt(sourceTimeMap.month) - 1; // 月份是0-11
+    const sourceDay = parseInt(sourceTimeMap.day);
+    const sourceHour = parseInt(sourceTimeMap.hour);
+    const sourceMinute = parseInt(sourceTimeMap.minute);
+    const sourceSecond = parseInt(sourceTimeMap.second);
+    
+    // 4. 創建表示源時區時間的UTC日期
+    const sourceUTCDate = new Date(Date.UTC(
+      sourceYear, 
+      sourceMonth, 
+      sourceDay, 
+      sourceHour, 
+      sourceMinute, 
+      sourceSecond
+    ));
+    
+    // 5. 將該UTC日期轉換為目標時區的表示
+    const targetTimezoneFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: targetTimezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    });
+    
+    const targetTimeParts = targetTimezoneFormatter.formatToParts(sourceUTCDate);
+    const targetTimeMap: Record<string, string> = {};
+    targetTimeParts.forEach(part => {
+      targetTimeMap[part.type] = part.value;
+    });
+    
+    // 6. 從格式化的部分重建日期
+    const targetYear = parseInt(targetTimeMap.year);
+    const targetMonth = parseInt(targetTimeMap.month) - 1; // 月份是0-11
+    const targetDay = parseInt(targetTimeMap.day);
+    const targetHour = parseInt(targetTimeMap.hour);
+    const targetMinute = parseInt(targetTimeMap.minute);
+    const targetSecond = parseInt(targetTimeMap.second);
+    
+    // 7. 創建表示目標時區時間的日期對象
+    const targetDate = new Date(
+      targetYear,
+      targetMonth,
+      targetDay,
+      targetHour,
+      targetMinute,
+      targetSecond
+    );
+    
+    // 8. 返回轉換後的ISO字符串
+    return targetDate.toISOString();
+  } catch (error) {
+    console.error('時區轉換錯誤:', error);
+    return isoString; // 出錯時返回原始字符串
+  }
+};
 
 export default function EventDetailPage() {
   const params = useParams();
@@ -177,31 +275,6 @@ export default function EventDetailPage() {
     : "日期待定";
 
   // 獲取人性化的時區縮寫顯示
-  const getTimezoneDisplay = (timezone: string): string => {
-    try {
-      const now = new Date();
-      const options: Intl.DateTimeFormatOptions = {
-        timeZone: timezone,
-        timeZoneName: 'short'
-      };
-      // 使用en-US來獲取標準化的時區縮寫（如EDT、PDT等）
-      const timeString = new Intl.DateTimeFormat('en-US', options).format(now);
-      
-      // 提取時區縮寫，例如從 "5/24/2023, 8:00 AM EDT" 提取 "EDT"
-      const tzMatch = timeString.match(/[A-Z]{3,4}$/);
-      if (tzMatch) {
-        return tzMatch[0]; // 返回時區縮寫，如 "EDT"
-      }
-      
-      // 如果沒有找到標準縮寫，嘗試獲取GMT偏移
-      const gmtMatch = timeString.match(/GMT[+-]\d+/);
-      return gmtMatch ? gmtMatch[0] : '';
-    } catch (error) {
-      console.error('獲取時區顯示錯誤:', error);
-      return '';
-    }
-  };
-
   const timezoneDisplay = event.timezone ? getTimezoneDisplay(event.timezone) : '';
 
   // 格式化完整地址
@@ -286,9 +359,46 @@ export default function EventDetailPage() {
                 <p className="flex items-center">
                   <Clock className="h-4 w-4 mr-1" />
                   <span>當地時間: {
-                    startDate && endDate && startDate.toDateString() === endDate.toDateString()
-                      ? `${format(startDate, "MMM d")} • ${format(startDate, "h:mm a")} - ${format(endDate, "h:mm a")} ${getTimezoneDisplay(getBrowserTimezone())}`
-                      : "轉換時間出錯"
+                    (() => {
+                      try {
+                        // 使用相同的時區轉換邏輯
+                        if (!startDate) return "時間未指定";
+                        
+                        // 獲取瀏覽器時區
+                        const browserTimezone = getBrowserTimezone();
+                        
+                        // 格式化開始時間到用戶當地時區
+                        const localStartTime = formatToLocalTime(event.start_time, event.timezone, browserTimezone);
+                        
+                        // 格式化結束時間到用戶當地時區
+                        const localEndTime = event.end_time 
+                          ? formatToLocalTime(event.end_time, event.timezone, browserTimezone)
+                          : null;
+                        
+                        // 獲取時區顯示
+                        const localTimezoneDisplay = getTimezoneDisplay(browserTimezone);
+                        
+                        // 組合顯示格式
+                        if (localEndTime) {
+                          const localStartDate = new Date(localStartTime);
+                          const localEndDate = new Date(localEndTime);
+                          
+                          if (localStartDate.toDateString() === localEndDate.toDateString()) {
+                            // 同一天的情況
+                            return `${format(localStartDate, "MMM d")} • ${format(localStartDate, "h:mm a")} - ${format(localEndDate, "h:mm a")} ${localTimezoneDisplay}`;
+                          } else {
+                            // 跨天的情況
+                            return `${format(localStartDate, "MMM d")} - ${format(localEndDate, "MMM d")} ${localTimezoneDisplay}`;
+                          }
+                        } else {
+                          // 只有開始時間
+                          return `${format(new Date(localStartTime), "MMM d, h:mm a")} ${localTimezoneDisplay}`;
+                        }
+                      } catch (error) {
+                        console.error("轉換當地時間錯誤:", error);
+                        return "轉換時間出錯";
+                      }
+                    })()
                   }</span>
                 </p>
               </div>

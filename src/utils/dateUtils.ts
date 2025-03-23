@@ -195,4 +195,56 @@ export const convertFromDatetimeLocalToISO = (
     console.error('datetime-local轉ISO錯誤:', error);
     return new Date(datetimeLocal).toISOString();
   }
+};
+
+/**
+ * 獲取時區的顯示名稱（優先使用縮寫如PDT、EDT，然後是GMT格式）
+ * @param timezone 時區標識符，如 'Asia/Taipei', 'America/New_York' 等
+ * @returns 時區縮寫或GMT格式
+ */
+export const getTimezoneDisplay = (timezone: string | undefined): string => {
+  if (!timezone) return '';
+  
+  // 如果已經是GMT格式，直接返回
+  if (timezone.startsWith('GMT')) {
+    return timezone;
+  }
+  
+  // 如果已經是縮寫格式，直接返回
+  if (/^[A-Z]{3,4}$/.test(timezone)) {
+    return timezone;
+  }
+  
+  try {
+    // 獲取時區縮寫（如 PDT, EDT 等）
+    const now = new Date();
+    const options: Intl.DateTimeFormatOptions = {
+      timeZone: timezone,
+      timeZoneName: 'short' // 'short' 會給出 PDT, EDT 等縮寫
+    };
+    
+    const formatter = new Intl.DateTimeFormat('en-US', options);
+    const formattedDate = formatter.format(now);
+    
+    // 提取時區縮寫，例如從 "5/24/2023, 8:00 AM EDT" 提取 "EDT"
+    const tzMatch = formattedDate.match(/[A-Z]{3,4}$/);
+    if (tzMatch) {
+      return tzMatch[0]; // 返回時區縮寫，如 "EDT"
+    }
+    
+    // 如果沒有找到縮寫，嘗試獲取GMT偏移
+    const options2: Intl.DateTimeFormatOptions = {
+      timeZone: timezone,
+      timeZoneName: 'longOffset' // 'longOffset' 會給出 GMT+8 等格式
+    };
+    
+    const formatter2 = new Intl.DateTimeFormat('en-GB', options2);
+    const formattedDate2 = formatter2.format(now);
+    
+    const gmtMatch = formattedDate2.match(/GMT[+-]\d+(?::\d+)?/);
+    return gmtMatch ? gmtMatch[0] : '';
+  } catch (error) {
+    console.error('獲取時區顯示錯誤:', error);
+    return '';
+  }
 }; 

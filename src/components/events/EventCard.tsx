@@ -8,6 +8,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Event } from "@/types/event";
 import { formatLocation } from "@/utils/languageUtils";
 import { Clock } from "lucide-react";
+import { getTimezoneDisplay } from "@/utils/dateUtils";
 
 interface EventCardProps {
   event: Event;
@@ -18,117 +19,46 @@ export function EventCard({ event }: EventCardProps) {
   const formattedDate = event.start_time ? 
     format(new Date(event.start_time), "MMM d, yyyy") : 
     "Date TBD";
-    
-  // 獲取時區的GMT偏移量（如GMT+8）
-  const getTimezoneOffset = (timezone: string | undefined): string => {
-    if (!timezone) return '';
-    
-    // 定義常見時區的映射（固定值），避免需要計算
-    const timezoneMap: Record<string, string> = {
-      'Asia/Taipei': 'GMT+8',
-      'Asia/Singapore': 'GMT+8',
-      'Asia/Shanghai': 'GMT+8',
-      'Asia/Hong_Kong': 'GMT+8',
-      'Asia/Tokyo': 'GMT+9',
-      'Asia/Seoul': 'GMT+9',
-      'America/New_York': 'GMT-5',
-      'America/Los_Angeles': 'GMT-8',
-      'Europe/London': 'GMT+0',
-      'Europe/Paris': 'GMT+1',
-      'UTC': 'UTC'
-    };
-    
-    // 檢查是否有預定義的映射
-    if (timezone in timezoneMap) {
-      return timezoneMap[timezone];
-    }
-    
-    // 如果是 "GMT+8" 格式，直接返回
-    if (timezone.startsWith('GMT')) {
-      return timezone;
-    }
-    
-    // 其他情況嘗試使用 Intl.DateTimeFormat 獲取
-    try {
-      const now = new Date();
-      const formatter = new Intl.DateTimeFormat('en-GB', {
-        timeZone: timezone,
-        timeZoneName: 'longOffset'
-      });
-      
-      const formatted = formatter.format(now);
-      const match = formatted.match(/GMT[+-]\d+(?::\d+)?/);
-      
-      return match ? match[0] : '';
-    } catch (error) {
-      console.error('獲取時區偏移量錯誤:', error);
-      return '';
-    }
-  };
 
-  // 格式化時間，考慮原始時區
-  // 由於瀏覽器無法直接用原始時間和時區顯示，我們使用輔助方法來模擬
-  const formatTimeInTimezone = (dateStr: string | undefined, timezone: string | undefined): string => {
-    if (!dateStr) return '';
-    
-    try {
-      // 獲取ISO格式時間
-      const date = new Date(dateStr);
-      
-      // 1. 從 ISO 時間中提取小時和分鐘
-      const hours = date.getUTCHours();
-      const minutes = date.getUTCMinutes();
-      
-      // 2. 根據時區調整小時
-      let adjustedHours = hours;
-      const tzOffset = getTimezoneOffset(timezone);
-      
-      if (tzOffset && tzOffset.startsWith('GMT')) {
-        const offsetHours = parseInt(tzOffset.substring(3)); // 如 "GMT+8" 提取 8 或 -5
-        adjustedHours = (hours + offsetHours) % 24;
-        if (adjustedHours < 0) adjustedHours += 24; // 處理負數時間
-      }
-      
-      // 3. 格式化為 "2:00 PM" 格式
-      const isPM = adjustedHours >= 12;
-      const hour12 = adjustedHours % 12 || 12; // 轉換為12小時制
-      const paddedMinutes = minutes.toString().padStart(2, '0');
-      
-      return `${hour12}:${paddedMinutes} ${isPM ? 'PM' : 'AM'}`;
-    } catch (error) {
-      console.error('格式化時區時間錯誤:', error);
-      return '';
-    }
-  };
-
-  // 生成時間範圍字符串
-  const formatTimeRange = (): string => {
+  // 使用更靠近原生的方法格式化時間
+  const formatTimeWithTimezone = (): string => {
     if (!event.start_time) return '';
     
     try {
-      const startTime = formatTimeInTimezone(event.start_time, event.timezone);
-      let result = startTime;
+      const startDate = new Date(event.start_time);
+      const endDate = event.end_time ? new Date(event.end_time) : null;
       
-      if (event.end_time) {
-        const endTime = formatTimeInTimezone(event.end_time, event.timezone);
-        result += ` - ${endTime}`;
+      // 使用瀏覽器的 toLocaleTimeString 而不是自己計算，以獲得更準確的時間格式化
+      const options: Intl.DateTimeFormatOptions = {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: event.timezone || undefined
+      };
+      
+      // 格式化開始時間
+      let result = startDate.toLocaleTimeString('en-US', options);
+      
+      // 添加結束時間（如果有）
+      if (endDate) {
+        result += ` - ${endDate.toLocaleTimeString('en-US', options)}`;
       }
       
-      // 添加時區
-      const timezone = getTimezoneOffset(event.timezone);
-      if (timezone) {
-        result += ` ${timezone}`;
+      // 添加時區，使用共享的時區顯示邏輯
+      const timezoneDisplay = getTimezoneDisplay(event.timezone);
+      if (timezoneDisplay) {
+        result += ` ${timezoneDisplay}`;
       }
       
       return result;
     } catch (error) {
-      console.error('時間範圍格式化錯誤:', error);
+      console.error('格式化時間錯誤:', error);
       return '';
     }
   };
 
   // 格式化好的時間範圍
-  const timeRange = formatTimeRange();
+  const timeRange = formatTimeWithTimezone();
 
   // 格式化地點
   const locationDisplay = event.location ? 
