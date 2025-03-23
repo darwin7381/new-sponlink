@@ -150,17 +150,26 @@ export const formatLumaEvent = (
   // 創建位置對象
   const location = createLocation(scrapedData.location);
   
-  // 處理時區 - 如果 Luma 沒有提供時區，使用瀏覽器的時區作為備用
-  const timezone = scrapedData.timezone || getBrowserTimezone();
-  console.log('活動時區:', timezone);
+  // 處理時區 - 保留原始格式（EDT、GMT+8等）
+  // 如果 Luma 沒有提供時區，使用瀏覽器的時區作為備用
+  let timezone = getBrowserTimezone();
+  
+  if (scrapedData.timezone) {
+    timezone = scrapedData.timezone;
+    console.log('Luma提供的原始時區:', timezone);
+  }
+  // 注意：這裡無法訪問HTML內容，因為 formatLumaEvent 函數無法訪問到 htmlContent
+  // 時區的提取應該已經在 scrapeLumaEventFromHTML 函數中完成
+  
+  console.log('最終使用的時區:', timezone);
   
   // 將時間轉換為表單可顯示的格式
   const startTimeLocal = convertToDatetimeLocalFormat(scrapedData.startAt, timezone);
   const endTimeLocal = convertToDatetimeLocalFormat(scrapedData.endAt, timezone);
   
-  console.log('原始開始時間:', scrapedData.startAt);
+  console.log('Luma原始開始時間:', scrapedData.startAt);
   console.log('轉換後開始時間:', startTimeLocal);
-  console.log('原始結束時間:', scrapedData.endAt);
+  console.log('Luma原始結束時間:', scrapedData.endAt);
   console.log('轉換後結束時間:', endTimeLocal);
   
   // 格式化為應用程序的事件格式
@@ -176,7 +185,7 @@ export const formatLumaEvent = (
     category: scrapedData.category,
     tags: scrapedData.tags,
     sponsorship_plans: [],
-    timezone: timezone  // 保存時區信息，方便後續處理
+    timezone: timezone  // 保存原始時區信息
   };
 };
 

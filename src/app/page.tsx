@@ -6,21 +6,12 @@ import Image from "next/image";
 import { getCurrentUser } from "@/lib/services/authService";
 import { User, USER_ROLES } from "@/lib/types/users";
 import { getAllEvents } from "@/services/eventService";
-import { EventStatus } from "@/types/event";
-import { formatLocation } from "@/utils/languageUtils";
-
-interface FeaturedEvent {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  date: string;
-  location: string;
-}
+import { EventStatus, Event } from "@/types/event";
+import { EventCard } from "@/components/events/EventCard";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
-  const [featuredEvents, setFeaturedEvents] = useState<FeaturedEvent[]>([]);
+  const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,19 +23,8 @@ export default function Home() {
         // Get events
         const events = await getAllEvents({ status: EventStatus.PUBLISHED });
         
-        // Format for frontend display
-        const formattedEvents = events.map(event => ({
-          id: event.id,
-          title: event.title,
-          description: event.description.substring(0, 120) + '...',
-          image: event.cover_image || '/images/event-placeholder.jpg',
-          date: new Date(event.start_time).toISOString().split('T')[0],
-          location: event.location.city || event.location.country ? 
-            formatLocation(event.location.city, event.location.country) : 
-            event.location.name
-        }));
-        
-        setFeaturedEvents(formattedEvents);
+        // 直接使用原始Event類型數據
+        setFeaturedEvents(events);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -113,36 +93,7 @@ export default function Home() {
           </div>
           <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {featuredEvents.map((event) => (
-              <div key={event.id} className="flex flex-col rounded-lg shadow-lg overflow-hidden">
-                <div className="flex-shrink-0 h-48 relative">
-                  <Image 
-                    className="w-full h-full object-cover" 
-                    src={event.image} 
-                    alt={event.title}
-                    fill
-                  />
-                </div>
-                <div className="flex-1 bg-card p-6 flex flex-col justify-between">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-primary">
-                      <span>{new Date(event.date).toLocaleDateString()}</span>
-                    </p>
-                    <Link href={`/events/${event.id}`} className="block mt-2">
-                      <p className="text-xl font-semibold text-foreground">{event.title}</p>
-                      <p className="mt-3 text-base text-muted-foreground">{event.description}</p>
-                    </Link>
-                  </div>
-                  <div className="mt-6">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
-                          {event.location}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <EventCard key={event.id} event={event} />
             ))}
           </div>
           <div className="mt-10 text-center">

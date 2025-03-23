@@ -6,30 +6,71 @@
 /**
  * 將ISO時間字符串轉換為指定時區的ISO時間字符串
  * @param isoString 原始ISO時間字符串
- * @param timezone 時區標識符，如 'Asia/Taipei', 'Asia/Tokyo', 'America/New_York' 等
- * @returns 轉換後的ISO時間字符串
+ * @param timezone 時區標識符，如 'Asia/Taipei', 'Asia/Tokyo', 'America/New_York', 'GMT+8', 'EDT' 等
+ * @returns 轉換後的ISO時間字符串，保留原始時間在目標時區的表示
  */
 export const convertToTimezone = (isoString: string, timezone: string): string => {
   try {
     if (!isoString) return '';
     
-    // 1. 將ISO字符串轉換為Date對象
-    const date = new Date(isoString);
+    // 處理特殊格式的時區 (如EDT、EST)，轉換為標準格式
+    let standardTimezone = timezone;
+    // 創建時區映射表
+    const timezoneMap: Record<string, string> = {
+      'EDT': 'America/New_York', // 東部夏令時間
+      'EST': 'America/New_York', // 東部標準時間
+      'PDT': 'America/Los_Angeles', // 太平洋夏令時間
+      'PST': 'America/Los_Angeles', // 太平洋標準時間
+      'CDT': 'America/Chicago', // 中部夏令時間
+      'CST': 'America/Chicago', // 中部標準時間
+      'MDT': 'America/Denver', // 山區夏令時間
+      'MST': 'America/Denver', // 山區標準時間
+    };
     
-    // 2. 使用Intl.DateTimeFormat獲取指定時區的日期時間
+    // 檢查是否為縮寫時區，並轉換為標準IANA時區
+    if (timezone in timezoneMap) {
+      standardTimezone = timezoneMap[timezone];
+      console.log(`將時區 ${timezone} 轉換為標準時區 ${standardTimezone}`);
+    }
+    
+    // 嘗試將 "GMT+8" 格式轉換為標準IANA時區
+    if (timezone.startsWith('GMT')) {
+      const offset = timezone.substring(3); // 例如從 "GMT+8" 提取 "+8"
+      
+      // 嘗試找到匹配的IANA時區
+      if (offset === '+8') {
+        standardTimezone = 'Asia/Shanghai'; // 或 'Asia/Taipei'
+      } else if (offset === '+9') {
+        standardTimezone = 'Asia/Tokyo';
+      } else if (offset === '-5') {
+        standardTimezone = 'America/New_York';
+      } else if (offset === '-8') {
+        standardTimezone = 'America/Los_Angeles';
+      }
+      // 可以根據需要添加更多映射
+      
+      console.log(`將GMT時區 ${timezone} 映射到 ${standardTimezone}`);
+    }
+    
+    // 1. 解析原始ISO時間
+    const originalDate = new Date(isoString);
+    
+    // 2. 使用格式化工具獲取在目標時區的時間各部分
+    // 這種方法處理了夏令時間和時區特定規則
     const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
+      timeZone: standardTimezone,
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false
+      hour12: false,
+      timeZoneName: 'short' // 獲取時區名稱如 "EDT"
     });
     
     // 3. 格式化日期時間
-    const parts = formatter.formatToParts(date);
+    const parts = formatter.formatToParts(originalDate);
     const dateTimeMap: Record<string, string> = {};
     
     // 將各部分數據放入映射中
@@ -45,13 +86,13 @@ export const convertToTimezone = (isoString: string, timezone: string): string =
     const minute = parseInt(dateTimeMap.minute);
     const second = parseInt(dateTimeMap.second);
     
-    // 5. 創建新的Date對象（在本地時區）
-    const localDate = new Date(year, month, day, hour, minute, second);
+    // 5. 創建新的Date對象（在UTC時區）
+    const utcDate = new Date(Date.UTC(year, month, day, hour, minute, second));
     
     // 6. 返回ISO格式字符串
-    return localDate.toISOString();
+    return utcDate.toISOString();
   } catch (error) {
-    console.error('時區轉換錯誤:', error);
+    console.error('時區轉換錯誤:', error, '時區:', timezone);
     return isoString; // 如果出錯，返回原始值
   }
 };

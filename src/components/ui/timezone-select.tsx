@@ -102,17 +102,18 @@ export function TimezoneSelect({
       </PopoverTrigger>
       <PopoverContent className="w-full p-0">
         <Command>
-          <CommandInput placeholder="搜尋時區..." />
+          <CommandInput placeholder="搜尋時區..." className="h-9" />
           <CommandEmpty>找不到符合的時區</CommandEmpty>
           <CommandGroup className="max-h-60 overflow-auto">
             {TIMEZONE_OPTIONS.map((timezone) => (
               <CommandItem
                 key={timezone.value}
                 value={timezone.value}
-                onSelect={(currentValue: string) => {
-                  onChange(currentValue);
+                onSelect={() => {
+                  onChange(timezone.value);
                   setOpen(false);
                 }}
+                className="cursor-pointer"
               >
                 <Check
                   className={cn(

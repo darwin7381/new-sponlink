@@ -356,7 +356,8 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
     
     // 尋找時區
     if (text.includes('timezone') || text.includes('UTC') || text.includes('GMT') || text.includes('EST') || text.includes('PST')) {
-      const timezoneMatch = text.match(/(UTC|GMT|[A-Z]{3,4})|([A-Za-z]+\/[A-Za-z_]+)/);
+      // 增強時區匹配，支持 GMT+8 格式和時區縮寫
+      const timezoneMatch = text.match(/(UTC|GMT[+-]\d+|[A-Z]{3,4})|([A-Za-z]+\/[A-Za-z_]+)/);
       if (timezoneMatch) {
         timezone = timezoneMatch[0];
       }
@@ -379,10 +380,42 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
         endAt = startDate.toISOString();
       }
       
+      // 增強時區提取，支持多種格式
+      let extractedTimezone = '';
       const timezoneMatch = htmlContent.match(/"timezone":"([^"]+)"/);
       if (timezoneMatch && timezoneMatch[1]) {
-        timezone = timezoneMatch[1];
+        extractedTimezone = timezoneMatch[1];
       }
+      
+      // 如果找到的是IANA時區，使用該時區
+      if (extractedTimezone && (extractedTimezone.includes('/') || extractedTimezone === 'UTC')) {
+        timezone = extractedTimezone;
+      } else {
+        // 尋找特殊格式的GMT時區，例如GMT+8
+        const gmtMatch = htmlContent.match(/GMT[+-]\d+/);
+        if (gmtMatch) {
+          timezone = gmtMatch[0];
+        } else if (extractedTimezone) {
+          timezone = extractedTimezone;
+        }
+      }
+      
+      // 顯式尋找包含時區的文本，這是Luma常用的時區顯示格式
+      const timeWithTimezonePattern = /\d{1,2}:\d{2}\s*(?:AM|PM)?\s*(GMT[+-]\d+|EDT|EST|PDT|PST|CDT|CST|MDT|MST)/i;
+      const timeWithTimezoneMatch = htmlContent.match(timeWithTimezonePattern);
+      if (timeWithTimezoneMatch && timeWithTimezoneMatch[1]) {
+        timezone = timeWithTimezoneMatch[1];
+      }
+
+      // 如果頁面包含EDI、PDT等標準縮寫時區
+      const tzAbbrevPatterns = /\b(EDT|EST|PDT|PST|CDT|CST|MDT|MST)\b/g;
+      const tzAbbrevMatches = [...htmlContent.matchAll(tzAbbrevPatterns)];
+      if (tzAbbrevMatches.length > 0) {
+        // 使用最後一個找到的縮寫（通常是最相關的）
+        timezone = tzAbbrevMatches[tzAbbrevMatches.length - 1][0];
+      }
+      
+      console.log('提取的時區:', timezone);
     }
   }
   

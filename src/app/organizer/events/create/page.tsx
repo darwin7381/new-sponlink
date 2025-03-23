@@ -181,18 +181,18 @@ export default function CreateEventPage() {
         return;
       }
       
-      // 使用時區處理函數正確轉換時間
+      // 保留 Luma 原始時區，如果沒有則使用 UTC
       const timezone = eventData.timezone || 'UTC';
-      console.log('使用時區:', timezone);
+      console.log('Luma 活動原始時區:', timezone);
       
       // 將 ISO 格式的時間轉換為 datetime-local 格式用於表單顯示
       const startTime = convertToDatetimeLocalFormat(eventData.start_time, timezone);
       const endTime = convertToDatetimeLocalFormat(eventData.end_time, timezone);
       
-      console.log('原始開始時間:', eventData.start_time);
-      console.log('轉換後開始時間:', startTime);
-      console.log('原始結束時間:', eventData.end_time);
-      console.log('轉換後結束時間:', endTime);
+      console.log('Luma 原始開始時間:', eventData.start_time);
+      console.log('表單顯示開始時間:', startTime);
+      console.log('Luma 原始結束時間:', eventData.end_time);
+      console.log('表單顯示結束時間:', endTime);
       
       // 更新表單數據
       setFormData({
@@ -203,14 +203,14 @@ export default function CreateEventPage() {
         end_time: endTime,
         category: eventData.category,
         tags: eventData.tags.join(", "),
-        timezone: timezone, // 保存 Luma 原始時區
+        timezone: timezone, // 完整保存 Luma 原始時區，不進行格式轉換
         location: eventData.location
       });
       
       // 關閉對話框
       handleLumaImportDialog(false);
     } catch (error) {
-      console.error("Luma import error:", error);
+      console.error("Luma 導入錯誤:", error);
       // 顯示更具體的錯誤信息
       const errorMessage = error instanceof Error 
         ? error.message 
