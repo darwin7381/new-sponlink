@@ -2,6 +2,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Location, LocationType } from '@/types/event';
+import { 
+  detectVirtualPlatform, 
+  createVirtualLocation, 
+  createGoogleLocation, 
+  createCustomLocation 
+} from '@/utils/locationUtils';
 
 // 定義推薦位置結構
 interface Prediction {
@@ -32,62 +38,6 @@ interface LocationSelectorProps {
   onChange: (location: Location) => void;
 }
 
-// 虛擬會議平台匹配規則
-const VIRTUAL_PLATFORMS = [
-  { name: 'Zoom', regex: /zoom\.us|zoomus\.cn/i },
-  { name: 'Google Meet', regex: /meet\.google\.com/i },
-  { name: 'Microsoft Teams', regex: /teams\.microsoft\.com|teams\.live\.com/i },
-  { name: 'Webex', regex: /webex\.com/i },
-  { name: 'Skype', regex: /skype\.com/i },
-  { name: 'Discord', regex: /discord\.com|discord\.gg/i },
-  { name: 'Slack', regex: /slack\.com/i },
-]
-
-// 檢測URL是否為虛擬會議連結
-const detectVirtualPlatform = (url: string): { isVirtual: boolean, platformName: string } => {
-  // 如果輸入非常短或明顯不是URL，直接返回非虛擬
-  if (!url || url.length < 4 || !url.includes('.')) {
-    return { isVirtual: false, platformName: '' };
-  }
-
-  // 避免將純地址或位置名稱誤識別為虛擬連結
-  // 地址內容通常包含數字、逗號、空格等，而非純URL
-  const addressPattern = /\d+.*?(st|rd|ave|blvd|square|plaza|district|road|street|avenue)/i;
-  if (addressPattern.test(url)) {
-    return { isVirtual: false, platformName: '' };
-  }
-
-  // 嘗試添加協議前綴以正確解析URL
-  let normalizedUrl = url;
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    normalizedUrl = `https://${url}`;
-  }
-
-  try {
-    const urlObj = new URL(normalizedUrl);
-    const hostname = urlObj.hostname;
-    
-    // 不要將明顯是搜索詞的內容識別為URL
-    // 例如： "café in paris" 不應該被視為URL，即使它包含點
-    if (hostname.includes(' ') || !hostname.includes('.')) {
-      return { isVirtual: false, platformName: '' };
-    }
-    
-    // 檢查是否匹配已知的虛擬平台
-    for (const platform of VIRTUAL_PLATFORMS) {
-      if (platform.regex.test(hostname)) {
-        return { isVirtual: true, platformName: platform.name };
-      }
-    }
-    
-    // 檢查是否為有效URL但非已知會議平台
-    return { isVirtual: true, platformName: 'Virtual' };
-  } catch {
-    // 解析URL失敗，可能不是有效的URL
-    return { isVirtual: false, platformName: '' };
-  }
-};
-
 const LocationSelector: React.FC<LocationSelectorProps> = ({
   location,
   onChange
@@ -116,9 +66,8 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
     place_id?: string;
     full_address?: string;
   }) => {
-    // 一次性更新所有位置信息
-    onChange({
-      ...location,
+    // 使用 createGoogleLocation 函數從 locationUtils.ts
+    const googleLocation = createGoogleLocation({
       name: placeDetails.name,
       address: placeDetails.address,
       full_address: placeDetails.full_address || placeDetails.address,
@@ -127,11 +76,11 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       postal_code: placeDetails.postal_code,
       latitude: placeDetails.latitude,
       longitude: placeDetails.longitude,
-      isVirtual: false,
-      platformName: '',
-      place_id: placeDetails.place_id,
-      location_type: LocationType.GOOGLE // 明確設置位置類型為 Google
+      place_id: placeDetails.place_id || ''
     });
+    
+    // 更新位置
+    onChange(googleLocation);
     
     // 選擇後關閉面板
     setIsExpanded(false);
@@ -145,20 +94,15 @@ const LocationSelector: React.FC<LocationSelectorProps> = ({
       // 檢測是否為虛擬會議連結
       const { isVirtual, platformName } = detectVirtualPlatform(inputValue);
       
-      onChange({
-        ...location,
-        name: isVirtual ? (platformName !== 'Virtual' ? platformName : '') : inputValue,
-        address: inputValue,
-        city: '',
-        country: '',
-        postal_code: '',
-        latitude: undefined,
-        longitude: undefined,
-        isVirtual: isVirtual,
-        platformName: isVirtual ? platformName : '',
-        place_id: undefined, // 自定義地址或虛擬連結不使用 place_id
-        location_type: isVirtual ? LocationType.VIRTUAL : LocationType.CUSTOM // 根據是否為虛擬設置位置類型
-      });
+      if (isVirtual) {
+        // 使用 createVirtualLocation 函數從 locationUtils.ts
+        const virtualLocation = createVirtualLocation(inputValue);
+        onChange(virtualLocation);
+      } else {
+        // 使用 createCustomLocation 函數從 locationUtils.ts
+        const customLocation = createCustomLocation(inputValue);
+        onChange(customLocation);
+      }
       
       setIsVirtual(isVirtual);
       setPlatformName(platformName);

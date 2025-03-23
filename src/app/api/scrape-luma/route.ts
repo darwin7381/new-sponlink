@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { getPlaceDetailsFromAPI } from '@/lib/utils/googlePlacesAPI';
 import { LocationType } from '@/types/event';
+import { 
+  createVirtualLocation, 
+  createGoogleLocation, 
+  createCustomLocation
+} from '@/utils/locationUtils';
 
 /**
  * Luma 活動數據接口
@@ -355,6 +360,25 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
     endAt = now.toISOString();
   }
   
+  // 檢查是否需要註冊才能查看確切位置
+  const needsRegistration = 
+    htmlContent.includes('Please register to see the exact location') || 
+    htmlContent.includes('Register to See Address') ||
+    htmlContent.includes('Request to Join') && htmlContent.match(/location.*hidden/i) ||
+    (htmlContent.includes('Location') && htmlContent.includes('Please register')) ||
+    htmlContent.match(/address.*hidden until/i) ||
+    htmlContent.match(/venue.*revealed/i) ||
+    $('div:contains("Location")').next().text().includes('register') ||
+    $('div:contains("Address")').next().text().includes('register');
+
+  // 通用的地區/城市識別模式
+  const locationPatterns = [
+    /([A-Za-z\u4e00-\u9fa5]+)\s*District,\s*([A-Za-z\u4e00-\u9fa5]+)\s*City/i,  // 區域, 城市
+    /([A-Za-z\u4e00-\u9fa5]+)\s*City,\s*([A-Za-z\u4e00-\u9fa5]+)/i,             // 城市, 國家
+    /([A-Za-z\u4e00-\u9fa5]+)\s*區,\s*([A-Za-z\u4e00-\u9fa5]+)\s*市/i,          // 區域, 城市 (本地化版本)
+    /([A-Za-z\u4e00-\u9fa5]+),\s*([A-Za-z\u4e00-\u9fa5]+)/i                    // 一般的 城市, 國家/州
+  ];
+  
   // 嘗試從JSON數據中提取Google Places ID和地理信息
   let placeId = '';
   let fullAddress = '';
@@ -365,6 +389,37 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
 
   // 首先嘗試從geo_address_info中提取完整數據
   const geoAddressInfoMatch = htmlContent.match(/"geo_address_info":\s*(\{[^}]+\})/);
+  
+  // 提取地區/城市名字的函數
+  const extractLocationInfo = () => {
+    // 先從 geo_address_info 獲取
+    if (geoAddressInfoMatch) {
+      const cityStateMatch = geoAddressInfoMatch[1].match(/"city_state\\?":\s*\\?"([^\\]+)\\?"/);
+      if (cityStateMatch && cityStateMatch[1]) {
+        return cityStateMatch[1];
+      }
+    }
+    
+    // 尋找可能包含位置信息的元素
+    const locationElements = $('div:contains("Location")').next();
+    if (locationElements.length > 0) {
+      const locationText = locationElements.text().trim();
+      if (locationText && !locationText.includes('register') && !locationText.includes('Online')) {
+        return locationText;
+      }
+    }
+    
+    // 直接在整個 HTML 尋找可能的位置信息
+    for (const pattern of locationPatterns) {
+      const match = htmlContent.match(pattern);
+      if (match) {
+        return match[0];
+      }
+    }
+    
+    return null;
+  };
+
   if (geoAddressInfoMatch) {
     try {
       // 改进JSON字符串的预处理
@@ -420,35 +475,7 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
         console.error('使用正则表达式提取geo_address_info失败:', regexError);
       }
     } catch (e) {
-      console.error('处理geo_address_info时出错:', e);
-    }
-  }
-
-  // 如果上面方法沒有獲取到place_id，嘗試從Google Maps嵌入URL提取
-  if (!placeId) {
-    // 尝试方法1：从maps/embed/v1/place中提取
-    const mapsEmbedMatch = htmlContent.match(/maps\/embed\/v1\/place\?[^"]*place_id%3A([^&"]+)/);
-    if (mapsEmbedMatch && mapsEmbedMatch[1]) {
-      placeId = decodeURIComponent(mapsEmbedMatch[1]);
-      console.log('从maps/embed/v1/place提取到place_id:', placeId);
-    } 
-    
-    // 尝试方法2：从maps/search中提取
-    if (!placeId) {
-      const mapsSearchMatch = htmlContent.match(/maps\/search\/\?[^"]*query_place_id=([^&"]+)/);
-      if (mapsSearchMatch && mapsSearchMatch[1]) {
-        placeId = mapsSearchMatch[1];
-        console.log('从maps/search提取到place_id:', placeId);
-      }
-    }
-    
-    // 尝试方法3：直接从HTML中搜索place_id
-    if (!placeId) {
-      const directPlaceIdMatch = htmlContent.match(/"place_id":"([^"]+)"/);
-      if (directPlaceIdMatch && directPlaceIdMatch[1]) {
-        placeId = directPlaceIdMatch[1];
-        console.log('从HTML直接提取到place_id:', placeId);
-      }
+      console.error('處理geo_address_info時出錯:', e);
     }
   }
 
@@ -459,237 +486,234 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
     (htmlContent.toLowerCase().includes(' zoom ') && !htmlContent.toLowerCase().includes('zoom is not')) ||
     htmlContent.toLowerCase().includes('webinar');
 
-  // 創建位置對象
-  const location: LumaLocationData = {
-    name: '',
-    full_address: '',
-    place_id: '',
-    location_type: LocationType.CUSTOM // 默認為自定義類型
-  };
+  // 處理位置數據
+  let locationResult: LumaLocationData;
 
-  // 完成从地点信息提取过程
-  const processLocation = async () => {
-    // 检查地址是否为模糊地址（obfuscated）
-    const isObfuscatedAddress = htmlContent.includes('"mode":"obfuscated"') || 
-                                geoAddressInfoMatch?.[1]?.includes('"mode":"obfuscated"');
+  if (isOnlineEvent) {
+    // 虛擬活動: 從 HTML 中提取並創建虛擬地點
+    // 尋找可能的會議鏈接
+    let virtualLink = '';
     
-    // 檢查是否需要註冊才能查看確切位置
-    const needsRegistration = 
-      htmlContent.includes('Please register to see the exact location') || 
-      htmlContent.includes('Register to See Address') ||
-      htmlContent.includes('Request to Join') && htmlContent.match(/location.*hidden/i) ||
-      (htmlContent.includes('Location') && htmlContent.includes('Please register')) ||
-      htmlContent.match(/address.*hidden until/i) ||
-      htmlContent.match(/venue.*revealed/i) ||
-      $('div:contains("Location")').next().text().includes('register') ||
-      $('div:contains("Address")').next().text().includes('register');
-    
-    // 通用的地區/城市識別模式
-    const locationPatterns = [
-      /([A-Za-z\u4e00-\u9fa5]+)\s*District,\s*([A-Za-z\u4e00-\u9fa5]+)\s*City/i,  // 區域, 城市
-      /([A-Za-z\u4e00-\u9fa5]+)\s*City,\s*([A-Za-z\u4e00-\u9fa5]+)/i,             // 城市, 國家
-      /([A-Za-z\u4e00-\u9fa5]+)\s*區,\s*([A-Za-z\u4e00-\u9fa5]+)\s*市/i,          // 區域, 城市 (本地化版本)
-      /([A-Za-z\u4e00-\u9fa5]+),\s*([A-Za-z\u4e00-\u9fa5]+)/i                    // 一般的 城市, 國家/州
+    // 先嘗試找常見會議平台的鏈接
+    const meetingLinkPatterns = [
+      /https?:\/\/[^"\s]+zoom\.us\/[^"\s]+/i,
+      /https?:\/\/meet\.google\.com\/[^"\s]+/i,
+      /https?:\/\/teams\.microsoft\.com\/[^"\s]+/i,
+      /https?:\/\/[^"\s]+\.webex\.com\/[^"\s]+/i
     ];
     
-    // 提取地區/城市名字的函數
-    const extractLocationInfo = () => {
-      // 先從 geo_address_info 獲取
-      if (geoAddressInfoMatch) {
-        const cityStateMatch = geoAddressInfoMatch[1].match(/"city_state\\?":\s*\\?"([^\\]+)\\?"/);
-        if (cityStateMatch && cityStateMatch[1]) {
-          return cityStateMatch[1];
+    for (const pattern of meetingLinkPatterns) {
+      const match = htmlContent.match(pattern);
+      if (match && match[0]) {
+        virtualLink = match[0];
+        break;
+      }
+    }
+    
+    // 若沒找到具體鏈接，根據關鍵詞判斷平台
+    if (!virtualLink) {
+      if (htmlContent.toLowerCase().includes('zoom')) {
+        virtualLink = 'Zoom';
+      } else if (htmlContent.toLowerCase().includes('google meet')) {
+        virtualLink = 'Google Meet';
+      } else if (htmlContent.toLowerCase().includes('microsoft teams')) {
+        virtualLink = 'Microsoft Teams';
+      } else if (htmlContent.toLowerCase().includes('webex')) {
+        virtualLink = 'Webex';
+      } else {
+        // 尋找任何可能的域名
+        const domainMatch = htmlContent.match(/https?:\/\/([^\/"\s]+)/i);
+        if (domainMatch && domainMatch[0] && !domainMatch[0].includes('lu.ma')) {
+          virtualLink = domainMatch[0];
+        } else {
+          virtualLink = 'Virtual';
         }
       }
+    }
+    
+    // 使用統一的邏輯創建虛擬地點
+    const virtualLocation = createVirtualLocation(virtualLink);
+    
+    // 將 Location 類型轉換為 LumaLocationData 類型
+    locationResult = {
+      name: virtualLocation.name,
+      full_address: virtualLocation.full_address || virtualLocation.address || '',
+      address: virtualLocation.address || '',
+      city: virtualLocation.city || '',
+      country: virtualLocation.country || '',
+      postal_code: virtualLocation.postal_code || '',
+      place_id: virtualLocation.place_id || '',
+      description: '', // Location 類型沒有 description 屬性，使用空字串
+      location_type: LocationType.VIRTUAL
+    };
+    console.log('已創建虛擬活動地點:', locationResult);
+
+  } else if (placeId) {
+    // Google Places: 使用 API 獲取詳情
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+      const placeDetails = await getPlaceDetailsFromAPI(placeId, apiKey);
       
-      // 尋找可能包含位置信息的元素
-      const locationElements = $('div:contains("Location")').next();
-      if (locationElements.length > 0) {
-        const locationText = locationElements.text().trim();
-        if (locationText && !locationText.includes('register') && !locationText.includes('Online')) {
-          return locationText;
-        }
+      if (placeDetails) {
+        // 成功獲取 Google 地點詳情
+        const googleLocation = createGoogleLocation({
+          name: placeDetails.name || locationName || '',
+          address: placeDetails.address || '',
+          full_address: placeDetails.full_address || fullAddress || '',
+          city: placeDetails.city || cityName || '',
+          country: placeDetails.country || countryName || '',
+          postal_code: placeDetails.postal_code || '',
+          latitude: placeDetails.latitude,
+          longitude: placeDetails.longitude,
+          place_id: placeId
+        });
+        
+        // 轉換為 LumaLocationData 類型
+        locationResult = {
+          name: googleLocation.name || '',
+          full_address: googleLocation.full_address || '',
+          address: googleLocation.address || '',
+          city: googleLocation.city || '',
+          country: googleLocation.country || '',
+          postal_code: googleLocation.postal_code || '',
+          place_id: googleLocation.place_id || '',
+          description: locationDescription || '',
+          location_type: LocationType.GOOGLE
+        };
+      } else {
+        // API 失敗，使用提取的數據創建備用地點
+        const customLocation = createCustomLocation(
+          locationName || fullAddress || '',
+          cityName,
+          countryName
+        );
+        
+        // 轉換為 LumaLocationData 類型
+        locationResult = {
+          name: customLocation.name || '',
+          full_address: customLocation.full_address || '',
+          address: customLocation.address || '',
+          city: customLocation.city || '',
+          country: customLocation.country || '',
+          postal_code: customLocation.postal_code || '',
+          place_id: placeId,
+          description: locationDescription || '',
+          location_type: LocationType.GOOGLE
+        };
       }
+    } catch (error) {
+      console.error('獲取 Google Places 詳情時出錯:', error);
       
-      // 直接在整個 HTML 尋找可能的位置信息
-      for (const pattern of locationPatterns) {
-        const match = htmlContent.match(pattern);
-        if (match) {
-          return match[0];
-        }
-      }
+      // 創建備用地點
+      const customLocation = createCustomLocation(
+        locationName || fullAddress || '',
+        cityName,
+        countryName
+      );
       
-      return null;
+      // 轉換為 LumaLocationData 類型
+      locationResult = {
+        name: customLocation.name || '',
+        full_address: customLocation.full_address || '',
+        address: customLocation.address || '',
+        city: customLocation.city || '',
+        country: customLocation.country || '',
+        postal_code: customLocation.postal_code || '',
+        place_id: placeId,
+        description: locationDescription || '',
+        location_type: LocationType.GOOGLE
+      };
+    }
+    
+  } else if (fullAddress) {
+    // 使用提取的地理數據創建自定義地點
+    const customLocation = createCustomLocation(
+      locationName || fullAddress,
+      cityName,
+      countryName
+    );
+    
+    // 轉換為 LumaLocationData 類型
+    locationResult = {
+      name: customLocation.name || '',
+      full_address: customLocation.full_address || '',
+      address: customLocation.address || '',
+      city: customLocation.city || '',
+      country: customLocation.country || '',
+      postal_code: customLocation.postal_code || '',
+      place_id: customLocation.place_id || '',
+      description: locationDescription || '',
+      location_type: LocationType.GOOGLE
     };
     
-    if (isOnlineEvent) {
-      // 線上活動
-      location.name = 'Online Event';
-      location.full_address = 'Online Event';
-      location.place_id = '';
-      location.location_type = LocationType.VIRTUAL; // 設置為虛擬類型
-    } else if (placeId) {
-      // 優先處理有 Google Place ID 的情況 - 使用 Google Places API 獲取詳細信息
-      location.place_id = placeId;
-      location.location_type = LocationType.GOOGLE;
+  } else if (needsRegistration) {
+    // 需要註冊才能查看確切位置
+    console.log('偵測到需要註冊才能查看確切位置的活動');
+    
+    // 獲取位置資訊
+    const locationInfo = extractLocationInfo();
+    console.log('提取的位置資訊:', locationInfo);
+    
+    if (locationInfo) {
+      // 使用提取的位置數據
+      const customLocation = createCustomLocation(
+        `[${locationInfo}] Please register to see the exact location of this event`,
+        locationInfo,
+        ''
+      );
       
-      try {
-        // 使用環境變量獲取 API 密鑰
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
-        const placeDetails = await getPlaceDetailsFromAPI(location.place_id, apiKey);
-        
-        if (placeDetails) {
-          // 成功從API獲取數據，使用 API 返回的結果
-          location.name = placeDetails.name || locationName || '';
-          location.full_address = placeDetails.full_address || fullAddress || '';
-          location.city = placeDetails.city || cityName || '';
-          location.country = placeDetails.country || countryName || '';
-          location.address = placeDetails.address || '';
-          location.description = locationDescription || '';
-          
-          // 處理郵遞區號
-          if (placeDetails.postal_code) {
-            location.postal_code = placeDetails.postal_code;
-          }
-          
-          // 處理可能的模糊地址
-          if (isObfuscatedAddress) {
-            location.location_type = LocationType.CUSTOM;
-          }
-        } else {
-          // API 調用失敗，使用從 HTML 提取的數據
-          location.name = locationName || '';
-          location.full_address = fullAddress || '';
-          location.city = cityName || '';
-          location.country = countryName || '';
-          location.address = locationName || '';
-          location.description = locationDescription || '';
-        }
-      } catch (error) {
-        // 錯誤處理
-        console.error('獲取 Google Places 詳情時出錯:', error);
-        
-        // 回退到從 HTML 提取的數據
-        location.name = locationName || '';
-        location.full_address = fullAddress || '';
-        location.city = cityName || '';
-        location.country = countryName || '';
-        location.address = locationName || '';
-        location.description = locationDescription || '';
-      }
-    } else if (fullAddress) {
-      // 使用已提取的地理數據
-      location.name = locationName || '';
-      location.full_address = fullAddress;
-      location.city = cityName || '';
-      location.country = countryName || '';
-      location.place_id = placeId; 
-      location.description = locationDescription || '';
-      
-      // 如果有place_id，設置為Google類型
-      location.location_type = placeId ? LocationType.GOOGLE : LocationType.CUSTOM;
-    } else if (needsRegistration) {
-      // 需要註冊才能查看確切位置的情況 - 優先級降低，只有當其他方法都失敗時才使用
-      console.log('偵測到需要註冊才能查看確切位置的活動');
-      
-      // 獲取位置資訊
-      const locationInfo = extractLocationInfo();
-      console.log('提取的位置資訊:', locationInfo);
-      
-      if (locationInfo) {
-        // 嘗試提取城市和區域/國家信息
-        let firstPart = '';
-        let secondPart = '';
-        let city = '';
-        let matchedPattern = null;
-        
-        // 嘗試匹配任何位置模式
-        for (const pattern of locationPatterns) {
-          const match = locationInfo.match(pattern);
-          if (match && match.length >= 3) {
-            firstPart = match[1];  // 這可能是區域或城市
-            secondPart = match[2]; // 這可能是城市或國家
-            matchedPattern = pattern.toString();
-            
-            // 一些啟發式判斷，通常第二部分是城市
-            if (matchedPattern.includes('District')) {
-              // 如果模式包含District，則第一部分是區域，第二部分是城市
-              city = secondPart;
-            } else {
-              // 否則第一部分可能是城市
-              city = firstPart;
-            }
-            break;
-          }
-        }
-        
-        // 組裝位置信息
-        if (city) {
-          location.name = `[${city}] Please register to see the exact location of this event`;
-          location.full_address = '';  // 不再保留模糊地址
-          location.city = city;
-          // 只有當明確識別出國家時才設置
-          if (matchedPattern && matchedPattern.includes('City,')) {
-            location.country = secondPart;
-          }
-        } else {
-          // 沒有分解出具體信息，使用名稱
-          location.name = 'Please register to see the exact location of this event';
-          location.full_address = '';  // 保持為空
-        }
-        
-        location.address = 'Custom Address';
-        location.description = 'The exact location is hidden until registration';
-        location.location_type = LocationType.CUSTOM;
-        
-        console.log('已提取需註冊活動的位置資訊:', {
-          locationInfo,
-          city: location.city,
-          full_address: location.full_address
-        });
-      } else {
-        // 找不到任何位置信息
-        location.name = 'Please register to see the exact location of this event';
-        location.full_address = '';  // 保持為空
-        location.address = 'Custom Address';
-        location.description = 'The exact location is hidden until registration';
-        location.location_type = LocationType.CUSTOM;
-      }
+      // 轉換為 LumaLocationData 類型
+      locationResult = {
+        name: customLocation.name || '',
+        full_address: customLocation.full_address || '',
+        address: customLocation.address || '',
+        city: customLocation.city || '',
+        country: customLocation.country || '',
+        postal_code: customLocation.postal_code || '',
+        place_id: customLocation.place_id || '',
+        description: locationDescription || '',
+        location_type: LocationType.CUSTOM
+      };
     } else {
-      // 嘗試從HTML中提取地址信息
-      // 尋找可能包含地址的元素
-      $('p, div, span, h1, h2, h3, h4, h5, h6').each((i, element) => {
-        const text = $(element).text().trim();
-        if (text && 
-            (text.match(/^\d+\s+[A-Za-z\s]+,\s+[A-Za-z\s]+,\s+[A-Za-z\s]+$/i) || 
-             text.match(/^[A-Za-z\s]+,\s+[A-Za-z\s]+,\s+[A-Za-z\s]+$/i) ||
-             text.match(/^[A-Za-z\s]+\s+\d+,\s+[A-Za-z\s]+$/i))) {
-          
-          location.full_address = text;
-          location.name = text.split(',')[0].trim();
-          
-          // 嘗試提取城市和國家
-          const addressParts = text.split(',');
-          if (addressParts.length >= 2) {
-            location.city = addressParts[addressParts.length - 2].trim();
-          }
-          if (addressParts.length >= 1) {
-            location.country = addressParts[addressParts.length - 1].trim();
-          }
-          
-          location.place_id = placeId; // 使用前面提取的place_id
-          // 如果有place_id，設置為Google類型
-          location.location_type = placeId ? LocationType.GOOGLE : LocationType.CUSTOM;
-          
-          return false; // 找到後停止循環
-        }
-      });
+      // 無法提取位置資訊，使用通用信息
+      const customLocation = createCustomLocation(
+        'Please register to see the exact location of this event',
+        '',
+        ''
+      );
+      
+      // 轉換為 LumaLocationData 類型
+      locationResult = {
+        name: customLocation.name || '',
+        full_address: customLocation.full_address || '',
+        address: customLocation.address || '',
+        city: customLocation.city || '',
+        country: customLocation.country || '',
+        postal_code: customLocation.postal_code || '',
+        place_id: customLocation.place_id || '',
+        description: locationDescription || '',
+        location_type: LocationType.CUSTOM
+      };
     }
-  };
+    
+  } else {
+    // 無法取得位置數據的情況
+    const customLocation = createCustomLocation('Location not specified', '', '');
+    
+    // 轉換為 LumaLocationData 類型
+    locationResult = {
+      name: customLocation.name || '',
+      full_address: customLocation.full_address || '',
+      address: customLocation.address || '',
+      city: customLocation.city || '',
+      country: customLocation.country || '',
+      postal_code: customLocation.postal_code || '',
+      place_id: customLocation.place_id || '',
+      description: '',
+      location_type: LocationType.CUSTOM
+    };
+  }
 
-  // 执行位置信息处理
-  await processLocation();
-  
   // 提取類別和標籤
   let category = '';
   const tags: string[] = [];
@@ -728,8 +752,8 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
   }
   
   // 從地點中提取標籤
-  if (location.city && !tags.includes(location.city)) {
-    tags.push(location.city);
+  if (locationResult.city && !tags.includes(locationResult.city)) {
+    tags.push(locationResult.city);
   }
   
   // 如果仍然沒有標籤，從類別中添加
@@ -758,7 +782,7 @@ async function scrapeLumaEventFromHTML(htmlContent: string): Promise<LumaEvent> 
     startAt,
     endAt,
     timezone,
-    location,
+    location: locationResult,
     category,
     tags
   };
