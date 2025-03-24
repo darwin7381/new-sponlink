@@ -44,79 +44,237 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* 基礎變數定義 - 淺色模式 */
 :root {
+  /* 基本系統變數 */
   --radius: 0.625rem;
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+  
+  /* 新品牌色系統 - 深湖藍 */
+  --color-brand-50: hsl(194, 100%, 97%);
+  --color-brand-100: hsl(194, 90%, 92%);
+  --color-brand-200: hsl(194, 85%, 83%);
+  --color-brand-300: hsl(194, 80%, 71%);
+  --color-brand-400: hsl(194, 75%, 58%);
+  --color-brand-500: hsl(194, 70%, 50%);
+  --color-brand-600: hsl(194, 75%, 41%);
+  --color-brand-700: hsl(194, 75%, 33%);
+  --color-brand-800: hsl(194, 75%, 26%);
+  --color-brand-900: hsl(194, 75%, 20%);
+  --color-brand-950: hsl(194, 80%, 12%);
+  
+  /* 新輔助品牌色 - 珊瑚紅 */
+  --color-secondary-50: hsl(6, 100%, 97%);
+  --color-secondary-100: hsl(6, 95%, 94%);
+  --color-secondary-200: hsl(6, 90%, 87%);
+  --color-secondary-300: hsl(6, 85%, 79%);
+  --color-secondary-400: hsl(6, 80%, 70%);
+  --color-secondary-500: hsl(6, 75%, 60%);
+  --color-secondary-600: hsl(6, 70%, 52%);
+  --color-secondary-700: hsl(6, 75%, 42%);
+  --color-secondary-800: hsl(6, 80%, 35%);
+  --color-secondary-900: hsl(6, 85%, 25%);
+  --color-secondary-950: hsl(6, 90%, 15%);
+  
+  /* 新強調色 - 琥珀黃 */
+  --color-accent-50: hsl(45, 100%, 96%);
+  --color-accent-100: hsl(45, 95%, 90%);
+  --color-accent-200: hsl(45, 90%, 82%);
+  --color-accent-300: hsl(45, 85%, 70%);
+  --color-accent-400: hsl(45, 80%, 60%);
+  --color-accent-500: hsl(45, 90%, 50%);
+  --color-accent-600: hsl(45, 85%, 43%);
+  --color-accent-700: hsl(45, 80%, 35%);
+  --color-accent-800: hsl(45, 75%, 28%);
+  --color-accent-900: hsl(45, 70%, 22%);
+  --color-accent-950: hsl(45, 80%, 12%);
+  
+  /* 功能色 - 成功綠 */
+  --color-success-50: hsl(152, 70%, 95%);
+  --color-success-100: hsl(152, 68%, 88%);
+  --color-success-200: hsl(152, 65%, 75%);
+  --color-success-300: hsl(152, 60%, 60%);
+  --color-success-400: hsl(152, 58%, 48%);
+  --color-success-500: hsl(152, 65%, 40%);
+  --color-success-600: hsl(152, 70%, 33%);
+  --color-success-700: hsl(152, 75%, 27%);
+  --color-success-800: hsl(152, 80%, 20%);
+  --color-success-900: hsl(152, 85%, 15%);
+  --color-success-950: hsl(152, 90%, 8%);
+  
+  /* 功能色 - 警告黃 */
+  --color-warning-50: hsl(36, 100%, 97%);
+  --color-warning-100: hsl(36, 95%, 92%);
+  --color-warning-200: hsl(36, 90%, 84%);
+  --color-warning-300: hsl(36, 85%, 74%);
+  --color-warning-400: hsl(36, 80%, 64%);
+  --color-warning-500: hsl(36, 90%, 56%);
+  --color-warning-600: hsl(36, 85%, 49%);
+  --color-warning-700: hsl(36, 80%, 40%);
+  --color-warning-800: hsl(36, 75%, 32%);
+  --color-warning-900: hsl(36, 70%, 25%);
+  --color-warning-950: hsl(36, 80%, 15%);
+  
+  /* 功能色 - 錯誤紅 */
+  --color-error-50: hsl(0, 100%, 97%);
+  --color-error-100: hsl(0, 95%, 94%);
+  --color-error-200: hsl(0, 90%, 88%);
+  --color-error-300: hsl(0, 85%, 80%);
+  --color-error-400: hsl(0, 80%, 70%);
+  --color-error-500: hsl(0, 90%, 60%);
+  --color-error-600: hsl(0, 85%, 50%);
+  --color-error-700: hsl(0, 80%, 41%);
+  --color-error-800: hsl(0, 75%, 33%);
+  --color-error-900: hsl(0, 70%, 25%);
+  --color-error-950: hsl(0, 80%, 15%);
+  
+  /* 功能色 - 資訊藍 */
+  --color-info-50: hsl(210, 100%, 97%);
+  --color-info-100: hsl(210, 95%, 92%);
+  --color-info-200: hsl(210, 90%, 86%);
+  --color-info-300: hsl(210, 85%, 75%);
+  --color-info-400: hsl(210, 80%, 65%);
+  --color-info-500: hsl(210, 90%, 58%);
+  --color-info-600: hsl(210, 85%, 50%);
+  --color-info-700: hsl(210, 80%, 42%);
+  --color-info-800: hsl(210, 75%, 34%);
+  --color-info-900: hsl(210, 70%, 27%);
+  --color-info-950: hsl(210, 80%, 14%);
+  
+  /* 中性色 - 灰階 */
+  --color-neutral-50: hsl(220, 20%, 98%);
+  --color-neutral-100: hsl(220, 15%, 94%);
+  --color-neutral-200: hsl(220, 12%, 88%);
+  --color-neutral-300: hsl(220, 10%, 78%);
+  --color-neutral-400: hsl(220, 8%, 65%);
+  --color-neutral-500: hsl(220, 6%, 50%);
+  --color-neutral-600: hsl(220, 6%, 40%);
+  --color-neutral-700: hsl(220, 6%, 30%);
+  --color-neutral-800: hsl(220, 6%, 20%);
+  --color-neutral-900: hsl(220, 8%, 15%);
+  --color-neutral-950: hsl(220, 10%, 8%);
+  
+  /* 相容現有系統 - 淺色模式 */
+  --card: var(--color-neutral-50);
+  --card-foreground: var(--color-neutral-900);
+  --popover: var(--color-neutral-50);
+  --popover-foreground: var(--color-neutral-900);
+  --primary: var(--color-brand-600);
+  --primary-foreground: var(--color-neutral-50);
+  --secondary: var(--color-neutral-100);
+  --secondary-foreground: var(--color-brand-700);
+  --muted: var(--color-neutral-100);
+  --muted-foreground: var(--color-neutral-500);
+  --accent: var(--color-neutral-100);
+  --accent-foreground: var(--color-brand-700);
+  --destructive: var(--color-error-600);
+  --border: var(--color-neutral-200);
+  --input: var(--color-neutral-200);
+  --ring: var(--color-brand-500);
+  
+  /* 圖表顏色 - 淺色模式 */
+  --chart-1: var(--color-brand-500);
+  --chart-2: var(--color-secondary-500);
+  --chart-3: var(--color-accent-500);
+  --chart-4: var(--color-info-500);
+  --chart-5: var(--color-success-500);
+  
+  /* 側邊欄相關 - 淺色模式 */
+  --sidebar: var(--color-neutral-50);
+  --sidebar-foreground: var(--color-neutral-900);
+  --sidebar-primary: var(--color-brand-600);
+  --sidebar-primary-foreground: var(--color-neutral-50);
+  --sidebar-accent: var(--color-neutral-100);
+  --sidebar-accent-foreground: var(--color-brand-700);
+  --sidebar-border: var(--color-neutral-200);
+  --sidebar-ring: var(--color-brand-500);
+  
+  /* 背景和前景 - 淺色模式 */
+  --background: var(--color-neutral-50);
+  --foreground: var(--color-neutral-900);
+  
+  /* RGB值變數，用於透明度調整 */
+  --color-brand-500-rgb: 28, 179, 208;
+  --color-secondary-500-rgb: 231, 76, 76;
+  --color-accent-500-rgb: 255, 193, 7;
+  --color-success-500-rgb: 33, 150, 83;
+  --color-warning-500-rgb: 245, 166, 35;
+  --color-error-500-rgb: 255, 51, 51;
+  --color-info-500-rgb: 51, 133, 255;
+  --color-neutral-500-rgb: 125, 128, 135;
 }
 
+/* 深色模式變數定義 */
 .dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.92 0.004 286.32);
-  --primary-foreground: oklch(0.21 0.006 285.885);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.552 0.016 285.938);
+  /* 相容現有系統 - 深色模式 */
+  --background: var(--color-neutral-950);
+  --foreground: var(--color-neutral-50);
+  
+  /* 卡片背景更深，增加層次感 */
+  --card: var(--color-neutral-900);
+  --card-foreground: var(--color-neutral-50);
+  
+  /* 彈出元素 */
+  --popover: var(--color-neutral-900);
+  --popover-foreground: var(--color-neutral-50);
+  
+  /* 主要品牌色更亮，提高對比度 */
+  --primary: var(--color-brand-400);
+  --primary-foreground: var(--color-neutral-950);
+  
+  /* 次要元素使用低飽和度但可辨識的顏色 */
+  --secondary: var(--color-neutral-800);
+  --secondary-foreground: var(--color-neutral-100);
+  
+  /* 靜音元素增強對比 */
+  --muted: var(--color-neutral-800);
+  --muted-foreground: var(--color-neutral-300);
+  
+  /* 強調元素 */
+  --accent: var(--color-neutral-800);
+  --accent-foreground: var(--color-neutral-100);
+  
+  /* 確保警告色在深色模式下足夠明顯 */
+  --destructive: var(--color-error-400);
+  
+  /* 更精細的邊框和輸入框處理 */
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  
+  /* 環形元素更亮 */
+  --ring: var(--color-brand-500);
+  
+  /* 圖表顏色 - 深色模式下更亮更飽和 */
+  --chart-1: var(--color-brand-400);
+  --chart-2: var(--color-secondary-400);
+  --chart-3: var(--color-accent-400);
+  --chart-4: var(--color-info-400);
+  --chart-5: var(--color-success-400);
+  
+  /* 側邊欄相關 - 深色模式 */
+  --sidebar: var(--color-neutral-900);
+  --sidebar-foreground: var(--color-neutral-100);
+  --sidebar-primary: var(--color-brand-400);
+  --sidebar-primary-foreground: var(--color-neutral-950);
+  --sidebar-accent: var(--color-neutral-800);
+  --sidebar-accent-foreground: var(--color-neutral-100);
+  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-ring: var(--color-brand-500);
 }
 
+/* 全局基礎設定 */
 @layer base {
+  html {
+    transition: color 0.3s ease, background-color 0.3s ease;
+  }
+  
+  html * {
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
   * {
     @apply border-border outline-ring/50;
   }
+  
   body {
     @apply bg-background text-foreground;
   }

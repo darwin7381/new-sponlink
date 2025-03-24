@@ -149,6 +149,28 @@ export default function Header() {
             </nav>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
+            <Link
+              href="/design-system/colors"
+              className="text-muted-foreground hover:text-foreground px-3 py-2 mx-2 rounded-md text-sm font-medium flex items-center"
+            >
+              <svg 
+                className="h-5 w-5 mr-1" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="4"></line>
+                <line x1="12" y1="20" x2="12" y2="22"></line>
+                <line x1="2" y1="12" x2="4" y2="12"></line>
+                <line x1="20" y1="12" x2="22" y2="12"></line>
+              </svg>
+              設計系統
+            </Link>
             <ThemeToggle />
             {user ? (
               <div className="ml-3 relative z-50">
@@ -351,6 +373,33 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Meetings
+            </Link>
+            <Link
+              href="/design-system/colors"
+              className={`${
+                pathname.startsWith("/design-system")
+                  ? "bg-accent text-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              } block px-3 py-2 rounded-md text-base font-medium flex items-center`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <svg 
+                className="h-5 w-5 mr-2" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="4"></line>
+                <line x1="12" y1="20" x2="12" y2="22"></line>
+                <line x1="2" y1="12" x2="4" y2="12"></line>
+                <line x1="20" y1="12" x2="22" y2="12"></line>
+              </svg>
+              設計系統
             </Link>
           </div>
           <div className="pt-4 pb-3 border-t border-border">
