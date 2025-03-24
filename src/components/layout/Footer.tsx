@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { useState, useEffect } from "react";
 
 export default function Footer() {
-  const currentYear = new Date().getFullYear();
+  const [currentYear, setCurrentYear] = useState("2025");
+  
+  useEffect(() => {
+    setCurrentYear(new Date().getFullYear().toString());
+  }, []);
   
   return (
     <footer className="bg-[#1f2937] text-white">

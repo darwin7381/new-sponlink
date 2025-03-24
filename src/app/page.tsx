@@ -2,18 +2,20 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { getCurrentUser } from "@/lib/services/authService";
-import { User, USER_ROLES } from "@/lib/types/users";
+import { User } from "@/lib/types/users";
 import { getAllEvents } from "@/services/eventService";
 import { EventStatus, Event } from "@/types/event";
-import { EventCard } from "@/components/events/EventCard";
+import { Hero } from "@/components/layout/Hero";
+import { FeaturedEvents } from "@/components/events/FeaturedEvents";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const fetchData = async () => {
       try {
         // Get current user
@@ -33,76 +35,18 @@ export default function Home() {
     fetchData();
   }, []);
 
+  // 避免水合錯誤
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <div className="bg-background">
       {/* Hero section */}
-      <div className="relative">
-        <div className="absolute inset-0">
-          <div className="w-full h-full relative">
-            <Image
-              src="https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80"
-              alt="Event background"
-              fill
-              style={{ objectFit: 'cover' }}
-              priority
-            />
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/70 mix-blend-multiply" />
-        </div>
-        <div className="relative px-4 py-16 sm:px-6 sm:py-24 lg:py-32 lg:px-8">
-          <h1 className="text-center text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
-            <span className="block text-primary-foreground">EventConnect</span>
-            <span className="block text-primary-foreground/80">Where Events Meet Sponsors</span>
-          </h1>
-          <p className="mt-6 max-w-lg mx-auto text-center text-xl text-primary-foreground/90 sm:max-w-3xl">
-            The ultimate platform connecting event organizers with sponsors. Create, manage, and discover events that align with your goals and interests.
-          </p>
-          <div className="mt-10 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center">
-            <div className="space-y-4 sm:space-y-0 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5">
-              <Link href="/events" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 md:py-4 md:text-lg md:px-10">
-                Browse Events
-              </Link>
-              {user ? (
-                user.role === USER_ROLES.ORGANIZER ? (
-                  <Link href="/organizer/create-event" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary-foreground hover:bg-primary-foreground/90 md:py-4 md:text-lg md:px-10">
-                    Create Event
-                  </Link>
-                ) : (
-                  <Link href="/cart" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary-foreground hover:bg-primary-foreground/90 md:py-4 md:text-lg md:px-10">
-                    View Cart
-                  </Link>
-                )
-              ) : (
-                <Link href="/register" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary-foreground hover:bg-primary-foreground/90 md:py-4 md:text-lg md:px-10">
-                  Get Started
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <Hero user={user} />
 
       {/* Featured Events Section */}
-      <div className="py-12 bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-foreground sm:text-4xl">Featured Events</h2>
-            <p className="mt-3 max-w-2xl mx-auto text-xl text-muted-foreground sm:mt-4">
-              Discover upcoming events looking for sponsors.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {featuredEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
-          <div className="mt-10 text-center">
-            <Link href="/events" className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-primary-foreground bg-primary hover:bg-primary/90">
-              View All Events
-            </Link>
-          </div>
-        </div>
-      </div>
+      <FeaturedEvents events={featuredEvents} />
 
       {/* How It Works Section */}
       <div className="py-12 bg-secondary/30">
