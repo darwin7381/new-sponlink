@@ -58,17 +58,17 @@ function ButtonsShowcase() {
       <div>
         <h3 className="text-base font-medium mb-3">漸變按鈕</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="px-4 py-2 rounded-md font-medium text-white bg-gradient-to-r from-brand-600 to-info-600 hover:from-brand-700 hover:to-info-700 transition-all duration-300 shadow-md hover:shadow-lg border border-brand-700/30">
-            品牌漸變
+          <button className="px-4 py-2 rounded-md font-medium text-slate-800 bg-gray-200 border border-gray-300 shadow-sm">
+            灰色按鈕
           </button>
-          <button className="px-4 py-2 rounded-md font-medium text-white bg-gradient-to-r from-secondary-600 to-accent-600 hover:from-secondary-700 hover:to-accent-700 transition-all duration-300 shadow-md hover:shadow-lg border border-secondary-700/30">
-            活力漸變
+          <button className="px-4 py-2 rounded-md font-medium text-slate-800 bg-yellow-200 border border-yellow-300 shadow-sm">
+            黃色按鈕
           </button>
-          <button className="px-4 py-2 rounded-md font-medium text-white bg-gradient-to-r from-success-600 to-info-600 hover:from-success-700 hover:to-info-700 transition-all duration-300 shadow-md hover:shadow-lg border border-success-700/30">
-            成功漸變
+          <button className="px-4 py-2 rounded-md font-medium text-white bg-purple-600 border border-purple-700 shadow-sm">
+            紫色按鈕
           </button>
-          <button className="px-4 py-2 rounded-md font-medium text-white bg-gradient-to-tr from-error-700 via-error-600 to-warning-600 hover:from-error-800 hover:via-error-700 hover:to-warning-700 transition-all duration-300 shadow-md hover:shadow-lg border border-error-700/30">
-            火焰漸變
+          <button className="px-4 py-2 rounded-md font-medium text-white bg-pink-500 border border-pink-600 shadow-sm">
+            粉色按鈕
           </button>
         </div>
       </div>
@@ -76,17 +76,17 @@ function ButtonsShowcase() {
       <div>
         <h3 className="text-base font-medium mb-3">透明度與陰影</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="px-4 py-2 rounded-md font-medium text-white bg-brand-600 hover:bg-brand-700 backdrop-blur-sm transition-all duration-300 shadow-lg hover:shadow-xl border border-brand-700/30">
-            半透明效果
+          <button className="px-4 py-2 rounded-md font-medium text-slate-800 bg-white border-2 border-sky-500 shadow-sm">
+            藍邊框按鈕
           </button>
-          <button className="px-4 py-2 rounded-md font-medium border border-secondary-400 text-secondary-900 bg-white hover:bg-secondary-50 backdrop-blur-sm transition-all duration-300 shadow-[0_4px_14px_0_rgba(231,76,76,0.2)] hover:shadow-[0_6px_20px_0_rgba(231,76,76,0.35)]">
-            帶彩色陰影
+          <button className="px-4 py-2 rounded-md font-medium text-white bg-emerald-600 border border-emerald-700 shadow-sm">
+            綠色按鈕
           </button>
-          <button className="px-4 py-2 rounded-md font-medium text-white bg-neutral-800 hover:bg-neutral-900 backdrop-blur-sm transition-all duration-300 shadow-[0_5px_15px_0_rgba(0,0,0,0.2)] hover:shadow-[0_8px_25px_0_rgba(0,0,0,0.4)] border border-neutral-700/30">
-            玻璃擬態
+          <button className="px-4 py-2 rounded-md font-medium text-white bg-indigo-600 border border-indigo-700 shadow-sm">
+            靛藍按鈕
           </button>
-          <button className="px-4 py-2 rounded-md font-medium text-white bg-accent-700 hover:bg-accent-800 transition-all duration-300 shadow-[inset_0_1px_3px_rgba(255,255,255,0.4),0_4px_10px_rgba(245,166,35,0.4)] hover:shadow-[inset_0_1px_3px_rgba(255,255,255,0.4),0_6px_15px_rgba(245,166,35,0.6)] border border-accent-800/30">
-            內陰影效果
+          <button className="px-4 py-2 rounded-md font-medium text-white bg-rose-500 border border-rose-600 shadow-sm">
+            玫瑰按鈕
           </button>
         </div>
       </div>
@@ -94,17 +94,17 @@ function ButtonsShowcase() {
       <div>
         <h3 className="text-base font-medium mb-3">互動效果</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="group relative px-6 py-2.5 rounded-md font-medium text-white bg-brand-600 overflow-hidden transition-all duration-300 shadow-md hover:shadow-lg border border-brand-700/30">
-            <span className="relative z-10">懸停動畫</span>
-            <span className="absolute inset-0 bg-brand-700 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
+          <button className="px-4 py-2 rounded-md font-medium text-slate-800 bg-amber-200 border border-amber-300 shadow-sm">
+            琥珀按鈕
           </button>
-          <button className="relative px-6 py-2.5 rounded-md font-medium text-white bg-secondary-700 overflow-hidden transition-all duration-300 shadow-md hover:shadow-lg hover:translate-y-[-2px] border border-secondary-800/30">
-            <span className="relative z-10">彈跳效果</span>
-            <span className="absolute inset-0 bg-gradient-to-tr from-secondary-600 to-secondary-800 opacity-0 hover:opacity-100 transition-opacity duration-300"></span>
+          <button className="px-4 py-2 rounded-md font-medium text-white bg-cyan-600 border border-cyan-700 shadow-sm">
+            青色按鈕
           </button>
-          <button className="group relative px-6 py-2.5 rounded-md font-medium overflow-hidden border border-brand-600 text-brand-800 bg-white transition-all duration-300 shadow-md hover:shadow-lg hover:text-white">
-            <span className="relative z-10">填充動畫</span>
-            <span className="absolute inset-0 bg-brand-600 transform scale-y-0 group-hover:scale-y-100 transition-transform origin-bottom duration-300"></span>
+          <button className="px-4 py-2 rounded-md font-medium text-slate-800 bg-lime-300 border border-lime-400 shadow-sm">
+            萊姆按鈕
+          </button>
+          <button className="relative px-4 py-2 rounded-md font-medium text-white bg-indigo-600 transition-all duration-300 hover:translate-y-[-3px] border border-indigo-700/40">
+            <span>填充動畫</span>
           </button>
         </div>
       </div>
@@ -612,68 +612,6 @@ export default function ComponentsPage() {
             >
               <ButtonsShowcase />
             </ComponentSection>
-            
-            <section className="mb-12 border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-2">漸變按鈕</h2>
-              <p className="text-muted-foreground mb-6">使用漸變顏色創建引人注目的按鈕，可以增強用戶體驗和視覺吸引力。</p>
-              <div className="space-y-6">
-                <div className="flex flex-wrap gap-4">
-                  <button className="px-4 py-2 rounded-md font-medium text-white bg-gradient-to-r from-purple-600 to-blue-500 hover:from-purple-700 hover:to-blue-600 border border-purple-700/30">
-                    紫藍漸變按鈕
-                  </button>
-                  <button className="px-4 py-2 rounded-md font-medium text-white bg-gradient-to-r from-red-500 to-yellow-500 hover:from-red-600 hover:to-yellow-600 border border-red-600/30">
-                    紅黃漸變按鈕
-                  </button>
-                  <button className="px-4 py-2 rounded-md font-medium text-white bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 border border-green-600/30">
-                    綠松漸變按鈕
-                  </button>
-                  <button className="px-4 py-2 rounded-md font-medium text-white bg-gradient-to-r from-pink-500 to-orange-500 hover:from-pink-600 hover:to-orange-600 border border-pink-600/30">
-                    粉橙漸變按鈕
-                  </button>
-                </div>
-              </div>
-            </section>
-            
-            <section className="mb-12 border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-2">透明度與陰影</h2>
-              <p className="text-muted-foreground mb-6">使用透明度和陰影效果創建具有深度感的按鈕，使界面更具立體感。</p>
-              <div className="space-y-6">
-                <div className="flex flex-wrap gap-4">
-                  <button className="px-4 py-2 rounded-md font-medium text-white bg-blue-600/85 hover:bg-blue-700/90 shadow-md hover:shadow-lg border border-blue-700/40">
-                    半透明藍按鈕
-                  </button>
-                  <button className="px-4 py-2 rounded-md font-medium text-slate-800 bg-white shadow-[0_4px_14px_0_rgba(0,0,0,0.2)] hover:shadow-[0_6px_20px_0_rgba(0,0,0,0.3)] border border-slate-300">
-                    白色陰影按鈕
-                  </button>
-                  <button className="px-4 py-2 rounded-md font-medium text-white bg-black/85 hover:bg-black/95 shadow-lg hover:shadow-xl border border-neutral-700/40">
-                    黑色透明按鈕
-                  </button>
-                  <button className="px-4 py-2 rounded-full font-medium text-slate-800 bg-yellow-300 shadow-[0_4px_14px_0_rgba(234,179,8,0.4)] hover:shadow-[0_6px_20px_0_rgba(234,179,8,0.6)] border border-yellow-400">
-                    圓形黃按鈕
-                  </button>
-                </div>
-              </div>
-            </section>
-            
-            <section className="mb-12 border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-2">互動效果</h2>
-              <p className="text-muted-foreground mb-6">透過動畫和變換效果，提供豐富的互動反饋，提升用戶體驗。</p>
-              <div className="space-y-6">
-                <div className="flex flex-wrap gap-4">
-                  <button className="group relative px-4 py-2 rounded-md font-medium overflow-hidden border border-cyan-600 text-cyan-700 bg-white transition-all duration-300 shadow-md hover:shadow-lg">
-                    <span className="relative z-10 text-cyan-700 group-hover:text-white transition-colors duration-300">左滑填充按鈕</span>
-                    <span className="absolute inset-0 bg-cyan-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></span>
-                  </button>
-                  <button className="relative px-4 py-2 rounded-md font-medium text-white bg-indigo-600 transition-all duration-300 shadow-md hover:shadow-lg hover:translate-y-[-3px] border border-indigo-700/40">
-                    <span>懸浮上升按鈕</span>
-                  </button>
-                  <button className="group relative px-4 py-2 rounded-md font-medium overflow-hidden border border-rose-600 text-rose-700 bg-white transition-all duration-300 shadow-md hover:shadow-lg">
-                    <span className="relative z-10 text-rose-700 group-hover:text-white transition-colors duration-300">底部填充按鈕</span>
-                    <span className="absolute inset-0 bg-rose-600 transform scale-y-0 group-hover:scale-y-100 transition-transform origin-bottom duration-300"></span>
-                  </button>
-                </div>
-              </div>
-            </section>
             
             <ComponentSection 
               title="徽章" 
