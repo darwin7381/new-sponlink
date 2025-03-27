@@ -85,6 +85,7 @@ export interface Meeting {
   description: string;
   proposed_times: string[];
   confirmed_time: string | null;
+  timezone?: string;
   status: MEETING_STATUS;
   meeting_link: string | null;
   created_at: string;

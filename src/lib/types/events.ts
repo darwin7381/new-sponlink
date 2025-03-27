@@ -26,6 +26,7 @@ export interface Event {
   description: string;
   start_time: string;
   end_time: string;
+  timezone?: string;
   location: Location;
   organizer_id: string;
   sponsor_ids: string[];

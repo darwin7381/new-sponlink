@@ -1,5 +1,7 @@
 import { Meeting, MeetingStatus, CartItem, CartItemStatus } from '@/types/meeting';
 import { mockMeetings, mockCartItems } from '@/mocks/meetingData';
+import { adaptApiMeetingsToLib } from '@/lib/types-adapter';
+import { Meeting as LibMeeting } from '@/lib/types/users';
 
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -172,13 +174,13 @@ export const getSponsorMeetings = async (sponsorId: string): Promise<Meeting[]> 
 };
 
 // Get meetings for organizer
-export const getOrganizerMeetings = async (organizerId: string): Promise<Meeting[]> => {
+export const getOrganizerMeetings = async (organizerId: string): Promise<LibMeeting[]> => {
   try {
     await delay(500);
     
     const meetings = mockMeetings.filter(meeting => meeting.organizer_id === organizerId);
     
-    return meetings;
+    return adaptApiMeetingsToLib(meetings);
   } catch (error) {
     console.error(`Error getting meetings for organizer ID ${organizerId}:`, error);
     throw error;
