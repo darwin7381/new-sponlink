@@ -5,7 +5,6 @@
 
 const USER_STORAGE_KEY = 'user';
 const LEGACY_USER_STORAGE_KEY = 'currentUser';
-const AUTH_TOKEN_KEY = 'authToken';
 
 /**
  * 檢查並遷移舊版身份驗證數據

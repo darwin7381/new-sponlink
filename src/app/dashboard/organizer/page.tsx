@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarIcon, UserIcon, BarChart3Icon, CheckIcon, ClockIcon } from "lucide-react";
+import { CalendarIcon, UserIcon, BarChart3Icon, ClockIcon } from "lucide-react";
 import { getOrganizerMeetings } from "@/services/meetingService";
 import { getOrganizerEvents } from "@/services/eventService";
 import { Meeting, MEETING_STATUS, USER_ROLES } from "@/lib/types/users";
@@ -46,7 +46,7 @@ export default function OrganizerDashboardPage() {
       // 如果沒有找到標準縮寫，嘗試獲取GMT偏移
       const gmtMatch = timeString.match(/GMT[+-]\d+/);
       return gmtMatch ? gmtMatch[0] : timezone.split('/').pop()?.replace('_', ' ') || timezone;
-    } catch (_) {
+    } catch (_) { // eslint-disable-line @typescript-eslint/no-unused-vars
       // 發生錯誤時返回簡化的時區名稱
       return timezone.includes('/') 
         ? timezone.split('/').pop()?.replace('_', ' ')

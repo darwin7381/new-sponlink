@@ -17,7 +17,6 @@ export default function ManageEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
   const [authState, setAuthState] = useState<'loading' | 'authenticated' | 'unauthorized'>('loading');
 
   // 檢查用戶身份和獲取活動
@@ -60,7 +59,6 @@ export default function ManageEventsPage() {
         }
         
         if (isMounted) {
-          setCurrentUser(user);
           setAuthState('authenticated');
           
           // 獲取活動數據
