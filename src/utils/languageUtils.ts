@@ -151,6 +151,6 @@ export const formatAddress = (location: Location | null | undefined): string => 
  * 格式化地址顯示為"城市, 國家"的格式，並根據用戶語言本地化
  */
 export const formatLocationSync = (city: string, country: string): string => {
-  const language = getUserLanguageSync();
-  return formatLocation(city, country, language);
+  // 由於formatLocation不接受第三個參數，我們在這裡使用它的基本功能
+  return formatLocation(city, country);
 }; 

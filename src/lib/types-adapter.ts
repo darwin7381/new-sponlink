@@ -8,10 +8,14 @@ import { Event as ApiEvent } from '@/types/event';
  * 處理不同模塊間的類型轉換
  */
 
-// 將API的Event類型轉換為Lib的Event類型
+// 將API的單個Event轉換為Lib的Event
+export function adaptNewEventToOld(apiEvent: ApiEvent): LibEvent {
+  return apiEvent as unknown as LibEvent;
+}
+
+// 將API的Event列表轉換為Lib的Event列表
 export function adaptNewEventsToOld(apiEvents: ApiEvent[]): LibEvent[] {
-  // 簡化版的適配器，確保類型兼容
-  return apiEvents as unknown as LibEvent[];
+  return apiEvents.map(event => adaptNewEventToOld(event));
 }
 
 // 將API中的Meeting類型轉換為lib中的Meeting類型

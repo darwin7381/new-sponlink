@@ -1,4 +1,4 @@
-import { SocialProvider, SocialProfile, OAuthConfig } from '@/types/auth';
+import { SocialProvider, SocialProfile, OAuthConfig, SocialLoginResult, OAuthProviderConfig } from '@/types/auth';
 
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -15,6 +15,22 @@ const OAUTH_CONFIG: Record<SocialProvider, OAuthConfig> = {
     authUrl: 'https://appleid.apple.com/auth/authorize',
     scope: 'email name',
   },
+};
+
+// OAuth 提供者UI配置
+const oauthProviderConfigs: Record<SocialProvider, OAuthProviderConfig> = {
+  google: {
+    name: 'Google',
+    icon: 'google',
+    buttonColor: '#4285F4',
+    textColor: '#ffffff'
+  },
+  apple: {
+    name: 'Apple',
+    icon: 'apple',
+    buttonColor: '#000000',
+    textColor: '#ffffff'
+  }
 };
 
 /**

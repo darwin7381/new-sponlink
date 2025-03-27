@@ -20,6 +20,9 @@ export interface SocialProfile {
   email: string;
   name: string;
   provider: SocialProvider;
+  providerId?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  profileData?: any;
 }
 
 export interface OAuthConfig {
@@ -31,4 +34,32 @@ export interface OAuthConfig {
 export interface OAuthConfigs {
   google: OAuthConfig;
   apple: OAuthConfig;
+}
+
+export interface SocialLoginResult {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    emailVerified: boolean;
+    socialIdentities: {
+      provider: SocialProvider;
+      providerId?: string;
+      email: string;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      profileData?: any;
+      linkedAt: string;
+    }[];
+    createdAt: string;
+    lastLogin: string;
+  };
+  token: string;
+}
+
+export interface OAuthProviderConfig {
+  name: string;
+  icon: string;
+  buttonColor: string;
+  textColor: string;
 } 
