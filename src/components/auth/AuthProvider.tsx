@@ -40,16 +40,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleLogout = useCallback(() => {
     console.log("AuthProvider: 開始登出處理");
     
-    // 清除用戶數據和登入狀態
-    setUser(null);
-    setIsLoggedIn(false);
-    
     // 調用登出服務
     try {
+      // 先執行登出服務，清除存儲的登錄數據
       logout();
       
-      // 使用 React 路由導航
-      router.push('/login');
+      // 然後更新組件狀態
+      setUser(null);
+      setIsLoggedIn(false);
+      
+      // 最後導航到登錄頁面
+      // 使用 setTimeout 確保狀態更新完成後再導航，避免循環更新
+      setTimeout(() => {
+        router.push('/login');
+      }, 0);
     } catch (error) {
       console.error('登出錯誤:', error);
     }
