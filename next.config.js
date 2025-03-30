@@ -29,7 +29,18 @@ const nextConfig = {
   },
   experimental: {
     optimizeCss: true,
-    optimizePackageImports: ['lucide-react', '@mui/material'],
+    optimizePackageImports: ['lucide-react', '@mui/material', 'tailwind-merge'],
+  },
+  webpack: (config) => {
+    // 修复tailwind-merge模块查找问题
+    config.optimization.splitChunks = {
+      cacheGroups: {
+        default: false,
+        vendors: false,
+      },
+    };
+    
+    return config;
   },
 };
 

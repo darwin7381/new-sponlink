@@ -2,93 +2,48 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getOrganizerEvents } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
-import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
-import { USER_ROLES } from "@/lib/types/users";
+import { getCurrentUser, VIEW_TYPE } from "@/lib/services/authService";
+import ProtectedRouteWrapper from "@/components/auth/ProtectedRouteWrapper";
 
 export default function ManageEventsPage() {
-  const router = useRouter();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [authState, setAuthState] = useState<'loading' | 'authenticated' | 'unauthorized'>('loading');
 
-  // 檢查用戶身份和獲取活動
+  // 獲取活動數據
   useEffect(() => {
-    let isMounted = true;
-    
-    const checkAuthAndFetchEvents = async () => {
+    const fetchEvents = async () => {
       try {
-        // 為了確保 localStorage 資料已載入，添加短暫延遲
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // 檢查身份驗證狀態
-        const authenticated = isAuthenticated();
-        if (!authenticated) {
-          if (isMounted) {
-            setAuthState('unauthorized');
-            router.push('/login');
-          }
-          return;
-        }
-        
-        // 檢查角色權限
-        const isOrganizerRole = hasRole(USER_ROLES.ORGANIZER);
-        if (!isOrganizerRole) {
-          if (isMounted) {
-            setAuthState('unauthorized');
-            router.push('/login');
-          }
-          return;
-        }
-        
         // 獲取當前用戶
         const user = await getCurrentUser();
         if (!user) {
-          if (isMounted) {
-            setAuthState('unauthorized');
-            router.push('/login');
-          }
           return;
         }
-        
-        if (isMounted) {
-          setAuthState('authenticated');
           
-          // 獲取活動數據
-          try {
-            const eventsData = await getOrganizerEvents(user.id);
-            setEvents(eventsData);
-          } catch (error) {
-            console.error("Error fetching events:", error);
-            setError("無法加載您的活動。請稍後再試。");
-          }
+        // 獲取活動數據
+        try {
+          const eventsData = await getOrganizerEvents(user.id);
+          setEvents(eventsData);
+        } catch (error) {
+          console.error("Error fetching events:", error);
+          setError("無法加載您的活動。請稍後再試。");
         }
       } catch (error) {
-        console.error("Auth check error:", error);
-        if (isMounted) {
-          setError("驗證過程中發生錯誤");
-          setAuthState('unauthorized');
-        }
+        console.error("Error fetching user:", error);
+        setError("獲取用戶資料時發生錯誤");
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     };
     
-    checkAuthAndFetchEvents();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [router]);
+    fetchEvents();
+  }, []);
 
   // 獲取活動狀態標籤
   const getStatusBadge = (status: EventStatus) => {
@@ -113,86 +68,91 @@ export default function ManageEventsPage() {
     event.status === EventStatus.COMPLETED || event.status === EventStatus.CANCELLED
   );
 
-  if (isLoading) {
+  // 頁面內容組件
+  const EventsPageContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center min-h-screen bg-background">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-2xl font-semibold mb-2 text-foreground">載入中...</h2>
+            <p className="text-muted-foreground">正在獲取您的活動資料</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="flex justify-center items-center min-h-screen bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-          <h2 className="text-2xl font-semibold mb-2 text-foreground">載入中...</h2>
-          <p className="text-muted-foreground">正在獲取您的活動資料</p>
+      <div className="bg-background min-h-screen pt-24 pb-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground">管理活動</h1>
+            <Link href="/organizer/events/create">
+              <Button variant="default">
+                創建新活動
+              </Button>
+            </Link>
+          </div>
+
+          {error ? (
+            <Card className="border-red-300 dark:border-red-800">
+              <CardContent className="p-6">
+                <p className="text-red-600 dark:text-red-400">{error}</p>
+              </CardContent>
+            </Card>
+          ) : events.length === 0 ? (
+            <Card className="border border-border">
+              <CardContent className="p-8 text-center">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <h2 className="text-xl font-medium text-foreground">您還沒有創建任何活動</h2>
+                <p className="mt-2 text-muted-foreground">
+                  點擊上方的「創建新活動」按鈕開始創建您的第一個活動。
+                </p>
+                <Link href="/organizer/events/create" className="mt-6 inline-block">
+                  <Button>開始創建活動</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          ) : (
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="mb-6 bg-card border border-border rounded-lg p-1">
+                <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">所有活動 ({events.length})</TabsTrigger>
+                <TabsTrigger value="draft" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">草稿 ({draftEvents.length})</TabsTrigger>
+                <TabsTrigger value="published" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">已發布 ({publishedEvents.length})</TabsTrigger>
+                <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">已完成 ({completedEvents.length})</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="all">
+                <EventList events={events} getStatusBadge={getStatusBadge} />
+              </TabsContent>
+              
+              <TabsContent value="draft">
+                <EventList events={draftEvents} getStatusBadge={getStatusBadge} />
+              </TabsContent>
+              
+              <TabsContent value="published">
+                <EventList events={publishedEvents} getStatusBadge={getStatusBadge} />
+              </TabsContent>
+              
+              <TabsContent value="completed">
+                <EventList events={completedEvents} getStatusBadge={getStatusBadge} />
+              </TabsContent>
+            </Tabs>
+          )}
         </div>
       </div>
     );
-  }
+  };
 
-  if (authState === 'unauthorized') {
-    // 僅顯示重定向消息，實際重定向由 useEffect 處理
-    return null;
-  }
-
+  // 使用 ProtectedRouteWrapper 包裝頁面
   return (
-    <div className="bg-background min-h-screen pt-24 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground">管理活動</h1>
-          <Link href="/organizer/events/create">
-            <Button variant="default">
-              創建新活動
-            </Button>
-          </Link>
-        </div>
-
-        {error ? (
-          <Card className="border-red-300 dark:border-red-800">
-            <CardContent className="p-6">
-              <p className="text-red-600 dark:text-red-400">{error}</p>
-            </CardContent>
-          </Card>
-        ) : events.length === 0 ? (
-          <Card className="border border-border">
-            <CardContent className="p-8 text-center">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-medium text-foreground">您還沒有創建任何活動</h2>
-              <p className="mt-2 text-muted-foreground">
-                點擊上方的「創建新活動」按鈕開始創建您的第一個活動。
-              </p>
-              <Link href="/organizer/events/create" className="mt-6 inline-block">
-                <Button>開始創建活動</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        ) : (
-          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="mb-6 bg-card border border-border rounded-lg p-1">
-              <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">所有活動 ({events.length})</TabsTrigger>
-              <TabsTrigger value="draft" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">草稿 ({draftEvents.length})</TabsTrigger>
-              <TabsTrigger value="published" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">已發布 ({publishedEvents.length})</TabsTrigger>
-              <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">已完成 ({completedEvents.length})</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="all">
-              <EventList events={events} getStatusBadge={getStatusBadge} />
-            </TabsContent>
-            
-            <TabsContent value="draft">
-              <EventList events={draftEvents} getStatusBadge={getStatusBadge} />
-            </TabsContent>
-            
-            <TabsContent value="published">
-              <EventList events={publishedEvents} getStatusBadge={getStatusBadge} />
-            </TabsContent>
-            
-            <TabsContent value="completed">
-              <EventList events={completedEvents} getStatusBadge={getStatusBadge} />
-            </TabsContent>
-          </Tabs>
-        )}
-      </div>
-    </div>
+    <ProtectedRouteWrapper requiredView={VIEW_TYPE.EVENT_ORGANIZER}>
+      <EventsPageContent />
+    </ProtectedRouteWrapper>
   );
 }
 

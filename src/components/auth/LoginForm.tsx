@@ -49,7 +49,7 @@ export function LoginForm({ onSubmit, loading = false, error }: LoginFormProps) 
       </div>
 
       {error && (
-        <div className="text-sm text-red-500">
+        <div className="text-sm text-destructive">
           {error}
         </div>
       )}
@@ -62,14 +62,14 @@ export function LoginForm({ onSubmit, loading = false, error }: LoginFormProps) 
         {loading ? (
           <div className="flex items-center">
             <div className="mr-2">登入中</div>
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
           </div>
         ) : (
           '登入'
         )}
       </Button>
 
-      <div className="text-xs text-center text-muted-foreground border-t pt-3">
+      <div className="text-xs text-center text-muted-foreground border-t border-border pt-3">
         <p className="mb-2">測試帳號：</p>
         <p>贊助商：sponsor@example.com / sponsor123</p>
         <p>主辦方：organizer@example.com / organizer123</p>

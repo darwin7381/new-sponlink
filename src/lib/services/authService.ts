@@ -4,53 +4,144 @@ import { MOCK_USERS } from '../mocks/users';
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Storage key constants
-const USER_STORAGE_KEY = 'user';
+// Keys for local storage
+const USER_KEY = 'user';
 const AUTH_TOKEN_KEY = 'authToken';
+const ACTIVE_VIEW_KEY = 'activeView'; // 新增: 存儲當前活躍的視角
 
-// Helper functions for type-safe localStorage access
-const setStoredUser = (user: User) => {
+// View types
+export enum VIEW_TYPE {
+  EVENT_ORGANIZER = 'event_organizer',
+  SPONSORSHIP_MANAGER = 'sponsorship_manager',
+}
+
+// Get stored user
+export const getStoredUser = (): User | null => {
   if (typeof window !== 'undefined') {
     try {
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
-    } catch (e) {
-      console.error('Error storing user data:', e);
-    }
-  }
-};
-
-const getStoredUser = (): User | null => {
-  if (typeof window !== 'undefined') {
-    try {
-      const userJson = localStorage.getItem(USER_STORAGE_KEY);
+      const userJson = localStorage.getItem(USER_KEY);
       if (!userJson) return null;
       return JSON.parse(userJson);
     } catch (e) {
-      console.error('Error parsing user data:', e);
+      console.error('Error getting stored user:', e);
       return null;
     }
   }
   return null;
 };
 
-const removeStoredUser = () => {
+// Set stored user
+export const setStoredUser = (user: User): void => {
   if (typeof window !== 'undefined') {
     try {
-      localStorage.removeItem(USER_STORAGE_KEY);
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
     } catch (e) {
-      console.error('Error removing user data:', e);
+      console.error('Error storing user:', e);
     }
   }
 };
 
-// Get current user from localStorage or session
+// New: Get active view
+export const getActiveView = (): VIEW_TYPE | null => {
+  if (typeof window !== 'undefined') {
+    try {
+      const view = localStorage.getItem(ACTIVE_VIEW_KEY) as VIEW_TYPE;
+      return view || null;
+    } catch (e) {
+      console.error('Error getting active view:', e);
+      return null;
+    }
+  }
+  return null;
+};
+
+// New: Set active view
+export const setActiveView = (view: VIEW_TYPE): void => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(ACTIVE_VIEW_KEY, view);
+      
+      // 分發視角變更事件，讓UI可以響應
+      window.dispatchEvent(new Event('viewChange'));
+    } catch (e) {
+      console.error('Error storing active view:', e);
+    }
+  }
+};
+
+// New: Check if user has any events (模擬實現，真實系統中應該查詢資料庫)
+export const hasOwnedEvents = async (): Promise<boolean> => {
+  // 模擬異步API調用
+  await delay(100);
+  
+  // 在真實系統中，這裡應該檢查用戶是否擁有任何活動
+  return true; // 假設用戶有活動
+};
+
+// New: Check if user has any sponsorships (模擬實現，真實系統中應該查詢資料庫)
+export const hasSponsorships = async (): Promise<boolean> => {
+  // 模擬異步API調用
+  await delay(100);
+  
+  // 在真實系統中，這裡應該檢查用戶是否有任何贊助
+  return true; // 假設用戶有贊助
+};
+
+// New: 檢查用戶是否擁有特定視角
+export const hasActiveView = (viewType: VIEW_TYPE): boolean => {
+  const activeView = getActiveView();
+  return activeView === viewType;
+};
+
+// New: 檢查用戶是否可以訪問頁面（基於視角）
+export const allowedToView = (): boolean => {
+  try {
+    // 用戶必須已登入，只要登入就有權訪問所有頁面
+    return isAuthenticated();
+  } catch (e) {
+    console.error('Error checking view permission:', e);
+    return false;
+  }
+};
+
+// New: 檢查用戶是否可以管理特定資源
+export const canManageResource = (resourceType: string, resourceOwnerId: string): boolean => {
+  const user = getStoredUser();
+  if (!user) return false;
+  
+  // 如果有管理員角色，可以允許管理所有資源
+  // 在真實系統中，應該根據實際角色系統來實現
+  
+  // 資源擁有者可以管理自己的資源
+  return user.id === resourceOwnerId;
+};
+
+// 獲取當前用戶
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    // In a real app, this would validate the token with the backend
+    // Simulate API call
+    await delay(300);
+    
     return getStoredUser();
   } catch (error) {
     console.error("Error getting current user:", error);
-    return null;
+    throw error;
+  }
+};
+
+// Logout user
+export const logout = (): void => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem(USER_KEY);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(ACTIVE_VIEW_KEY); // 清除活躍視角
+      
+      // 分發登出事件
+      window.dispatchEvent(new Event('authChange'));
+    } catch (e) {
+      console.error('Error during logout:', e);
+    }
   }
 };
 
@@ -141,92 +232,6 @@ export const register = async (email: string, password: string, role: USER_ROLES
     return newUser;
   } catch (error) {
     console.error("Registration error:", error);
-    throw error;
-  }
-};
-
-// Logout user
-export const logout = async (): Promise<boolean> => {
-  try {
-    // Simulate API call
-    await delay(300);
-    
-    // Remove user data from local storage
-    removeStoredUser();
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.removeItem(AUTH_TOKEN_KEY);
-        
-        // 分發登出狀態變更事件
-        window.dispatchEvent(new Event('authChange'));
-      } catch (e) {
-        console.error('Error removing auth token:', e);
-      }
-    }
-    
-    return true;
-  } catch (error) {
-    console.error("Logout error:", error);
-    return false;
-  }
-};
-
-// Update user profile
-export const updateProfile = async (userData: Partial<User>): Promise<User> => {
-  try {
-    // Get current user
-    const currentUser = await getCurrentUser();
-    
-    if (!currentUser) {
-      throw new Error("User not authenticated");
-    }
-    
-    // Simulate API call
-    await delay(500);
-    
-    // Update user data
-    const updatedUser = {
-      ...currentUser,
-      ...userData,
-      updated_at: new Date().toISOString()
-    };
-    
-    // Update localStorage
-    setStoredUser(updatedUser);
-    
-    return updatedUser;
-  } catch (error) {
-    console.error("Update profile error:", error);
-    throw error;
-  }
-};
-
-// Change language preference
-export const changeLanguage = async (language: string): Promise<User> => {
-  try {
-    // Get current user
-    const currentUser = await getCurrentUser();
-    
-    if (!currentUser) {
-      throw new Error("User not authenticated");
-    }
-    
-    // Simulate API call
-    await delay(300);
-    
-    // Update language
-    const updatedUser = {
-      ...currentUser,
-      preferred_language: language,
-      updated_at: new Date().toISOString()
-    };
-    
-    // Update localStorage
-    setStoredUser(updatedUser);
-    
-    return updatedUser;
-  } catch (error) {
-    console.error("Change language error:", error);
     throw error;
   }
 };
