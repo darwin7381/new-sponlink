@@ -6,8 +6,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // 獲取URL參數
-    const id = params.id;
+    // 直接從解構中獲取 id
+    const { id } = params;
     
     // 根據ID查找贊助計劃
     const sponsorshipPlan = mockSponsorshipPlans.find(plan => plan.id === id);

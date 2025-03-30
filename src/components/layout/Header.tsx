@@ -14,7 +14,7 @@ export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { isLoggedIn, showLoginModal } = useAuth();
+  const { isLoggedIn, showLoginModal, handleLogout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -60,23 +60,6 @@ export default function Header() {
       window.removeEventListener('authChange', handleAuthChange);
     };
   }, [pathname, router]); // 添加pathname和router作為依賴項，確保路由變更時重新獲取用戶資訊
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      
-      // 清除本地狀態
-      setUser(null);
-      
-      // 分發登出事件
-      window.dispatchEvent(new Event('authChange'));
-      
-      // 導航到登入頁面
-      router.push('/login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
-  };
 
   return (
     <header className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-background shadow-md' : 'bg-background/90'}`}>
@@ -186,7 +169,7 @@ export default function Header() {
                     type="button"
                     className="bg-card rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                     id="user-menu-button"
-                    aria-expanded={isMenuOpen ? 'true' : 'false'}
+                    aria-expanded="true"
                     aria-haspopup="true"
                     onClick={() => setIsMenuOpen(!isMenuOpen)}
                   >
@@ -263,7 +246,7 @@ export default function Header() {
               type="button"
               className="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
               aria-controls="mobile-menu"
-              aria-expanded={isMenuOpen ? 'true' : 'false'}
+              aria-expanded="true"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               <span className="sr-only">Open main menu</span>

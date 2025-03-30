@@ -15,6 +15,13 @@ export enum VIEW_TYPE {
   SPONSORSHIP_MANAGER = 'sponsorship_manager',
 }
 
+// 為 Window 添加 _isLoggingOut 屬性
+declare global {
+  interface Window {
+    _isLoggingOut?: boolean;
+  }
+}
+
 // Get stored user
 export const getStoredUser = (): User | null => {
   if (typeof window !== 'undefined') {
@@ -133,14 +140,32 @@ export const getCurrentUser = async (): Promise<User | null> => {
 export const logout = (): void => {
   if (typeof window !== 'undefined') {
     try {
+      // 直接清除本地存儲，不使用事件機制
       localStorage.removeItem(USER_KEY);
       localStorage.removeItem(AUTH_TOKEN_KEY);
-      localStorage.removeItem(ACTIVE_VIEW_KEY); // 清除活躍視角
+      localStorage.removeItem(ACTIVE_VIEW_KEY);
       
-      // 分發登出事件
-      window.dispatchEvent(new Event('authChange'));
+      // 設置標誌表示已登出
+      if (!window._isLoggingOut) {
+        window._isLoggingOut = true;
+        
+        // 使用較長的延遲確保清理完成後再觸發事件
+        setTimeout(() => {
+          try {
+            // 只有在頁面仍然活躍時才分發事件
+            if (typeof window !== 'undefined' && document.body) {
+              window.dispatchEvent(new Event('authChange'));
+            }
+            window._isLoggingOut = false;
+          } catch (e) {
+            console.error('Error during logout event dispatch:', e);
+            window._isLoggingOut = false;
+          }
+        }, 300); // 使用更長的延遲
+      }
     } catch (e) {
       console.error('Error during logout:', e);
+      window._isLoggingOut = false;
     }
   }
 };

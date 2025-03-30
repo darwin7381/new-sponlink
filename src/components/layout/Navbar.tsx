@@ -14,6 +14,7 @@ import {
   VIEW_TYPE
 } from "@/lib/services/authService";
 import { ViewSwitcher } from "@/components/view/ViewSwitcher";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface User {
   id: string;
@@ -31,6 +32,7 @@ export default function Navbar() {
   const [activeView, setActiveView] = useState<VIEW_TYPE | null>(null);
   const pathname = usePathname();
   const router = useRouter();
+  const { handleLogout } = useAuth();
 
   // Handle scroll behavior for navbar
   const [scrolled, setScrolled] = useState(false);
@@ -83,25 +85,6 @@ export default function Navbar() {
       window.removeEventListener('viewChange', handleViewChange);
     };
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      // 調用登出服務
-      logout();
-      
-      // 清除本地狀態
-      setCurrentUser(null);
-      setIsUserAuthenticated(false);
-      
-      // 分發登出事件
-      window.dispatchEvent(new Event('authChange'));
-      
-      // 重定向到登入頁面
-      router.push("/login");
-    } catch (error) {
-      console.error("Error logging out:", error);
-    }
-  };
 
   // 根據當前視角和所有權決定顯示的導航項
   const renderNavigationItems = () => {
