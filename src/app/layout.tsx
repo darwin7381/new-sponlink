@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { AuthProvider } from "@/components/auth/AuthProvider";
+import ComparePanel from "@/components/comparison/ComparePanel";
 import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -29,6 +30,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <ComparePanel />
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

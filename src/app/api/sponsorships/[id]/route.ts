@@ -6,8 +6,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    // 直接從解構中獲取 id
-    const { id } = params;
+    // 正確處理 Next.js 15.2.3 中的路由參數
+    const id = params.id; // 參數已經是字符串，不需要 await
     
     // 根據ID查找贊助計劃
     const sponsorshipPlan = mockSponsorshipPlans.find(plan => plan.id === id);
