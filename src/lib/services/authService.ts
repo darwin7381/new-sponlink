@@ -1,4 +1,4 @@
-import { User, USER_ROLES } from '../types/users';
+import { User, USER_ROLES, RESOURCE_TYPE, PERMISSION, DYNAMIC_ROLE, UserOrganization } from '../types/users';
 import { MOCK_USERS } from '../mocks/users';
 
 // Helper function to simulate API delay
@@ -279,4 +279,105 @@ export const isAuthenticated = (): boolean => {
     console.error('Error checking authentication:', e);
     return false;
   }
+};
+
+// 新增：检查用户是否有特定资源的特定权限
+export const hasPermission = (
+  resourceType: RESOURCE_TYPE, 
+  resourceId: string, 
+  permission: PERMISSION
+): boolean => {
+  try {
+    const user = getStoredUser();
+    if (!user) return false;
+    
+    // 模拟实现 - 实际系统应从后端验证权限
+    // 在真实实现中，这应该检查用户的权限列表
+    
+    // 假设资源创建者拥有所有权限
+    if (resourceId.includes(user.id)) {
+      return true;
+    }
+    
+    // 简化实现：SPONSOR 角色可访问 SPONSORSHIP 资源，ORGANIZER 可访问 EVENT 资源
+    if (user.role === USER_ROLES.SPONSOR && resourceType === RESOURCE_TYPE.SPONSORSHIP) {
+      return permission === PERMISSION.VIEW || permission === PERMISSION.CREATE;
+    }
+    
+    if (user.role === USER_ROLES.ORGANIZER && resourceType === RESOURCE_TYPE.EVENT) {
+      return true; // 组织者对事件有完全权限
+    }
+    
+    // 所有登录用户都有查看权限
+    return permission === PERMISSION.VIEW;
+  } catch (e) {
+    console.error('Error checking permission:', e);
+    return false;
+  }
+};
+
+// 新增：基于视角的权限检查
+export const hasViewPermission = (
+  viewType: VIEW_TYPE,
+  permission: PERMISSION,
+  resourceType: RESOURCE_TYPE
+): boolean => {
+  // 根据当前活跃视角检查权限
+  const activeView = getActiveView();
+  if (!activeView) return false;
+  
+  // 事件组织者视角可管理事件
+  if (viewType === VIEW_TYPE.EVENT_ORGANIZER && 
+      resourceType === RESOURCE_TYPE.EVENT) {
+    return true;
+  }
+  
+  // 赞助管理视角可管理赞助
+  if (viewType === VIEW_TYPE.SPONSORSHIP_MANAGER && 
+      resourceType === RESOURCE_TYPE.SPONSORSHIP) {
+    return true;
+  }
+  
+  // 所有视角都有查看权限
+  return permission === PERMISSION.VIEW;
+};
+
+// 新增：判断用户是否为资源所有者
+export const isResourceOwner = (resourceId: string, ownerId: string): boolean => {
+  const user = getStoredUser();
+  if (!user) return false;
+  
+  return user.id === ownerId;
+};
+
+// 新增：获取用户的组织列表
+export const getUserOrganizations = async (): Promise<UserOrganization[]> => {
+  // 模拟API调用
+  await delay(300);
+  
+  // 在真实系统中，应从后端获取
+  return [];
+};
+
+// 新增：获取用户在特定组织中的角色
+export const getUserRoleInOrganization = (organizationId: string): DYNAMIC_ROLE | null => {
+  try {
+    // 在真实系统中应从用户的组织列表中查询
+    return null;
+  } catch (e) {
+    console.error('Error getting user role in organization:', e);
+    return null;
+  }
+};
+
+// 新增：检查用户是否有特定动态角色(不依赖于固定的USER_ROLES)
+export const hasDynamicRole = (role: DYNAMIC_ROLE, organizationId?: string): boolean => {
+  if (organizationId) {
+    const userRole = getUserRoleInOrganization(organizationId);
+    return userRole === role;
+  }
+  
+  // 如果没有指定组织，检查用户是否在任何组织中拥有该角色
+  // 模拟实现
+  return false;
 }; 

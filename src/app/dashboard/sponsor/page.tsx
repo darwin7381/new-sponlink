@@ -11,9 +11,8 @@ import { CalendarIcon, BarChart3Icon, ClockIcon } from "lucide-react";
 import { getSponsorMeetings, getSponsorships, cancelMeeting } from "@/lib/services/sponsorService";
 import { getEventById } from "@/services/eventService";
 import { CartItem, Meeting, MEETING_STATUS } from "@/lib/types/users";
-import { USER_ROLES } from "@/lib/types/users";
 import { SponsorshipPlan } from "@/types/event";
-import { getCurrentUser, hasRole, isAuthenticated } from "@/lib/services/authService";
+import { getCurrentUser, isAuthenticated } from "@/lib/services/authService";
 import { toast } from "sonner";
 import { mockSponsorshipPlans } from '@/mocks/sponsorshipData';
 
@@ -54,11 +53,6 @@ export default function SponsorDashboardPage() {
   useEffect(() => {
     const checkAuth = async () => {
       if (!isAuthenticated()) {
-        router.push('/login');
-        return;
-      }
-      
-      if (!hasRole(USER_ROLES.SPONSOR)) {
         router.push('/login');
         return;
       }

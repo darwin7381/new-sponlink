@@ -10,8 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getEventById, getSponsorshipPlans, createSponsorshipPlan, updateSponsorshipPlan, deleteSponsorshipPlan } from "@/services/eventService";
 import { Event, SponsorshipPlan } from "@/types/event";
-import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
-import { USER_ROLES } from "@/lib/types/users";
+import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
 
 export default function ManagePlansPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -52,11 +51,6 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
           return;
         }
         
-        if (!hasRole(USER_ROLES.ORGANIZER)) {
-          router.push('/login');
-          return;
-        }
-        
         const userData = await getCurrentUser();
         if (!userData) {
           router.push('/login');
@@ -74,8 +68,8 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
   // Get event and sponsorship plans
   useEffect(() => {
     async function fetchEventAndPlans() {
-      if (!isAuthenticated() || !hasRole(USER_ROLES.ORGANIZER)) {
-        return; // If user is not authenticated or not an organizer, don't fetch data
+      if (!isAuthenticated()) {
+        return; // If user is not authenticated, don't fetch data
       }
       
       setError("");

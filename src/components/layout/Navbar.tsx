@@ -86,16 +86,17 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
+      // 調用登出服務
       logout();
       
-      // Reset state
+      // 清除本地狀態
       setCurrentUser(null);
       setIsUserAuthenticated(false);
-      setIsSponsor(false);
-      setIsOrganizer(false);
-      setActiveView(null);
       
-      // Redirect to login page
+      // 分發登出事件
+      window.dispatchEvent(new Event('authChange'));
+      
+      // 重定向到登入頁面
       router.push("/login");
     } catch (error) {
       console.error("Error logging out:", error);
@@ -319,80 +320,56 @@ export default function Navbar() {
           
           {isUserAuthenticated && (
             <>
-              {activeView === VIEW_TYPE.EVENT_ORGANIZER ? (
-                <>
-                  <Link
-                    href="/dashboard/events"
-                    className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                      pathname === "/dashboard/events"
-                        ? "border-indigo-500 text-indigo-700 bg-indigo-50"
-                        : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
-                    }`}
-                  >
-                    My Events
-                  </Link>
-                  <Link
-                    href="/events/create"
-                    className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                      pathname === "/events/create"
-                        ? "border-indigo-500 text-indigo-700 bg-indigo-50"
-                        : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
-                    }`}
-                  >
-                    Create Event
-                  </Link>
-                </>
-              ) : activeView === VIEW_TYPE.SPONSORSHIP_MANAGER ? (
-                <>
-                  <Link
-                    href="/dashboard/sponsorships"
-                    className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                      pathname === "/dashboard/sponsorships"
-                        ? "border-indigo-500 text-indigo-700 bg-indigo-50"
-                        : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
-                    }`}
-                  >
-                    My Sponsorships
-                  </Link>
-                  <Link
-                    href="/cart"
-                    className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                      pathname === "/cart"
-                        ? "border-indigo-500 text-indigo-700 bg-indigo-50"
-                        : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
-                    }`}
-                  >
-                    Cart
-                  </Link>
-                </>
-              ) : (
-                <>
-                  {isOrganizer && (
-                    <Link
-                      href="/dashboard/events"
-                      className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                        pathname === "/dashboard/events"
-                          ? "border-indigo-500 text-indigo-700 bg-indigo-50"
-                          : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
-                      }`}
-                    >
-                      My Events
-                    </Link>
-                  )}
-                  {isSponsor && (
-                    <Link
-                      href="/dashboard/sponsorships"
-                      className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
-                        pathname === "/dashboard/sponsorships"
-                          ? "border-indigo-500 text-indigo-700 bg-indigo-50"
-                          : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
-                      }`}
-                    >
-                      My Sponsorships
-                    </Link>
-                  )}
-                </>
-              )}
+              <Link
+                href="/dashboard/events"
+                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                  pathname === "/dashboard/events"
+                    ? "border-indigo-500 text-indigo-700 bg-indigo-50"
+                    : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                }`}
+              >
+                My Events
+              </Link>
+              <Link
+                href="/events/create"
+                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                  pathname === "/events/create"
+                    ? "border-indigo-500 text-indigo-700 bg-indigo-50"
+                    : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                }`}
+              >
+                Create Event
+              </Link>
+              <Link
+                href="/dashboard/sponsorships"
+                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                  pathname === "/dashboard/sponsorships"
+                    ? "border-indigo-500 text-indigo-700 bg-indigo-50"
+                    : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                }`}
+              >
+                My Sponsorships
+              </Link>
+              <Link
+                href="/cart"
+                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                  pathname === "/cart"
+                    ? "border-indigo-500 text-indigo-700 bg-indigo-50"
+                    : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                }`}
+              >
+                Cart
+              </Link>
+              <Link
+                href="/meetings"
+                className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${
+                  pathname === "/meetings"
+                    ? "border-indigo-500 text-indigo-700 bg-indigo-50"
+                    : "border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700"
+                }`}
+              >
+                Meetings
+              </Link>
               
               {/* 移動端的視角切換器 */}
               <div className="pl-3 pr-4 py-2 border-l-4 border-transparent">

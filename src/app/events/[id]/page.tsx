@@ -205,11 +205,6 @@ export default function EventDetailPage() {
       return;
     }
     
-    if (!isSponsor) {
-      alert("Only sponsors can add sponsorship plans to cart");
-      return;
-    }
-    
     if (!userId) return;
     
     try {

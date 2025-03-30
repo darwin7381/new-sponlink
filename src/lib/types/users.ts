@@ -3,6 +3,28 @@ export enum USER_ROLES {
   ORGANIZER = 'ORGANIZER'
 }
 
+export enum RESOURCE_TYPE {
+  EVENT = 'EVENT',
+  SPONSORSHIP = 'SPONSORSHIP',
+  MEETING = 'MEETING',
+  ORGANIZATION = 'ORGANIZATION'
+}
+
+export enum PERMISSION {
+  VIEW = 'VIEW',
+  CREATE = 'CREATE',
+  EDIT = 'EDIT',
+  DELETE = 'DELETE',
+  MANAGE = 'MANAGE'
+}
+
+export enum DYNAMIC_ROLE {
+  OWNER = 'OWNER',
+  ADMIN = 'ADMIN',
+  MEMBER = 'MEMBER',
+  COLLABORATOR = 'COLLABORATOR'
+}
+
 export interface User {
   id: string;
   email: string;
@@ -10,6 +32,22 @@ export interface User {
   preferred_language: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ExtendedUser extends User {
+  organizations?: UserOrganization[];
+}
+
+export interface UserOrganization {
+  organization_id: string;
+  role: DYNAMIC_ROLE;
+  joined_at: string;
+}
+
+export interface ResourcePermission {
+  resource_type: RESOURCE_TYPE;
+  resource_id: string;
+  permissions: PERMISSION[];
 }
 
 export interface OrganizerProfile {

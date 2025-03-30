@@ -9,10 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CalendarIcon, UserIcon, BarChart3Icon, ClockIcon } from "lucide-react";
 import { getOrganizerMeetings } from "@/services/meetingService";
 import { getOrganizerEvents } from "@/services/eventService";
-import { Meeting, MEETING_STATUS, USER_ROLES } from "@/lib/types/users";
+import { Meeting, MEETING_STATUS } from "@/lib/types/users";
 import { Event } from "@/lib/types/events";
 import { adaptNewEventsToOld } from "@/lib/types-adapter";
-import { getCurrentUser, hasRole, isAuthenticated } from "@/lib/services/authService";
+import { getCurrentUser, isAuthenticated } from "@/lib/services/authService";
 import { format } from "date-fns";
 
 export default function OrganizerDashboardPage() {
@@ -66,11 +66,6 @@ export default function OrganizerDashboardPage() {
   useEffect(() => {
     const checkAuth = async () => {
       if (!isAuthenticated()) {
-        router.push('/login');
-        return;
-      }
-      
-      if (!hasRole(USER_ROLES.ORGANIZER)) {
         router.push('/login');
         return;
       }

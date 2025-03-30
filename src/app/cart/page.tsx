@@ -10,8 +10,7 @@ import { getCartItems, removeFromCart, checkout } from "@/services/sponsorServic
 import { CartItem, CartItemStatus, CheckoutResult } from "@/types/sponsor";
 import { SponsorshipPlan } from "@/types/sponsorshipPlan";
 import { getEventById } from "@/services/eventService";
-import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
-import { USER_ROLES } from "@/lib/types/users";
+import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
 
 export default function CartPage() {
   const router = useRouter();
@@ -30,11 +29,6 @@ export default function CartPage() {
   useEffect(() => {
     const checkAuth = async () => {
       if (!isAuthenticated()) {
-        router.push('/login');
-        return;
-      }
-      
-      if (!hasRole(USER_ROLES.SPONSOR)) {
         router.push('/login');
         return;
       }

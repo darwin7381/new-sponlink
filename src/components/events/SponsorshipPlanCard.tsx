@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { SponsorshipPlan as SPType } from "@/types/sponsorshipPlan";
 import { SponsorshipPlan as EventSPType } from "@/types/event";
-import { isAuthenticated, hasRole } from "@/lib/services/authService";
-import { USER_ROLES } from "@/lib/types/users";
+import { isAuthenticated } from "@/lib/services/authService";
 
 interface SponsorshipPlanCardProps {
   plan: SPType | EventSPType;
@@ -23,14 +22,12 @@ export function SponsorshipPlanCard({
   isLoading = false
 }: SponsorshipPlanCardProps) {
   const [isUserAuthenticated, setIsUserAuthenticated] = React.useState(false);
-  const [isSponsor, setIsSponsor] = React.useState(false);
 
-  // Check user identity
+  // Check user authentication
   React.useEffect(() => {
     const checkAuth = () => {
       const authenticated = isAuthenticated();
       setIsUserAuthenticated(authenticated);
-      setIsSponsor(authenticated && hasRole(USER_ROLES.SPONSOR));
     };
     
     checkAuth();
@@ -73,7 +70,7 @@ export function SponsorshipPlanCard({
       </CardContent>
       
       <CardFooter className="p-6 pt-0">
-        {isUserAuthenticated && isSponsor ? (
+        {isUserAuthenticated ? (
           <Button
             variant={isInCart ? "outline" : "default"}
             className="w-full"

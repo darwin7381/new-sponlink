@@ -9,8 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { getEventById, updateEvent } from "@/services/eventService";
 import { Event, Location } from "@/types/event";
-import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
-import { USER_ROLES } from "@/lib/types/users";
+import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
 import LocationSelector from "@/components/maps/LocationSelector";
 
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
@@ -50,11 +49,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           return;
         }
         
-        if (!hasRole(USER_ROLES.ORGANIZER)) {
-          router.push('/login');
-          return;
-        }
-        
         const userData = await getCurrentUser();
         if (!userData) {
           router.push('/login');
@@ -72,8 +66,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   // Get event details
   useEffect(() => {
     async function fetchEventDetails() {
-      if (!isAuthenticated() || !hasRole(USER_ROLES.ORGANIZER)) {
-        return; // If user is not authenticated or not an organizer, don't fetch details
+      if (!isAuthenticated()) {
+        return; // If user is not authenticated, don't fetch details
       }
       
       try {

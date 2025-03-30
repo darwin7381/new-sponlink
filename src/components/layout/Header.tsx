@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { getCurrentUser, logout } from '@/lib/services/authService';
-import { User, USER_ROLES } from '@/lib/types/users';
+import { User } from '@/lib/types/users';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import migrateLegacyAuth from '@/lib/utils/migrateLegacyAuth';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -64,6 +64,14 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await logout();
+      
+      // 清除本地狀態
+      setUser(null);
+      
+      // 分發登出事件
+      window.dispatchEvent(new Event('authChange'));
+      
+      // 導航到登入頁面
       router.push('/login');
     } catch (error) {
       console.error('Error logging out:', error);
@@ -91,7 +99,7 @@ export default function Header() {
               >
                 Events
               </Link>
-              {user && user.role === USER_ROLES.ORGANIZER && (
+              {user && (
                 <>
                   <Link 
                     href="/organizer/events" 
@@ -113,10 +121,6 @@ export default function Header() {
                   >
                     Create Event
                   </Link>
-                </>
-              )}
-              {user && user.role === USER_ROLES.SPONSOR && (
-                <>
                   <Link 
                     href="/sponsor/sponsorships" 
                     className={`${
@@ -137,18 +141,18 @@ export default function Header() {
                   >
                     Cart
                   </Link>
+                  <Link 
+                    href="/meetings" 
+                    className={`${
+                      pathname === "/meetings" 
+                        ? "border-primary text-foreground" 
+                        : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
+                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+                  >
+                    Meetings
+                  </Link>
                 </>
               )}
-              <Link 
-                href="/meetings" 
-                className={`${
-                  pathname === "/meetings" 
-                    ? "border-primary text-foreground" 
-                    : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-              >
-                Meetings
-              </Link>
             </nav>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -315,6 +319,56 @@ export default function Header() {
           >
             Events
           </Link>
+          
+          {user && (
+            <>
+              <Link
+                href="/organizer/events"
+                className={`${
+                  pathname === "/organizer/events" || pathname.startsWith("/organizer/events/")
+                    ? "bg-accent text-foreground border-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                My Events
+              </Link>
+              <Link
+                href="/organizer/events/create"
+                className={`${
+                  pathname === "/organizer/events/create"
+                    ? "bg-accent text-foreground border-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Create Event
+              </Link>
+              <Link
+                href="/sponsor/sponsorships"
+                className={`${
+                  pathname === "/sponsor/sponsorships" || pathname.startsWith("/sponsor/sponsorships/")
+                    ? "bg-accent text-foreground border-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                My Sponsorships
+              </Link>
+              <Link
+                href="/cart"
+                className={`${
+                  pathname === "/cart"
+                    ? "bg-accent text-foreground border-primary"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Cart
+              </Link>
+            </>
+          )}
+          
           <Link
             href="/meetings"
             className={`${
