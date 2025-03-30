@@ -3,11 +3,10 @@ import { mockSponsorshipPlans } from '@/mocks/sponsorshipData';
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     // 獲取URL參數
-    const params = await context.params;
     const id = params.id;
     
     // 根據ID查找贊助計劃

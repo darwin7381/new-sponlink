@@ -99,29 +99,49 @@ export default function CartPage() {
         
         const details = await Promise.all(
           cartItems.map(async (item) => {
-            console.log("正在獲取贊助計劃詳情，計劃ID:", item.sponsorship_plan_id);
-            
-            // 獲取贊助計劃詳情
-            const response = await fetch(`/api/sponsorships/${item.sponsorship_plan_id}`);
-            if (!response.ok) {
-              throw new Error(`獲取贊助計劃詳情失敗: ${response.statusText}`);
-            }
-            
-            const planData = await response.json();
-            console.log("獲取到贊助計劃:", planData);
-            
-            // 獲取事件詳情
-            console.log("正在獲取事件詳情，事件ID:", planData.event_id);
-            const eventData = await getEventById(planData.event_id);
-            console.log("獲取到事件詳情:", eventData);
-
-            return {
-              plan: planData,
-              event: {
-                id: eventData?.id || "unknown",
-                title: eventData?.title || "未知活動"
+            try {
+              console.log("正在獲取贊助計劃詳情，計劃ID:", item.sponsorship_plan_id);
+              
+              // 1. 直接從模擬數據中獲取贊助計劃詳情
+              const response = await fetch(`/api/sponsorships/${item.sponsorship_plan_id}`);
+              
+              if (!response.ok) {
+                throw new Error(`獲取贊助計劃詳情失敗: ${response.statusText}`);
               }
-            };
+              
+              const planData = await response.json();
+              console.log("獲取到贊助計劃:", planData);
+              
+              // 2. 獲取事件詳情
+              console.log("正在獲取事件詳情，事件ID:", planData.event_id);
+              const eventData = await getEventById(planData.event_id);
+              console.log("獲取到事件詳情:", eventData);
+
+              return {
+                plan: planData,
+                event: {
+                  id: eventData?.id || "unknown",
+                  title: eventData?.title || "未知活動"
+                }
+              };
+            } catch (error) {
+              console.error(`處理購物車項目 ${item.id} 時出錯:`, error);
+              
+              // 返回一個默認項目，避免整個列表因為一個項目錯誤而失敗
+              return {
+                plan: {
+                  id: item.sponsorship_plan_id,
+                  name: "無法載入贊助計劃",
+                  description: "無法獲取此贊助計劃的詳細信息",
+                  price: 0,
+                  event_id: "unknown"
+                },
+                event: {
+                  id: "unknown",
+                  title: "未知活動"
+                }
+              };
+            }
           })
         );
 

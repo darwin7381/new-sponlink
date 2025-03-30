@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { SponsorshipPlanCard } from "@/components/events/SponsorshipPlanCard";
 import { getEventById } from "@/services/eventService";
 import { addToCart, getCartItems } from "@/services/sponsorService";
-import { Event, SponsorshipPlan } from "@/types/event";
+import type { Event, SponsorshipPlan } from "@/types/event";
 import { CartItem, CartItemStatus } from "@/types/sponsor";
 import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
 import { USER_ROLES } from "@/lib/types/users";
@@ -217,7 +217,7 @@ export default function EventDetailPage() {
     
     fetchCartItems();
     
-    // 添加事件監聽器，當用戶登出時更新購物車
+    // 添加事件監聽器，當購物車更新時重新獲取數據
     const handleCartUpdate = () => {
       fetchCartItems();
     };
@@ -260,6 +260,11 @@ export default function EventDetailPage() {
       // 添加到購物車
       const newItem = await addToCart(userId, plan.id);
       console.log("添加到購物車成功，新項目:", newItem);
+      
+      // 觸發購物車更新事件以通知其他組件
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('cartUpdate'));
+      }
       
       // 更新購物車列表
       const updatedItems = await getCartItems(userId);

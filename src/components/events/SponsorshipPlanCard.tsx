@@ -22,6 +22,7 @@ export function SponsorshipPlanCard({
   isLoading = false
 }: SponsorshipPlanCardProps) {
   const [isUserAuthenticated, setIsUserAuthenticated] = React.useState(false);
+  const [isButtonLoading, setIsButtonLoading] = React.useState(false);
 
   // Check user authentication
   React.useEffect(() => {
@@ -31,11 +32,25 @@ export function SponsorshipPlanCard({
     };
     
     checkAuth();
+    
+    // 添加身份驗證變更事件的監聽器
+    window.addEventListener('authChange', checkAuth);
+    
+    return () => {
+      window.removeEventListener('authChange', checkAuth);
+    };
   }, []);
 
-  const handleAddToCart = () => {
-    if (onAddToCart) {
+  const handleAddToCart = async () => {
+    if (!onAddToCart) return;
+    
+    setIsButtonLoading(true);
+    try {
       onAddToCart(plan.id);
+    } finally {
+      setTimeout(() => {
+        setIsButtonLoading(false);
+      }, 1000); // 給用戶視覺反饋
     }
   };
 
@@ -75,9 +90,23 @@ export function SponsorshipPlanCard({
             variant={isInCart ? "outline" : "default"}
             className="w-full"
             onClick={handleAddToCart}
-            disabled={isInCart || isLoading}
+            disabled={isInCart || isLoading || isButtonLoading}
           >
-            {isLoading ? "Processing..." : isInCart ? "Added to Cart" : "Add to Cart"}
+            {isLoading || isButtonLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="mr-2">處理中...</div>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              </div>
+            ) : isInCart ? (
+              <div className="flex items-center justify-center">
+                <svg className="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                已加入購物車
+              </div>
+            ) : (
+              "添加到購物車"
+            )}
           </Button>
         ) : (
           <Link href="/login" className="w-full">
@@ -85,7 +114,7 @@ export function SponsorshipPlanCard({
               variant="outline"
               className="w-full"
             >
-              Login to Sponsor
+              登入以贊助
             </Button>
           </Link>
         )}

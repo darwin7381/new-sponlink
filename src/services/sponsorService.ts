@@ -4,16 +4,60 @@ import { mockCartItems, mockMeetings, generateId, getCurrentISOString } from '@/
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+// 持久化本地存儲函數
+const saveToLocalStorage = (key: string, data: unknown) => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (error) {
+      console.error(`保存到本地存儲錯誤 (${key}):`, error);
+    }
+  }
+};
+
+// 從本地存儲中獲取數據
+const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
+  if (typeof window !== 'undefined') {
+    try {
+      const storedData = localStorage.getItem(key);
+      return storedData ? JSON.parse(storedData) as T : defaultValue;
+    } catch (error) {
+      console.error(`從本地存儲獲取數據錯誤 (${key}):`, error);
+      return defaultValue;
+    }
+  }
+  return defaultValue;
+};
+
+// 購物車本地存儲鍵
+const CART_STORAGE_KEY = 'sponlink_cart_items';
+
 // Get cart items for the current sponsor
 export const getCartItems = async (sponsorId: string): Promise<CartItem[]> => {
   try {
     await delay(400);
     
-    const items = mockCartItems.filter(item => item.sponsor_id === sponsorId);
+    // 從本地存儲中獲取購物車數據
+    const storedItems = getFromLocalStorage<CartItem[]>(CART_STORAGE_KEY, []);
     
-    return items;
+    // 獲取指定贊助商的項目
+    const items = storedItems.filter((item) => item.sponsor_id === sponsorId);
+    console.log(`獲取到 ${items.length} 個購物車項目，用戶ID: ${sponsorId}`);
+    
+    // 合併模擬數據和本地數據
+    const combinedItems = [...mockCartItems, ...items].filter(
+      (item, index, self) => 
+        // 去除重複項目（基於ID）
+        index === self.findIndex(i => i.id === item.id)
+    );
+    
+    // 更新本地存儲
+    saveToLocalStorage(CART_STORAGE_KEY, combinedItems);
+    
+    // 返回指定贊助商的項目
+    return combinedItems.filter(item => item.sponsor_id === sponsorId);
   } catch (error) {
-    console.error(`Error getting cart items for sponsor ID ${sponsorId}:`, error);
+    console.error(`獲取購物車項目錯誤，贊助商ID ${sponsorId}:`, error);
     throw error;
   }
 };
@@ -23,8 +67,24 @@ export const addToCart = async (sponsorId: string, sponsorshipPlanId: string): P
   try {
     await delay(500);
     
-    const newItemId = `cart-${Date.now()}`;
+    // 從本地存儲獲取當前購物車
+    const currentCart = getFromLocalStorage<CartItem[]>(CART_STORAGE_KEY, []);
     
+    // 檢查項目是否已在購物車中
+    const existingItem = currentCart.find(
+      (item) => 
+        item.sponsor_id === sponsorId && 
+        item.sponsorship_plan_id === sponsorshipPlanId &&
+        item.status === CartItemStatus.PENDING
+    );
+    
+    if (existingItem) {
+      console.log("項目已存在於購物車:", existingItem);
+      return existingItem;
+    }
+    
+    // 生成新項目
+    const newItemId = `cart-${Date.now()}`;
     const newCartItem: CartItem = {
       id: newItemId,
       sponsor_id: sponsorId,
@@ -34,8 +94,13 @@ export const addToCart = async (sponsorId: string, sponsorshipPlanId: string): P
       updated_at: new Date().toISOString()
     };
     
-    mockCartItems.push(newCartItem);
+    // 添加到購物車
+    const updatedCart = [...currentCart, newCartItem];
     
+    // 保存到本地存儲
+    saveToLocalStorage(CART_STORAGE_KEY, updatedCart);
+    
+    // 觸發購物車更新事件
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('cartUpdate'));
     }
@@ -54,14 +119,24 @@ export const removeFromCart = async (itemId: string): Promise<boolean> => {
   try {
     await delay(300);
     
-    const itemIndex = mockCartItems.findIndex(item => item.id === itemId);
+    // 從本地存儲獲取當前購物車
+    const currentCart = getFromLocalStorage<CartItem[]>(CART_STORAGE_KEY, []);
+    
+    // 查找項目索引
+    const itemIndex = currentCart.findIndex((item) => item.id === itemId);
     
     if (itemIndex === -1) {
       throw new Error("未找到購物車項目");
     }
     
-    mockCartItems.splice(itemIndex, 1);
+    // 從購物車中移除
+    const updatedCart = [...currentCart];
+    updatedCart.splice(itemIndex, 1);
     
+    // 保存到本地存儲
+    saveToLocalStorage(CART_STORAGE_KEY, updatedCart);
+    
+    // 觸發購物車更新事件
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('cartUpdate'));
     }
@@ -80,29 +155,44 @@ export const checkout = async (sponsorId: string, paymentDetails: { amount: numb
   try {
     await delay(1500);
     
-    const sponsorItems = mockCartItems.filter(
-      item => item.sponsor_id === sponsorId && item.status === CartItemStatus.PENDING
+    // 從本地存儲獲取當前購物車
+    const currentCart = getFromLocalStorage<CartItem[]>(CART_STORAGE_KEY, []);
+    
+    // 獲取待確認的購物車項目
+    const sponsorItems = currentCart.filter(
+      (item) => item.sponsor_id === sponsorId && item.status === CartItemStatus.PENDING
     );
     
+    console.log(`準備結帳，用戶ID: ${sponsorId}，待確認項目數量: ${sponsorItems.length}`);
+    
     if (sponsorItems.length === 0) {
-      throw new Error("No items in cart");
+      throw new Error("購物車中沒有項目");
     }
     
-    sponsorItems.forEach(item => {
-      const itemIndex = mockCartItems.findIndex(i => i.id === item.id);
-      if (itemIndex !== -1) {
-        mockCartItems[itemIndex].status = CartItemStatus.CONFIRMED;
-        mockCartItems[itemIndex].updated_at = new Date().toISOString();
+    // 更新項目狀態為已確認
+    const updatedCart = currentCart.map((item) => {
+      if (item.sponsor_id === sponsorId && item.status === CartItemStatus.PENDING) {
+        return {
+          ...item,
+          status: CartItemStatus.CONFIRMED,
+          updated_at: new Date().toISOString()
+        };
       }
+      return item;
     });
     
+    // 保存到本地存儲
+    saveToLocalStorage(CART_STORAGE_KEY, updatedCart);
+    
     // 創建結帳結果
-    const result = {
+    const result: CheckoutResult = {
       success: true,
       confirmed_items: sponsorItems.length,
       order_id: `order-${Date.now()}`,
       total_amount: paymentDetails.amount
     };
+    
+    console.log("結帳完成，結果:", result);
     
     // 觸發購物車更新事件
     if (typeof window !== 'undefined') {
@@ -111,7 +201,7 @@ export const checkout = async (sponsorId: string, paymentDetails: { amount: numb
     
     return result;
   } catch (error) {
-    console.error(`Error during checkout for sponsor ID ${sponsorId}:`, error);
+    console.error(`結帳錯誤，用戶ID ${sponsorId}:`, error);
     throw error;
   }
 };
@@ -121,13 +211,24 @@ export const getSponsorships = async (sponsorId: string): Promise<CartItem[]> =>
   try {
     await delay(400);
     
-    const sponsorships = mockCartItems.filter(
+    // 從本地存儲獲取當前購物車
+    const currentCart = getFromLocalStorage<CartItem[]>(CART_STORAGE_KEY, []);
+    
+    // 合併模擬數據和本地數據
+    const combinedItems = [...mockCartItems, ...currentCart].filter(
+      (item, index, self) => 
+        // 去除重複項目（基於ID）
+        index === self.findIndex(i => i.id === item.id)
+    );
+    
+    // 篩選出已確認的贊助項目
+    const sponsorships = combinedItems.filter(
       item => item.sponsor_id === sponsorId && item.status === CartItemStatus.CONFIRMED
     );
     
     return sponsorships;
   } catch (error) {
-    console.error(`Error getting sponsorships for sponsor ID ${sponsorId}:`, error);
+    console.error(`獲取已確認贊助項目錯誤，贊助商ID ${sponsorId}:`, error);
     throw error;
   }
 };
