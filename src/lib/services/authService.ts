@@ -360,7 +360,7 @@ export const getUserOrganizations = async (): Promise<UserOrganization[]> => {
 };
 
 // 新增：获取用户在特定组织中的角色
-export const getUserRoleInOrganization = (organizationId: string): DYNAMIC_ROLE | null => {
+export const getUserRoleInOrganization = (): DYNAMIC_ROLE | null => {
   try {
     // 在真实系统中应从用户的组织列表中查询
     return null;
@@ -371,13 +371,7 @@ export const getUserRoleInOrganization = (organizationId: string): DYNAMIC_ROLE 
 };
 
 // 新增：检查用户是否有特定动态角色(不依赖于固定的USER_ROLES)
-export const hasDynamicRole = (role: DYNAMIC_ROLE, organizationId?: string): boolean => {
-  if (organizationId) {
-    const userRole = getUserRoleInOrganization(organizationId);
-    return userRole === role;
-  }
-  
-  // 如果没有指定组织，检查用户是否在任何组织中拥有该角色
-  // 模拟实现
+export const hasDynamicRole = (): boolean => {
+  // 模拟实现 - 检查用户是否在任何组织中拥有该角色
   return false;
 }; 

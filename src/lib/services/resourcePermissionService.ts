@@ -21,10 +21,7 @@ export const isResourceOwner = <T extends BaseResource>(
 /**
  * 檢查用戶是否為組織成員
  */
-export const isOrganizationMember = (
-  organizationId: string,
-  userId?: string
-): boolean => {
+export const isOrganizationMember = (): boolean => {
   // 模擬實現 - 實際應查詢用戶的組織成員資格
   return false;
 };
@@ -32,10 +29,7 @@ export const isOrganizationMember = (
 /**
  * 檢查用戶在組織中的角色
  */
-export const getUserRoleInOrganization = (
-  organizationId: string,
-  userId?: string
-): DYNAMIC_ROLE | null => {
+export const getUserRoleInOrganization = (): DYNAMIC_ROLE | null => {
   // 模擬實現 - 實際應查詢用戶在組織中的角色
   return null;
 };
@@ -60,7 +54,7 @@ export const hasResourcePermission = <T extends BaseResource>(
   
   // 組織資源的權限檢查
   if (resource.ownerType === OWNER_TYPE.ORGANIZATION) {
-    const role = getUserRoleInOrganization(resource.ownerId, userIdToCheck);
+    const role = getUserRoleInOrganization();
     
     // 組織管理員具有所有權限
     if (role === DYNAMIC_ROLE.ADMIN) {
@@ -107,7 +101,7 @@ export const canCreateResource = (
   
   // 用戶可以為其所屬的組織創建資源(如果具有適當權限)
   if (ownerType === OWNER_TYPE.ORGANIZATION) {
-    const role = getUserRoleInOrganization(ownerId, userIdToCheck);
+    const role = getUserRoleInOrganization();
     return role === DYNAMIC_ROLE.ADMIN || role === DYNAMIC_ROLE.MEMBER;
   }
   

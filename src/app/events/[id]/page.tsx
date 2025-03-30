@@ -10,7 +10,7 @@ import { SponsorshipPlanCard } from "@/components/events/SponsorshipPlanCard";
 import { getEventById } from "@/services/eventService";
 import { addToCart, getCartItems } from "@/services/sponsorService";
 import { Event, SponsorshipPlan } from "@/types/event";
-import { CartItem } from "@/types/sponsor";
+import { CartItem, CartItemStatus } from "@/types/sponsor";
 import { isAuthenticated, hasRole, getCurrentUser } from "@/lib/services/authService";
 import { USER_ROLES } from "@/lib/types/users";
 import { formatAddress } from "@/utils/languageUtils";
@@ -133,6 +133,7 @@ export default function EventDetailPage() {
   // Check user identity
   useEffect(() => {
     const checkAuth = async () => {
+      // 直接從localStorage獲取身份驗證狀態
       const authenticated = isAuthenticated();
       setIsUserAuthenticated(authenticated);
       
@@ -144,16 +145,28 @@ export default function EventDetailPage() {
           try {
             const userData = await getCurrentUser();
             if (userData) {
+              console.log("當前用戶ID:", userData.id);
               setUserId(userData.id);
             }
           } catch (error) {
-            console.error("Error getting user data:", error);
+            console.error("獲取用戶數據錯誤:", error);
           }
         }
       }
     };
     
     checkAuth();
+    
+    // 添加事件監聽器以偵測身份驗證變化
+    const handleAuthChange = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('authChange', handleAuthChange);
+    
+    return () => {
+      window.removeEventListener('authChange', handleAuthChange);
+    };
   }, []);
   
   // Get event data
@@ -182,51 +195,83 @@ export default function EventDetailPage() {
   
   // Get cart items for sponsor
   useEffect(() => {
-    if (isSponsor && userId) {
-      async function fetchCartItems() {
-        try {
-          if (!userId) return;
-          
-          const items = await getCartItems(userId);
-          setCartItems(items);
-        } catch (error) {
-          console.error("Error fetching cart items:", error);
-        }
-      }
+    const fetchCartItems = async () => {
+      if (!isSponsor || !userId) return;
       
+      try {
+        console.log("正在獲取購物車項目，用戶ID:", userId);
+        
+        // 獲取購物車項目
+        const items = await getCartItems(userId);
+        console.log("獲取到的購物車項目:", items);
+        
+        // 只顯示待處理的項目
+        const pendingItems = items.filter(item => item.status === CartItemStatus.PENDING);
+        console.log("待處理的購物車項目:", pendingItems);
+        
+        setCartItems(pendingItems);
+      } catch (error) {
+        console.error("獲取購物車項目錯誤:", error);
+      }
+    };
+    
+    fetchCartItems();
+    
+    // 添加事件監聽器，當用戶登出時更新購物車
+    const handleCartUpdate = () => {
       fetchCartItems();
-    }
+    };
+    
+    window.addEventListener('cartUpdate', handleCartUpdate);
+    
+    return () => {
+      window.removeEventListener('cartUpdate', handleCartUpdate);
+    };
   }, [isSponsor, userId]);
   
   // Handle add to cart
   const handleAddToCart = async (plan: SponsorshipPlan) => {
+    // 檢查用戶是否已登入
     if (!isUserAuthenticated) {
+      alert("請先登入後再添加到購物車");
       router.push('/login');
       return;
     }
     
-    if (!userId) return;
+    // 檢查用戶ID是否存在
+    if (!userId) {
+      alert("無法獲取用戶ID，請重新登入");
+      return;
+    }
     
     try {
       setAddingToCart(true);
       
-      // Check if plan is already in cart
+      // 檢查商品是否已在購物車中
       const alreadyInCart = cartItems.some(item => item.sponsorship_plan_id === plan.id);
       
       if (alreadyInCart) {
-        alert("This sponsorship plan is already in your cart");
+        alert("此贊助計劃已在您的購物車中");
         return;
       }
       
-      await addToCart(userId, plan.id);
+      console.log(`正在將計劃添加到購物車，用戶ID:${userId}，計劃ID:${plan.id}`);
       
-      // Update cart items
+      // 添加到購物車
+      const newItem = await addToCart(userId, plan.id);
+      console.log("添加到購物車成功，新項目:", newItem);
+      
+      // 更新購物車列表
       const updatedItems = await getCartItems(userId);
-      setCartItems(updatedItems);
-      alert("Sponsorship plan added to cart successfully");
+      console.log("更新後的購物車項目:", updatedItems);
+      
+      // 只顯示待處理的項目
+      setCartItems(updatedItems.filter(item => item.status === CartItemStatus.PENDING));
+      
+      alert("贊助計劃已成功添加到購物車");
     } catch (error) {
-      console.error("Error adding to cart:", error);
-      alert("Failed to add sponsorship plan to cart");
+      console.error("添加到購物車錯誤:", error);
+      alert("無法將贊助計劃添加到購物車");
     } finally {
       setAddingToCart(false);
     }

@@ -57,8 +57,16 @@ export default function CartPage() {
 
       try {
         setIsLoading(true);
+        console.log("正在獲取購物車項目，用戶ID:", userId);
+        
         const items = await getCartItems(userId);
-        setCartItems(items.filter(item => item.status === CartItemStatus.PENDING));
+        console.log("購物車原始項目:", items);
+        
+        // 只顯示狀態為PENDING的項目
+        const pendingItems = items.filter(item => item.status === CartItemStatus.PENDING);
+        console.log("待處理的購物車項目:", pendingItems);
+        
+        setCartItems(pendingItems);
       } catch (error) {
         console.error("獲取購物車項目錯誤:", error);
         setError("無法加載購物車項目。請稍後再試。");
@@ -68,6 +76,17 @@ export default function CartPage() {
     }
 
     fetchCartItems();
+    
+    // 添加事件監聽器
+    const handleCartUpdate = () => {
+      fetchCartItems();
+    };
+    
+    window.addEventListener('cartUpdate', handleCartUpdate);
+    
+    return () => {
+      window.removeEventListener('cartUpdate', handleCartUpdate);
+    };
   }, [userId]);
 
   // 獲取購物車項目的詳細信息
@@ -76,15 +95,25 @@ export default function CartPage() {
       if (cartItems.length === 0) return;
 
       try {
+        console.log("正在獲取購物車詳情，項目數量:", cartItems.length);
+        
         const details = await Promise.all(
           cartItems.map(async (item) => {
-            // 在實際應用中，這裡會從API獲取贊助方案和活動詳情
-            // 目前使用模擬數據
-            const eventResponse = await fetch(`/api/sponsorships/${item.sponsorship_plan_id}`);
-            const planData = await eventResponse.json();
+            console.log("正在獲取贊助計劃詳情，計劃ID:", item.sponsorship_plan_id);
             
-            const eventId = planData.event_id;
-            const eventData = await getEventById(eventId);
+            // 獲取贊助計劃詳情
+            const response = await fetch(`/api/sponsorships/${item.sponsorship_plan_id}`);
+            if (!response.ok) {
+              throw new Error(`獲取贊助計劃詳情失敗: ${response.statusText}`);
+            }
+            
+            const planData = await response.json();
+            console.log("獲取到贊助計劃:", planData);
+            
+            // 獲取事件詳情
+            console.log("正在獲取事件詳情，事件ID:", planData.event_id);
+            const eventData = await getEventById(planData.event_id);
+            console.log("獲取到事件詳情:", eventData);
 
             return {
               plan: planData,
@@ -96,6 +125,7 @@ export default function CartPage() {
           })
         );
 
+        console.log("購物車詳情完成:", details);
         setCartDetails(details);
       } catch (error) {
         console.error("獲取購物車詳情錯誤:", error);
@@ -125,14 +155,23 @@ export default function CartPage() {
 
       // 計算總金額
       const totalAmount = cartDetails.reduce((sum, item) => sum + item.plan.price, 0);
+      console.log("結帳總金額:", totalAmount);
 
       // 處理結帳
+      console.log("開始結帳流程，用戶ID:", userId);
       const result = await checkout(userId, { amount: totalAmount });
+      console.log("結帳成功，結果:", result);
+      
       setCheckoutResult(result);
 
-      // 清空購物車
+      // 清空購物車狀態
       setCartItems([]);
       setCartDetails([]);
+      
+      // 觸發購物車更新事件
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('cartUpdate'));
+      }
     } catch (error) {
       console.error("結帳錯誤:", error);
       setError("結帳過程中發生錯誤。請稍後再試。");

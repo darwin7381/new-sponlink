@@ -18,7 +18,6 @@ import { BarChart3Icon, CalendarIcon, Users2Icon, WalletIcon } from 'lucide-reac
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeView, setActiveViewState] = useState<VIEW_TYPE | null>(null);
-  const [userData, setUserData] = useState<any>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -36,8 +35,6 @@ export default function DashboardPage() {
           router.push('/login');
           return;
         }
-        
-        setUserData(currentUser);
         
         // 檢查當前視角
         let view = getActiveView();

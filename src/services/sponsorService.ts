@@ -36,9 +36,15 @@ export const addToCart = async (sponsorId: string, sponsorshipPlanId: string): P
     
     mockCartItems.push(newCartItem);
     
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('cartUpdate'));
+    }
+    
+    console.log("購物車項目添加成功:", newCartItem);
+    
     return newCartItem;
   } catch (error) {
-    console.error("Error adding item to cart:", error);
+    console.error("添加到購物車錯誤:", error);
     throw error;
   }
 };
@@ -51,14 +57,20 @@ export const removeFromCart = async (itemId: string): Promise<boolean> => {
     const itemIndex = mockCartItems.findIndex(item => item.id === itemId);
     
     if (itemIndex === -1) {
-      throw new Error("Cart item not found");
+      throw new Error("未找到購物車項目");
     }
     
     mockCartItems.splice(itemIndex, 1);
     
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('cartUpdate'));
+    }
+    
+    console.log("購物車項目移除成功:", itemId);
+    
     return true;
   } catch (error) {
-    console.error(`Error removing item ${itemId} from cart:`, error);
+    console.error(`移除購物車項目 ${itemId} 錯誤:`, error);
     throw error;
   }
 };
@@ -84,12 +96,20 @@ export const checkout = async (sponsorId: string, paymentDetails: { amount: numb
       }
     });
     
-    return {
+    // 創建結帳結果
+    const result = {
       success: true,
       confirmed_items: sponsorItems.length,
       order_id: `order-${Date.now()}`,
       total_amount: paymentDetails.amount
     };
+    
+    // 觸發購物車更新事件
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('cartUpdate'));
+    }
+    
+    return result;
   } catch (error) {
     console.error(`Error during checkout for sponsor ID ${sponsorId}:`, error);
     throw error;

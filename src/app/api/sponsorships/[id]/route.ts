@@ -1,30 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSponsorships } from '@/lib/services/sponsorService';
+import { mockSponsorshipPlans } from '@/mocks/sponsorshipData';
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    // 獲取URL參數
-    const params = await context.params;
+    // 获取URL参数
     const id = params.id;
     
-    // 獲取贊助商的所有贊助
-    const sponsorships = await getSponsorships(id);
+    // 根据ID查找赞助计划
+    const sponsorshipPlan = mockSponsorshipPlans.find(plan => plan.id === id);
     
-    if (!sponsorships || sponsorships.length === 0) {
+    if (!sponsorshipPlan) {
       return NextResponse.json(
-        { error: '找不到贊助' },
+        { error: '找不到赞助计划' },
         { status: 404 }
       );
     }
     
-    return NextResponse.json(sponsorships);
+    return NextResponse.json(sponsorshipPlan);
   } catch (error) {
-    console.error('獲取贊助時出錯:', error);
+    console.error('获取赞助计划时出错:', error);
     return NextResponse.json(
-      { error: '獲取贊助時出錯' },
+      { error: '获取赞助计划时出错' },
       { status: 500 }
     );
   }
