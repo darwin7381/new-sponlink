@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { createEvent } from "@/services/eventService";
-import { EventStatus, Location } from "@/types/event";
+import { EventStatus, Location, OWNER_TYPE } from "@/types/event";
 import { getCurrentUser, VIEW_TYPE } from "@/lib/services/authService";
 import LocationSelector from "@/components/maps/LocationSelector";
 import { scrapeLumaEvent } from "@/services/lumaService";
@@ -246,35 +246,34 @@ export default function CreateEventPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentUser) return;
-    
     try {
       setIsLoading(true);
-      setError("");
       
-      // 處理標籤
+      // 驗證結束時間必須晚於開始時間
+      const startTime = new Date(formData.start_time);
+      const endTime = new Date(formData.end_time);
+      
+      if (endTime <= startTime) {
+        setError("結束時間必須晚於開始時間");
+        setIsLoading(false);
+        return;
+      }
+      
+      // 將標籤字符串轉換為陣列
       const tags = formData.tags
-        .split(",")
+        .split(',')
         .map(tag => tag.trim())
-        .filter(tag => tag !== "");
+        .filter(tag => tag.length > 0);
       
-      // 處理贊助方案
-      const formattedSponsorshipPlans = sponsorshipPlans.map(plan => ({
-        ...plan,
-        price: Number(plan.price),
-        max_sponsors: Number(plan.max_sponsors),
-        current_sponsors: 0,
-        event_id: "", // 這將在創建時由服務器填充
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }));
+      // 獲取當前用戶信息
+      const currentUser = await getCurrentUser();
+      if (!currentUser) {
+        setError("未登入或會話已過期");
+        setIsLoading(false);
+        return;
+      }
       
-      // 時區處理 - 使用用戶瀏覽器的時區或前面保存的活動時區
-      // 注意：這個處理主要是為了記錄數據，前面的日期時間轉換已經考慮了時區
-      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-      console.log('提交時使用的時區:', timezone);
-      
-      // 準備創建數據
+      // 準備事件數據 - 不包含贊助計劃，這些會在事件創建後添加
       const eventData = {
         organizer_id: currentUser.id,
         title: formData.title,
@@ -286,8 +285,10 @@ export default function CreateEventPage() {
         status: EventStatus.DRAFT,
         category: formData.category,
         tags,
-        sponsorship_plans: formattedSponsorshipPlans,
-        timezone: timezone // 添加時區信息以便將來顯示
+        sponsorship_plans: [], // 先設為空數組，在創建事件後再添加贊助計劃
+        timezone: formData.timezone, // 使用表單中的 timezone
+        ownerId: currentUser.id, // 添加所有者ID
+        ownerType: OWNER_TYPE.USER // 添加所有者類型
       };
       
       const createdEvent = await createEvent(eventData);

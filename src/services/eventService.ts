@@ -1,4 +1,4 @@
-import { Event, EventStatus, SponsorshipPlan } from '@/types/event';
+import { EventStatus, Event, SponsorshipPlan, OWNER_TYPE } from '@/types/event';
 import { mockEvents } from '@/mocks/eventData';
 
 // Helper function to simulate API delay
@@ -57,22 +57,55 @@ export const getEventById = async (id: string): Promise<Event | null> => {
 };
 
 /**
- * Create new event
+ * Create a new event
  */
-export const createEvent = async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'>): Promise<Event> => {
-  await delay(500);
-  
-  const newEvent: Event = {
-    ...eventData,
-    id: `${mockEvents.length + 1}`,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  
-  // 在實際應用中，這裡會將新活動添加到數據庫
-  mockEvents.push(newEvent);
-  
-  return newEvent;
+export const createEvent = async (eventData: Partial<Event>): Promise<Event> => {
+  try {
+    // Simulate API call
+    await delay(800);
+    
+    // Generate new ID
+    const newId = String(parseInt(mockEvents[mockEvents.length - 1].id) + 1);
+    
+    // Create new event object with the current timestamp
+    const now = new Date().toISOString();
+    
+    const newEvent: Event = {
+      id: newId,
+      title: eventData.title || '',
+      description: eventData.description || '',
+      start_time: eventData.start_time || now,
+      end_time: eventData.end_time || now,
+      location: eventData.location || {
+        id: '',
+        name: '',
+        address: '',
+        city: '',
+        country: '',
+        postal_code: '',
+      },
+      organizer_id: eventData.organizer_id || '',
+      ownerId: eventData.ownerId || '',
+      ownerType: eventData.ownerType || OWNER_TYPE.USER,
+      sponsor_ids: [],
+      status: eventData.status || EventStatus.DRAFT,
+      cover_image: eventData.cover_image || '',
+      deck_url: eventData.deck_url || '',
+      category: eventData.category || '',
+      tags: eventData.tags || [],
+      sponsorship_plans: [],
+      created_at: now,
+      updated_at: now
+    };
+    
+    // Add to mock data
+    mockEvents.push(newEvent);
+    
+    return newEvent;
+  } catch (error) {
+    console.error("Error creating event:", error);
+    throw error;
+  }
 };
 
 /**
@@ -128,7 +161,7 @@ export const getSponsorshipPlans = async (eventId: string): Promise<SponsorshipP
  */
 export const createSponsorshipPlan = async (
   eventId: string, 
-  planData: Omit<SponsorshipPlan, 'id' | 'event_id' | 'created_at' | 'updated_at'>
+  planData: Omit<SponsorshipPlan, 'id' | 'event_id' | 'created_at' | 'updated_at' | 'ownerId' | 'ownerType'>
 ): Promise<SponsorshipPlan | null> => {
   await delay(500);
   
@@ -139,6 +172,8 @@ export const createSponsorshipPlan = async (
     ...planData,
     id: `sp${Date.now()}`,
     event_id: eventId,
+    ownerId: event.ownerId,
+    ownerType: event.ownerType,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString()
   };
@@ -156,7 +191,7 @@ export const createSponsorshipPlan = async (
 export const updateSponsorshipPlan = async (
   eventId: string,
   planId: string,
-  planData: Partial<Omit<SponsorshipPlan, 'id' | 'event_id' | 'created_at' | 'updated_at'>>
+  planData: Partial<Omit<SponsorshipPlan, 'id' | 'event_id' | 'created_at' | 'updated_at' | 'ownerId' | 'ownerType'>>
 ): Promise<SponsorshipPlan | null> => {
   await delay(500);
   
@@ -170,6 +205,11 @@ export const updateSponsorshipPlan = async (
   const updatedPlan: SponsorshipPlan = {
     ...event.sponsorship_plans[planIndex],
     ...planData,
+    // 確保這些字段不會被修改
+    id: planId,
+    event_id: eventId,
+    ownerId: event.sponsorship_plans[planIndex].ownerId,
+    ownerType: event.sponsorship_plans[planIndex].ownerType,
     updated_at: new Date().toISOString()
   };
   

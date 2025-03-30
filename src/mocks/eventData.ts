@@ -1,9 +1,11 @@
-import { Event, EventStatus, LocationType } from '@/types/event';
+import { Event, EventStatus, LocationType, OWNER_TYPE } from '@/types/event';
 
 export const mockEvents: Event[] = [
   {
     id: "1",
     organizer_id: "2",
+    ownerId: "2",
+    ownerType: OWNER_TYPE.USER,
     title: "Tech Innovation Summit 2025",
     description: "An annual gathering of global technology leaders and innovators to explore the latest technology trends and future development directions.",
     cover_image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
@@ -38,7 +40,9 @@ export const mockEvents: Event[] = [
         max_sponsors: 3,
         current_sponsors: 1,
         created_at: "2023-01-15T08:00:00Z",
-        updated_at: "2023-01-15T08:00:00Z"
+        updated_at: "2023-01-15T08:00:00Z",
+        ownerId: "2",
+        ownerType: OWNER_TYPE.USER
       },
       {
         id: "sp2",
@@ -50,7 +54,9 @@ export const mockEvents: Event[] = [
         max_sponsors: 5,
         current_sponsors: 3,
         created_at: "2023-01-15T08:30:00Z",
-        updated_at: "2023-01-15T08:30:00Z"
+        updated_at: "2023-01-15T08:30:00Z",
+        ownerId: "2",
+        ownerType: OWNER_TYPE.USER
       }
     ],
     created_at: "2025-01-10T10:00:00Z",
@@ -59,6 +65,8 @@ export const mockEvents: Event[] = [
   {
     id: "2",
     organizer_id: "2",
+    ownerId: "2",
+    ownerType: OWNER_TYPE.USER,
     title: "Sustainable Development Forum",
     description: "An international forum discussing environmental protection, social responsibility, and sustainable economic development.",
     cover_image: "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
@@ -93,7 +101,9 @@ export const mockEvents: Event[] = [
         max_sponsors: 2,
         current_sponsors: 0,
         created_at: "2023-03-05T09:15:00Z",
-        updated_at: "2023-03-05T09:15:00Z"
+        updated_at: "2023-03-05T09:15:00Z",
+        ownerId: "2",
+        ownerType: OWNER_TYPE.USER
       }
     ],
     created_at: "2025-03-01T11:20:00Z",
@@ -102,6 +112,8 @@ export const mockEvents: Event[] = [
   {
     id: "3",
     organizer_id: "2",
+    ownerId: "2",
+    ownerType: OWNER_TYPE.USER,
     title: "Global Marketing Conference",
     description: "A professional conference focused on the latest digital marketing trends, strategies, and tools.",
     cover_image: "https://images.unsplash.com/photo-1551818255-e6e10975bc17?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
@@ -136,7 +148,9 @@ export const mockEvents: Event[] = [
         max_sponsors: 4,
         current_sponsors: 2,
         created_at: "2023-05-12T10:30:00Z",
-        updated_at: "2023-05-12T10:30:00Z"
+        updated_at: "2023-05-12T10:30:00Z",
+        ownerId: "2",
+        ownerType: OWNER_TYPE.USER
       },
       {
         id: "sp5",
@@ -148,7 +162,9 @@ export const mockEvents: Event[] = [
         max_sponsors: 8,
         current_sponsors: 5,
         created_at: "2023-05-12T11:00:00Z",
-        updated_at: "2023-05-12T11:00:00Z"
+        updated_at: "2023-05-12T11:00:00Z",
+        ownerId: "2",
+        ownerType: OWNER_TYPE.USER
       },
       {
         id: "sp6",
@@ -160,7 +176,9 @@ export const mockEvents: Event[] = [
         max_sponsors: 12,
         current_sponsors: 8,
         created_at: "2023-05-12T11:30:00Z",
-        updated_at: "2023-05-12T11:30:00Z"
+        updated_at: "2023-05-12T11:30:00Z",
+        ownerId: "2",
+        ownerType: OWNER_TYPE.USER
       }
     ],
     created_at: "2025-05-01T09:00:00Z",
@@ -169,6 +187,8 @@ export const mockEvents: Event[] = [
   {
     id: "4",
     organizer_id: "2",
+    ownerId: "2",
+    ownerType: OWNER_TYPE.USER,
     title: "AI & Healthcare Expo 2025",
     description: "探索人工智能如何徹底改變醫療保健行業的前沿會議。與領先的醫療科技公司、AI專家和醫療專業人士一起了解最新的研究和應用。",
     cover_image: "https://images.unsplash.com/photo-1587854680352-936b22b91030?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
@@ -209,7 +229,9 @@ export const mockEvents: Event[] = [
         max_sponsors: 2,
         current_sponsors: 0,
         created_at: "2024-06-01T08:00:00Z",
-        updated_at: "2024-06-01T08:00:00Z"
+        updated_at: "2024-06-01T08:00:00Z",
+        ownerId: "2",
+        ownerType: OWNER_TYPE.USER
       },
       {
         id: "sp402",
@@ -226,7 +248,9 @@ export const mockEvents: Event[] = [
         max_sponsors: 5,
         current_sponsors: 2,
         created_at: "2024-06-01T08:30:00Z",
-        updated_at: "2024-06-01T08:30:00Z"
+        updated_at: "2024-06-01T08:30:00Z",
+        ownerId: "2",
+        ownerType: OWNER_TYPE.USER
       }
     ],
     created_at: "2024-06-01T00:00:00Z",
@@ -235,6 +259,8 @@ export const mockEvents: Event[] = [
   {
     id: "5",
     organizer_id: "1",
+    ownerId: "1",
+    ownerType: OWNER_TYPE.USER,
     title: "全球永續發展論壇 2025",
     description: "聚集世界各地的環保領袖、政策制定者和企業家，討論永續發展策略和氣候行動計畫，共同打造更綠色的未來。",
     cover_image: "https://images.unsplash.com/photo-1553152531-b98a2fc8d3bf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
@@ -275,7 +301,9 @@ export const mockEvents: Event[] = [
         max_sponsors: 3,
         current_sponsors: 1,
         created_at: "2024-05-10T10:00:00Z",
-        updated_at: "2024-05-10T10:00:00Z"
+        updated_at: "2024-05-10T10:00:00Z",
+        ownerId: "1",
+        ownerType: OWNER_TYPE.USER
       }
     ],
     created_at: "2024-05-01T00:00:00Z",
