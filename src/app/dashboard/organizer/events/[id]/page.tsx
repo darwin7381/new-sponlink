@@ -1,44 +1,62 @@
 'use client';
 
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getEventById } from "@/services/eventService";
 import { adaptNewEventToOld } from "@/lib/types-adapter";
 import { Event } from "@/lib/types/events";
 
 export default function EventDetailsPage() {
+  const router = useRouter();
   const params = useParams();
   const [event, setEvent] = useState<Event | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // 獲取事件
+  // 獲取事件數據
   useEffect(() => {
-    async function fetchEvent() {
+    const fetchEvent = async () => {
       try {
-        if (params.id) {
-          setIsLoading(true);
-          const fetchedEvent = await getEventById(params.id as string);
-          if (fetchedEvent) {
-            setEvent(adaptNewEventToOld(fetchedEvent));
-          }
+        setLoading(true);
+        
+        if (!params || !params.id) {
+          setError("無效的事件ID");
+          return;
         }
-      } catch (error) {
-        console.error("Error fetching event:", error);
-        toast.error("獲取活動失敗", {
-          description: "無法加載活動信息。請稍後再試。"
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    
-    if (params.id) {
-      fetchEvent();
-    }
-  }, [params.id]);
+        
+        // 在 Next.js 15 中，params可能是一个Promise
+        const eventId = typeof params.id === 'string' 
+          ? params.id 
+          : (params.id instanceof Promise 
+              ? await params.id 
+              : Array.isArray(params.id) 
+                ? params.id[0] 
+                : null);
+                
+        if (!eventId) {
+          setError("無法獲取有效的事件ID");
+          return;
+        }
 
-  if (isLoading) {
+        const fetchedEvent = await getEventById(eventId);
+        if (fetchedEvent) {
+          setEvent(adaptNewEventToOld(fetchedEvent));
+        } else {
+          setError("找不到事件數據");
+        }
+      } catch (err) {
+        console.error("獲取事件數據時出錯", err);
+        setError("加載事件數據時出錯");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvent();
+  }, [params]);
+
+  if (loading) {
     return <div>加載中...</div>;
   }
 

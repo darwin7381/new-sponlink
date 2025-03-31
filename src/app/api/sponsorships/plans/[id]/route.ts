@@ -3,28 +3,28 @@ import { mockSponsorshipPlans } from '@/mocks/sponsorshipData';
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 獲取 URL 參數
-    const params = await context.params;
-    const id = params.id;
+    // 正確處理 Next.js 15.2.3 中的路由參數
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
     
-    // 查找贊助計劃
-    const plan = mockSponsorshipPlans.find(plan => plan.id === id);
+    // 根據ID查找贊助計劃
+    const sponsorshipPlan = mockSponsorshipPlans.find(plan => plan.id === id);
     
-    if (!plan) {
+    if (!sponsorshipPlan) {
       return NextResponse.json(
-        { error: 'Sponsorship plan not found' },
+        { error: '找不到贊助計劃' },
         { status: 404 }
       );
     }
     
-    return NextResponse.json(plan);
+    return NextResponse.json(sponsorshipPlan);
   } catch (error) {
-    console.error('Error fetching sponsorship plan:', error);
+    console.error('獲取贊助計劃時出錯:', error);
     return NextResponse.json(
-      { error: 'Error fetching sponsorship plan' },
+      { error: '獲取贊助計劃時出錯' },
       { status: 500 }
     );
   }

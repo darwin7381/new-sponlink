@@ -23,6 +23,15 @@ export enum EventStatus {
   COMPLETED = 'completed'
 }
 
+// 新增事件系列類型
+export enum EventSeriesType {
+  BLOCKCHAIN_WEEK = 'blockchain_week',
+  HACKATHON_SERIES = 'hackathon_series',
+  CONFERENCE_SERIES = 'conference_series',
+  ROADSHOW = 'roadshow',
+  CUSTOM = 'custom'
+}
+
 export enum LocationType {
   GOOGLE = 'google',  // Google 地點（有 place_id）
   VIRTUAL = 'virtual', // 虛擬會議連結
@@ -56,6 +65,23 @@ export interface SponsorshipPlan extends Omit<BaseResource, 'resourceType'> {
   current_sponsors?: number;
 }
 
+// 活動系列 - 實現基礎資源接口
+export interface EventSeries extends Omit<BaseResource, 'resourceType'> {
+  title: string;
+  description: string;
+  cover_image: string;
+  series_type: EventSeriesType;
+  start_time: string; // 整個活動系列的開始時間
+  end_time: string; // 整個活動系列的結束時間
+  main_event_id?: string; // 主要活動ID
+  event_ids: string[]; // 系列中包含的所有活動ID
+  status: EventStatus;
+  category: string;
+  tags: string[];
+  locations: string[]; // 涵蓋的地點（城市名稱）
+  timezone?: string;
+}
+
 // 活動 - 實現基礎資源接口
 export interface Event extends Omit<BaseResource, 'resourceType'> {
   organizer_id: string;  // 暫時保留，兼容舊代碼
@@ -72,4 +98,7 @@ export interface Event extends Omit<BaseResource, 'resourceType'> {
   sponsor_ids?: string[];
   sponsorship_plans: SponsorshipPlan[];
   timezone?: string; // 事件的時區，例如: 'Asia/Taipei', 'America/New_York'
+  series_id?: string; // 所屬的活動系列ID，如果有的話
+  is_main_event?: boolean; // 是否為活動系列的主要活動
+  event_type?: string; // 活動類型，例如：Main Event, Side Event, Feature Event等
 }

@@ -288,13 +288,9 @@ export const verifyToken = async (token: string): Promise<boolean> => {
 
 // 檢查用戶是否有特定角色
 export const hasRole = (role: USER_ROLES): boolean => {
-  try {
-    const user = getStoredUser();
-    return !!user && user.role === role;
-  } catch (e) {
-    console.error('Error checking user role:', e);
-    return false;
-  }
+  // 根據新身份系統整合方案，所有已登入用戶都具有相同權限
+  // 不再區分具體角色，只檢查是否已登入
+  return isAuthenticated();
 };
 
 // 檢查用戶是否已登入
@@ -307,39 +303,65 @@ export const isAuthenticated = (): boolean => {
   }
 };
 
-// 新增：检查用户是否有特定资源的特定权限
+// 檢查用戶是否可以執行操作（基於新身份系統）
+export const canPerformAction = (
+  action: 'create_event' | 'sponsor_event' | 'manage_event' | 'view_event' | 'add_to_cart',
+  resourceId?: string
+): boolean => {
+  // 未登入用戶無法執行任何操作
+  if (!isAuthenticated()) {
+    return false;
+  }
+  
+  // 基本操作：所有已登入用戶都可以執行
+  const basicActions = ['view_event', 'sponsor_event', 'create_event', 'add_to_cart'];
+  if (basicActions.includes(action)) {
+    return true;
+  }
+  
+  // 管理操作：僅資源所有者可執行
+  if (action === 'manage_event' && resourceId) {
+    return isResourceOwner(resourceId);
+  }
+  
+  return false;
+};
+
+// 判斷用戶是否為資源所有者
+export const isResourceOwner = (resourceId: string, ownerId?: string): boolean => {
+  const user = getStoredUser();
+  if (!user) return false;
+  
+  // 如果提供了所有者ID，直接比較
+  if (ownerId) {
+    return user.id === ownerId;
+  }
+  
+  // 在實際系統中，應查詢資源所有權
+  // 這裡只是一個簡單的模擬實現
+  return resourceId.startsWith(user.id) || resourceId.includes(user.id);
+};
+
+// 檢查用戶是否有特定資源的特定權限
 export const hasPermission = (
   resourceType: RESOURCE_TYPE, 
   resourceId: string, 
   permission: PERMISSION
 ): boolean => {
-  try {
-    const user = getStoredUser();
-    if (!user) return false;
-    
-    // 模拟实现 - 实际系统应从后端验证权限
-    // 在真实实现中，这应该检查用户的权限列表
-    
-    // 假设资源创建者拥有所有权限
-    if (resourceId.includes(user.id)) {
-      return true;
-    }
-    
-    // 简化实现：SPONSOR 角色可访问 SPONSORSHIP 资源，ORGANIZER 可访问 EVENT 资源
-    if (user.role === USER_ROLES.SPONSOR && resourceType === RESOURCE_TYPE.SPONSORSHIP) {
-      return permission === PERMISSION.VIEW || permission === PERMISSION.CREATE;
-    }
-    
-    if (user.role === USER_ROLES.ORGANIZER && resourceType === RESOURCE_TYPE.EVENT) {
-      return true; // 组织者对事件有完全权限
-    }
-    
-    // 所有登录用户都有查看权限
-    return permission === PERMISSION.VIEW;
-  } catch (e) {
-    console.error('Error checking permission:', e);
-    return false;
+  // 未登入用戶無法獲得任何權限
+  if (!isAuthenticated()) return false;
+  
+  // 查看和創建權限：所有已登入用戶都有
+  if (permission === PERMISSION.VIEW || permission === PERMISSION.CREATE) {
+    return true;
   }
+  
+  // 編輯和刪除權限：僅資源所有者可有
+  if (permission === PERMISSION.EDIT || permission === PERMISSION.DELETE) {
+    return isResourceOwner(resourceId);
+  }
+  
+  return false;
 };
 
 // 新增：基于视角的权限检查
@@ -366,14 +388,6 @@ export const hasViewPermission = (
   
   // 所有视角都有查看权限
   return permission === PERMISSION.VIEW;
-};
-
-// 新增：判断用户是否为资源所有者
-export const isResourceOwner = (resourceId: string, ownerId: string): boolean => {
-  const user = getStoredUser();
-  if (!user) return false;
-  
-  return user.id === ownerId;
 };
 
 // 新增：获取用户的组织列表

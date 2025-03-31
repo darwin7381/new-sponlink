@@ -5,13 +5,16 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/services/authService";
 import { User } from "@/lib/types/users";
 import { getAllEvents } from "@/services/eventService";
-import { EventStatus, Event } from "@/types/event";
+import { getFeaturedEventSeries } from "@/services/eventSeriesService";
+import { EventStatus, Event, EventSeries } from "@/types/event";
 import { Hero } from "@/components/layout/Hero";
 import { FeaturedEvents } from "@/components/events/FeaturedEvents";
+import { FeaturedEventSeries } from "@/components/events/FeaturedEventSeries";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
+  const [featuredSeries, setFeaturedSeries] = useState<EventSeries[]>([]);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -24,9 +27,11 @@ export default function Home() {
 
         // Get events
         const events = await getAllEvents({ status: EventStatus.PUBLISHED });
-        
-        // 直接使用原始Event類型數據
         setFeaturedEvents(events);
+        
+        // 获取推荐的活动系列
+        const series = await getFeaturedEventSeries();
+        setFeaturedSeries(series);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -47,9 +52,12 @@ export default function Home() {
 
       {/* Featured Events Section */}
       <FeaturedEvents events={featuredEvents} />
+      
+      {/* Featured Event Series Section */}
+      <FeaturedEventSeries series={featuredSeries} />
 
       {/* How It Works Section */}
-      <div className="py-12 bg-secondary/30">
+      <div className="py-12 bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="text-3xl font-extrabold text-foreground sm:text-4xl">How It Works</h2>

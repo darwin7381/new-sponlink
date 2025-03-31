@@ -9,6 +9,7 @@ const saveToLocalStorage = (key: string, data: unknown) => {
   if (typeof window !== 'undefined') {
     try {
       localStorage.setItem(key, JSON.stringify(data));
+      console.log(`已保存數據到本地存儲 (${key}):`, data);
     } catch (error) {
       console.error(`保存到本地存儲錯誤 (${key}):`, error);
     }
@@ -20,7 +21,9 @@ const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
   if (typeof window !== 'undefined') {
     try {
       const storedData = localStorage.getItem(key);
-      return storedData ? JSON.parse(storedData) as T : defaultValue;
+      const parsedData = storedData ? JSON.parse(storedData) as T : defaultValue;
+      console.log(`從本地存儲獲取數據 (${key}):`, parsedData);
+      return parsedData;
     } catch (error) {
       console.error(`從本地存儲獲取數據錯誤 (${key}):`, error);
       return defaultValue;
@@ -67,6 +70,8 @@ export const addToCart = async (sponsorId: string, sponsorshipPlanId: string): P
   try {
     await delay(500);
     
+    console.log("添加到購物車開始，參數:", { sponsorId, sponsorshipPlanId });
+    
     // 從本地存儲獲取當前購物車
     const currentCart = getFromLocalStorage<CartItem[]>(CART_STORAGE_KEY, []);
     
@@ -94,6 +99,8 @@ export const addToCart = async (sponsorId: string, sponsorshipPlanId: string): P
       updated_at: new Date().toISOString()
     };
     
+    console.log("創建新購物車項目:", newCartItem);
+    
     // 添加到購物車
     const updatedCart = [...currentCart, newCartItem];
     
@@ -103,6 +110,7 @@ export const addToCart = async (sponsorId: string, sponsorshipPlanId: string): P
     // 觸發購物車更新事件
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new Event('cartUpdate'));
+      console.log("已觸發購物車更新事件");
     }
     
     console.log("購物車項目添加成功:", newCartItem);

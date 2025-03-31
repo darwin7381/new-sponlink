@@ -67,6 +67,30 @@ export default function CartPage() {
         console.log("待處理的購物車項目:", pendingItems);
         
         setCartItems(pendingItems);
+
+        // 如果购物车为空，检查localStorage
+        if (pendingItems.length === 0) {
+          console.log("检查本地存储中的购物车项目");
+          // 这里不需要做额外的操作，但在控制台记录一下，方便调试
+          try {
+            if (typeof window !== 'undefined') {
+              const storageData = localStorage.getItem('sponlink_cart_items');
+              console.log("本地存储购物车原始数据:", storageData);
+              if (storageData) {
+                const parsedData = JSON.parse(storageData);
+                console.log("本地存储购物车解析数据:", parsedData);
+                
+                // 查找当前用户的项目
+                const userItems = parsedData.filter((item: CartItem) => 
+                  item.sponsor_id === userId && item.status === CartItemStatus.PENDING
+                );
+                console.log("本地存储中当前用户的待处理项目:", userItems);
+              }
+            }
+          } catch (e) {
+            console.error("检查本地存储时出错:", e);
+          }
+        }
       } catch (error) {
         console.error("獲取購物車項目錯誤:", error);
         setError("無法加載購物車項目。請稍後再試。");
@@ -79,6 +103,7 @@ export default function CartPage() {
     
     // 添加事件監聽器
     const handleCartUpdate = () => {
+      console.log("触发购物车更新事件，重新获取购物车项目");
       fetchCartItems();
     };
     

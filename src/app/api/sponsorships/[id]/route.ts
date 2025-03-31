@@ -3,11 +3,12 @@ import { mockSponsorshipPlans } from '@/mocks/sponsorshipData';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 正確處理 Next.js 15.2.3 中的路由參數
-    const id = params.id; // 參數已經是字符串，不需要 await
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
     
     // 根據ID查找贊助計劃
     const sponsorshipPlan = mockSponsorshipPlans.find(plan => plan.id === id);

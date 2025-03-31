@@ -1,30 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getEventById } from '@/services/eventService';
+import { mockEvents } from '@/mocks/eventData';
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 獲取 URL 參數
-    const params = await context.params;
-    const id = params.id;
+    // 正確處理 Next.js 15.2.3 中的路由參數
+    const resolvedParams = await params;
+    const id = resolvedParams.id;
     
-    // 獲取事件詳情
-    const event = await getEventById(id);
+    // 根據ID查找活動
+    const event = mockEvents.find(event => event.id === id);
     
     if (!event) {
       return NextResponse.json(
-        { error: '找不到事件' },
+        { error: '找不到活動' },
         { status: 404 }
       );
     }
     
     return NextResponse.json(event);
   } catch (error) {
-    console.error('獲取事件時出錯:', error);
+    console.error('獲取活動時出錯:', error);
     return NextResponse.json(
-      { error: '獲取事件時出錯' },
+      { error: '獲取活動時出錯' },
       { status: 500 }
     );
   }
