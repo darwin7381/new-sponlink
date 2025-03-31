@@ -8,7 +8,8 @@ import { zhTW } from "date-fns/locale";
 import { 
   Calendar, Clock, MapPin, Tag, Users, Check, Plus, Grid, 
   List, Calendar as CalendarIcon, ChevronLeft, ChevronRight, 
-  User, Filter, Instagram, Twitter, Globe, ExternalLink, X 
+  User, Filter, Instagram, Twitter, Globe, ExternalLink, X,
+  Search, AlignJustify
 } from "lucide-react";
 import { getEventSeriesById, getEventsInSeries, getMainEventInSeries } from "@/services/eventSeriesService";
 import { EventSeries, Event } from "@/types/event";
@@ -27,12 +28,14 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
   const [mainEvent, setMainEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "calendar">("list");
+  const [viewMode, setViewMode] = useState<"timeline" | "list">("timeline");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showMode, setShowMode] = useState<"upcoming" | "past">("upcoming");
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // 解析参数
   useEffect(() => {
@@ -140,7 +143,13 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
       format(eventDate, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd') : 
       true;
     
-    return passesTagFilter && passesSelectedDateFilter && (
+    // 添加搜尋過濾
+    const matchesSearch = searchQuery === "" || 
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (event.organizer && event.organizer.toLowerCase().includes(searchQuery.toLowerCase()));
+    
+    return passesTagFilter && passesSelectedDateFilter && matchesSearch && (
       (showMode === "upcoming" && isUpcoming) ||
       (showMode === "past" && isPast)
     );
@@ -268,6 +277,60 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
         date: new Date(dateKey),
         events: groupedEvents[dateKey]
       }));
+  };
+
+  // 獲取相對日期顯示
+  const getRelativeDateDisplay = (date: Date): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
+      return 'Today';
+    } else if (format(date, 'yyyy-MM-dd') === format(tomorrow, 'yyyy-MM-dd')) {
+      return 'Tomorrow';
+    } else if (format(date, 'yyyy-MM-dd') === format(yesterday, 'yyyy-MM-dd')) {
+      return 'Yesterday';
+    }
+    
+    // 使用英文格式 May 15
+    return `${format(date, 'MMM d')}`;
+  };
+
+  // 獲取日期和星期分開顯示
+  const getDateDisplay = (date: Date): { date: string, weekday: string } => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    let dateText;
+    let weekdayText;
+    
+    if (format(date, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) {
+      dateText = 'Today';
+      weekdayText = format(date, 'EEEE');
+    } else if (format(date, 'yyyy-MM-dd') === format(tomorrow, 'yyyy-MM-dd')) {
+      dateText = 'Tomorrow';
+      weekdayText = format(date, 'EEEE');
+    } else if (format(date, 'yyyy-MM-dd') === format(yesterday, 'yyyy-MM-dd')) {
+      dateText = 'Yesterday';
+      weekdayText = format(date, 'EEEE');
+    } else {
+      dateText = `${format(date, 'MMM d')}`;
+      weekdayText = format(date, 'EEEE');
+    }
+    
+    return { date: dateText, weekday: weekdayText };
   };
 
   const eventsByDate = groupEventsByDate();
@@ -420,10 +483,10 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
             {/* 頂部標題和控制區 */}
             <div className="flex justify-between items-center mb-6 sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-4">
               <h2 className="text-xl font-semibold">
-                活動
+                Events
                 {selectedDate && (
-                  <span className="ml-2 text-sm font-normal text-neutral-400">
-                    ({format(selectedDate, 'yyyy年MM月dd日')})
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({format(selectedDate, 'MMM d, yyyy')})
                   </span>
                 )}
               </h2>
@@ -438,9 +501,53 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                     onClick={clearDateFilter}
                   >
                     <X className="h-3.5 w-3.5" />
-                    <span className="text-xs">清除日期</span>
+                    <span className="text-xs">Clear date</span>
                   </Button>
                 )}
+                
+                {/* 搜尋按鈕 */}
+                <div className="relative">
+                  {isSearchOpen ? (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Search events..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="h-8 rounded-md bg-secondary/20 px-8 text-xs border-none focus:ring-1 focus:ring-primary"
+                        onBlur={() => {
+                          if (searchQuery === "") {
+                            setIsSearchOpen(false);
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <Search className="h-3.5 w-3.5 absolute left-2.5 top-[10px] text-muted-foreground" />
+                      {searchQuery && (
+                        <button
+                          onClick={() => {
+                            setSearchQuery("");
+                            setIsSearchOpen(false);
+                          }}
+                          className="absolute right-2.5 top-[10px]"
+                          aria-label="Clear search"
+                          title="Clear search"
+                        >
+                          <X className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setIsSearchOpen(true)}
+                    >
+                      <Search className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                </div>
                 
                 {/* 標籤篩選按鈕 */}
                 {allTags.length > 0 && (
@@ -454,7 +561,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                       }}
                     >
                       <Filter className="h-3.5 w-3.5" />
-                      <span className="text-xs">篩選</span>
+                      <span className="text-xs">Filter</span>
                     </Button>
                   </div>
                 )}
@@ -462,18 +569,24 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                 {/* 視圖切換按鈕 */}
                 <div className="bg-card rounded-md overflow-hidden flex border border-border">
                   <button 
-                    className={`p-1.5 ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/20'}`}
-                    onClick={() => setViewMode('list')}
-                    aria-label="列表視圖"
+                    className={`p-1.5 ${viewMode === 'timeline' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/20'}`}
+                    onClick={() => setViewMode('timeline')}
+                    aria-label="Timeline view"
+                    title="Timeline view"
                   >
-                    <List className="h-3.5 w-3.5" />
+                    <AlignJustify className="h-3.5 w-3.5" />
                   </button>
                   <button 
-                    className={`p-1.5 ${viewMode === 'calendar' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/20'}`}
-                    onClick={() => setViewMode('calendar')}
-                    aria-label="日曆視圖"
+                    className={`p-1.5 ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'hover:bg-secondary/20'}`}
+                    onClick={() => setViewMode('list')}
+                    aria-label="List view"
+                    title="List view"
                   >
-                    <Grid className="h-3.5 w-3.5" />
+                    <div className="h-3.5 w-3.5 flex flex-col justify-between">
+                      <div className="h-[1px] w-full bg-current"></div>
+                      <div className="h-[1px] w-full bg-current"></div>
+                      <div className="h-[1px] w-full bg-current"></div>
+                    </div>
                   </button>
                 </div>
               </div>
@@ -513,35 +626,41 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
               </div>
             )}
 
-            {filteredEvents.length > 0 && viewMode === 'list' && (
+            {filteredEvents.length > 0 && viewMode === 'timeline' && (
               <div className="relative">
                 {/* 事件列表 */}
                 <div className="space-y-10 relative z-10 pb-12">
                   {eventsByDate.map((group, groupIndex) => (
                     <div key={format(group.date, 'yyyy-MM-dd')} className="relative">
-                      {/* 時間軸垂直線連接所有時間點 */}
-                      {groupIndex < eventsByDate.length - 1 && (
-                        <div className="absolute left-[6px] top-[26px] w-[0.5px] h-[calc(100%+20px)] bg-neutral-800/20"></div>
-                      )}
-                      
                       {/* 日期標記 - 使用獨立的圓點 */}
                       <div className="flex items-center sticky top-[72px] z-20 py-2 bg-background/95 backdrop-blur-sm">
                         <div className="w-3 h-3 rounded-full bg-primary flex-shrink-0"></div>
-                        <div className="ml-3">
-                          <span className="font-medium text-sm">{format(group.date, 'EEEE', { locale: zhTW })}</span>
-                          <span className="text-sm text-neutral-400 ml-1">{format(group.date, 'M月d日', { locale: zhTW })}</span>
+                        <div className="ml-3 font-medium text-sm">
+                          {(() => {
+                            const { date, weekday } = getDateDisplay(group.date);
+                            return (
+                              <>
+                                {date} <span className="text-muted-foreground">{weekday}</span>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
+                      
+                      {/* 時間軸垂直線連接所有時間點，確保線條可見 */}
+                      {groupIndex < eventsByDate.length - 1 && (
+                        <div className="absolute left-[6px] top-[26px] w-[0.5px] h-[calc(100%+30px)] bg-border/50"></div>
+                      )}
                       
                       {/* 事件卡片列表 */}
                       <div className="mt-4 ml-6 space-y-3">
                         {group.events.map((event) => (
                           <Link key={event.id} href={`/events/${event.id}`} className="block group">
-                            <div className="bg-card border border-neutral-800/30 hover:border-primary/30 transition-all rounded-md overflow-hidden">
+                            <div className="bg-card border border-border hover:border-primary/30 transition-all rounded-md overflow-hidden">
                               <div className="flex flex-col md:flex-row">
                                 {/* 主要內容區 */}
                                 <div className="p-4 md:p-5 flex-1 min-w-0">
-                                  <div className="text-sm text-neutral-400 mb-1.5">
+                                  <div className="text-sm text-muted-foreground mb-1.5">
                                     {event.start_time ? format(new Date(event.start_time), "h:mm a") : ""}
                                   </div>
                                   
@@ -550,19 +669,19 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                                   </h3>
                                   
                                   {/* 組織者和地點信息 */}
-                                  <div className="flex flex-col gap-1.5 text-sm text-neutral-400">
+                                  <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
                                     {event.organizer && (
                                       <div className="flex items-center">
-                                        <span className="text-neutral-300">By {event.organizer}</span>
+                                        <span className="text-foreground/80">By {event.organizer}</span>
                                       </div>
                                     )}
                                     
                                     {event.location && (
                                       <div className="flex items-center">
-                                        <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-neutral-500" />
+                                        <MapPin className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-muted-foreground" />
                                         <span className="truncate max-w-full">
-                                          {event.location.location_type === 'virtual' ? '虛擬活動' : 
-                                          event.location.name || event.location.address || '地點未定'}
+                                          {event.location.location_type === 'virtual' ? 'Virtual Event' : 
+                                          event.location.name || event.location.address || 'Location TBD'}
                                         </span>
                                       </div>
                                     )}
@@ -571,7 +690,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                                 
                                 {/* 右側圖片 */}
                                 {event.cover_image && (
-                                  <div className="w-full md:w-28 h-32 md:h-auto relative overflow-hidden flex-shrink-0 border-t md:border-t-0 md:border-l border-neutral-800/30">
+                                  <div className="w-full md:w-28 h-32 md:h-auto relative overflow-hidden flex-shrink-0 border-t md:border-t-0 md:border-l border-border">
                                     <Image 
                                       src={event.cover_image}
                                       alt={event.title}
@@ -584,10 +703,10 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                               
                               {/* 底部資訊欄 */}
                               {(event.attendees_count !== undefined || event.tags?.length > 0) && (
-                                <div className="px-4 py-2 bg-neutral-800/10 border-t border-neutral-800/30 flex items-center justify-between text-xs">
+                                <div className="px-4 py-2 bg-secondary/5 border-t border-border flex items-center justify-between text-xs">
                                   <div className="flex items-center gap-2">
                                     {event.attendees_count !== undefined && (
-                                      <div className="flex items-center text-neutral-400">
+                                      <div className="flex items-center text-muted-foreground">
                                         <Users className="h-3.5 w-3.5 mr-1" />
                                         <span>{event.attendees_count}</span>
                                       </div>
@@ -597,12 +716,12 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                                     {event.tags && event.tags.length > 0 && (
                                       <div className="flex flex-wrap gap-1">
                                         {event.tags.slice(0, 2).map(tag => (
-                                          <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0 bg-transparent border-neutral-700 text-neutral-400">
+                                          <Badge key={tag} variant="outline" className="text-xs px-1.5 py-0 bg-transparent border-border text-muted-foreground">
                                             {tag}
                                           </Badge>
                                         ))}
                                         {event.tags.length > 2 && (
-                                          <span className="text-xs text-neutral-500">+{event.tags.length - 2}</span>
+                                          <span className="text-xs text-muted-foreground">+{event.tags.length - 2}</span>
                                         )}
                                       </div>
                                     )}
@@ -610,7 +729,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                                   
                                   {event.status === EventStatus.PUBLISHED && (
                                     <Badge variant="secondary" className="text-[10px] px-1 py-0 bg-green-900/20 text-green-400 border-0">
-                                      已發布
+                                      Published
                                     </Badge>
                                   )}
                                 </div>
@@ -625,92 +744,76 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
               </div>
             )}
 
-            {filteredEvents.length > 0 && viewMode === 'calendar' && (
-              <div className="bg-card border border-neutral-800/30 rounded-md overflow-hidden">
-                {/* 日曆標頭 */}
-                <div className="flex items-center justify-between p-3 border-b border-neutral-800/30">
-                  <h3 className="font-medium">{format(currentMonth, 'yyyy年MM月')}</h3>
-                  <div className="flex gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 hover:bg-neutral-800/20" 
-                      onClick={handlePrevMonth}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-7 w-7 hover:bg-neutral-800/20" 
-                      onClick={handleNextMonth}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* 日曆主體 */}
-                <div className="grid grid-cols-7">
-                  {generateCalendarDays()}
-                </div>
-                
-                {/* 當月活動列表 */}
-                <div className="border-t border-neutral-800/30 p-4">
-                  <h3 className="font-medium mb-3 text-sm">本月活動</h3>
-                  {filteredEvents.filter(event => {
-                    if (!event.start_time) return false;
-                    const eventDate = new Date(event.start_time);
-                    return eventDate.getMonth() === currentMonth.getMonth() && 
-                           eventDate.getFullYear() === currentMonth.getFullYear();
-                  }).length > 0 ? (
-                    <div className="space-y-2.5">
-                      {filteredEvents
-                        .filter(event => {
-                          if (!event.start_time) return false;
-                          const eventDate = new Date(event.start_time);
-                          return eventDate.getMonth() === currentMonth.getMonth() && 
-                                eventDate.getFullYear() === currentMonth.getFullYear();
-                        })
-                        .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-                        .map(event => (
-                          <Link 
-                            key={event.id} 
-                            href={`/events/${event.id}`} 
-                            className="flex items-center px-2 py-1.5 -mx-2 rounded-md hover:bg-neutral-800/20 transition-colors"
-                          >
-                            <div className="w-8 h-8 rounded-md overflow-hidden relative flex-shrink-0 mr-3 bg-neutral-800/30">
-                              {event.cover_image ? (
-                                <Image
-                                  src={event.cover_image}
-                                  alt={event.title}
-                                  fill
-                                  className="object-cover"
-                                />
-                              ) : (
-                                <div className="flex items-center justify-center h-full">
-                                  <Calendar className="h-3.5 w-3.5 text-neutral-500" />
+            {filteredEvents.length > 0 && viewMode === 'list' && (
+              <div className="space-y-6">
+                {eventsByDate.map((group) => (
+                  <div key={format(group.date, 'yyyy-MM-dd')} className="space-y-2">
+                    {/* 日期標題 */}
+                    <div className="flex items-center py-2 text-sm font-medium">
+                      {(() => {
+                        const { date, weekday } = getDateDisplay(group.date);
+                        return (
+                          <>
+                            {date} <span className="text-muted-foreground ml-1">{weekday}</span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    
+                    {/* 當日活動列表 */}
+                    {group.events.map(event => (
+                      <Link key={event.id} href={`/events/${event.id}`} className="block group">
+                        <div className="px-3 py-3 hover:bg-secondary/5 transition-colors rounded-md flex gap-3 items-start">
+                          <div className="text-xs text-muted-foreground w-16 flex-shrink-0 pt-1">
+                            {event.start_time ? format(new Date(event.start_time), "h:mm a") : ""}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <h3 className="text-sm font-medium mb-1 group-hover:text-primary transition-colors line-clamp-1">
+                                {event.title}
+                              </h3>
+                              
+                              {event.cover_image && (
+                                <div className="w-12 h-12 relative overflow-hidden rounded-md flex-shrink-0">
+                                  <Image 
+                                    src={event.cover_image}
+                                    alt={event.title}
+                                    fill
+                                    className="object-cover"
+                                  />
                                 </div>
                               )}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate">{event.title}</div>
-                              <div className="text-xs text-neutral-400 flex items-center">
-                                <span>
-                                  {format(new Date(event.start_time), "M月d日 h:mm a")}
-                                </span>
-                              </div>
+                            
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              {event.organizer && (
+                                <span>By {event.organizer}</span>
+                              )}
+                              
+                              {event.location && (
+                                <div className="flex items-center">
+                                  <span className="mx-1">•</span>
+                                  <MapPin className="h-3 w-3 mr-0.5" />
+                                  <span className="truncate max-w-[150px]">
+                                    {event.location.name || 'Location TBD'}
+                                  </span>
+                                </div>
+                              )}
+                              
+                              {event.attendees_count !== undefined && (
+                                <div className="flex items-center">
+                                  <span className="mx-1">•</span>
+                                  <span>{event.attendees_count} attending</span>
+                                </div>
+                              )}
                             </div>
-                          </Link>
-                        ))
-                      }
-                    </div>
-                  ) : (
-                    <div className="text-sm text-neutral-500 py-2">
-                      本月無活動
-                    </div>
-                  )}
-                </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -718,37 +821,37 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
           {/* 右側邊欄 (1/3 寬度) */}
           <div className="w-full md:w-72 flex-shrink-0 space-y-6">
             {/* 提交活動按鈕 - 移到日曆上方 */}
-            <div className="bg-card border border-neutral-800/30 rounded-md p-4 text-center">
-              <h3 className="font-medium mb-2 text-sm">提交您的活動到此日曆</h3>
-              <p className="text-xs text-neutral-400 mb-3">想將您的活動添加到這個系列中嗎？</p>
+            <div className="bg-card border border-border rounded-md p-4 text-center">
+              <h3 className="font-medium mb-2 text-sm">Submit your event to this calendar</h3>
+              <p className="text-xs text-muted-foreground mb-3">Want to add your event to this series?</p>
               <Link href="/create-event">
                 <Button 
                   className="w-full text-sm h-9"
                   variant="outline"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  提交活動
+                  Submit Event
                 </Button>
               </Link>
             </div>
             
             {/* 固定在頂部的日曆組件 */}
-            <div className="bg-card border border-neutral-800/30 rounded-md overflow-hidden sticky top-4">
-              <div className="p-3 border-b border-neutral-800/30 flex justify-between items-center">
-                <h3 className="font-medium text-sm">{format(currentMonth, 'MMMM', { locale: zhTW })}</h3>
+            <div className="bg-card border border-border rounded-md overflow-hidden sticky top-4">
+              <div className="p-3 border-b border-border flex justify-between items-center">
+                <h3 className="font-medium text-sm">{format(currentMonth, 'MMMM')}</h3>
                 <div className="flex space-x-2">
                   <div
-                    className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-neutral-800/30 cursor-pointer text-neutral-400 hover:text-white transition-colors"
-                    title="上個月"
-                    aria-label="查看上個月"
+                    className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-secondary/20 cursor-pointer text-muted-foreground hover:text-foreground transition-colors"
+                    title="Previous month"
+                    aria-label="View previous month"
                     onClick={handlePrevMonth}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </div>
                   <div
-                    className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-neutral-800/30 cursor-pointer text-neutral-400 hover:text-white transition-colors" 
-                    title="下個月"
-                    aria-label="查看下個月"
+                    className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-secondary/20 cursor-pointer text-muted-foreground hover:text-foreground transition-colors" 
+                    title="Next month"
+                    aria-label="View next month"
                     onClick={handleNextMonth}
                   >
                     <ChevronRight className="h-4 w-4" />
@@ -759,7 +862,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
               {/* 如果有選中日期，顯示日期和取消按鈕 */}
               {selectedDate && (
                 <div className="p-2 bg-primary/10 flex justify-between items-center">
-                  <span className="text-xs font-medium">{format(selectedDate, 'MMMM d', { locale: zhTW })}</span>
+                  <span className="text-xs font-medium">{format(selectedDate, 'MMMM d')}</span>
                   <Button 
                     variant="ghost"
                     size="icon"
@@ -774,8 +877,8 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
               <div className="p-3">
                 {/* 週日標題 */}
                 <div className="grid grid-cols-7 text-center mb-2">
-                  {['日', '一', '二', '三', '四', '五', '六'].map((day, index) => (
-                    <div key={day} className="text-xs text-neutral-500">{day}</div>
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+                    <div key={day + index} className="text-xs text-muted-foreground">{day}</div>
                   ))}
                 </div>
                 
@@ -792,7 +895,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                     for (let i = 0; i < firstDay; i++) {
                       const day = prevMonthLastDay - firstDay + i + 1;
                       prevMonthDays.push(
-                        <div key={`prev-${day}`} className="h-6 w-6 text-neutral-500 flex items-center justify-center">
+                        <div key={`prev-${day}`} className="h-6 w-6 text-muted-foreground/50 flex items-center justify-center">
                           {day}
                         </div>
                       );
@@ -865,7 +968,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                     
                     for (let i = 1; i <= daysToAdd; i++) {
                       nextMonthDays.push(
-                        <div key={`next-${i}`} className="h-6 w-6 text-neutral-500 flex items-center justify-center">
+                        <div key={`next-${i}`} className="h-6 w-6 text-muted-foreground/50 flex items-center justify-center">
                           {i}
                         </div>
                       );
@@ -876,15 +979,15 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                 </div>
               </div>
               
-              <div className="p-3 border-t border-neutral-800/30 flex justify-between">
+              <div className="p-3 border-t border-border flex justify-between">
                 <button
-                  className={`text-xs py-1 px-4 h-7 rounded transition-colors ${showMode === 'upcoming' ? 'bg-primary text-primary-foreground' : 'text-neutral-400 hover:bg-neutral-800/20'}`}
+                  className={`text-xs py-1 px-4 h-7 rounded transition-colors ${showMode === 'upcoming' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary/20'}`}
                   onClick={() => setShowMode("upcoming")}
                 >
                   Upcoming
                 </button>
                 <button
-                  className={`text-xs py-1 px-4 h-7 rounded transition-colors ${showMode === 'past' ? 'bg-primary text-primary-foreground' : 'text-neutral-400 hover:bg-neutral-800/20'}`}
+                  className={`text-xs py-1 px-4 h-7 rounded transition-colors ${showMode === 'past' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-secondary/20'}`}
                   onClick={() => setShowMode("past")}
                 >
                   Past
@@ -893,7 +996,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
             </div>
             
             {/* 活動地點地圖組件 */}
-            <div className="bg-card border border-neutral-800/30 rounded-md overflow-hidden">
+            <div className="bg-card border border-border rounded-md overflow-hidden">
               <div className="aspect-video w-full relative bg-neutral-900">
                 {/* 地圖預留區域 */}
                 <div className="absolute inset-0 flex items-center justify-center">
