@@ -18,7 +18,9 @@ import Link from "next/link";
 
 const MeetingsPage = () => {
   const searchParams = useSearchParams();
-  const eventIdFromUrl = searchParams.get('eventId');
+  const eventIdFromUrl = searchParams.get('event') || searchParams.get('eventId');
+  const organizerIdFromUrl = searchParams.get('organizer');
+  const titleFromUrl = searchParams.get('title');
   
   // State for login modal
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -89,8 +91,12 @@ const MeetingsPage = () => {
             const eventDetails = await getEventById(eventIdFromUrl);
             if (eventDetails) {
               setCurrentEvent(eventDetails);
-              // Pre-fill meeting title based on event
-              setMeetingTitle(`${eventDetails.title} - Sponsorship Discussion`);
+              // Pre-fill meeting title based on URL parameter or event
+              if (titleFromUrl) {
+                setMeetingTitle(titleFromUrl);
+              } else {
+                setMeetingTitle(`${eventDetails.title} - Sponsorship Discussion`);
+              }
             }
           } catch (err) {
             console.error("Error fetching event details:", err);
@@ -104,7 +110,7 @@ const MeetingsPage = () => {
     };
     
     fetchEvents();
-  }, [eventIdFromUrl]);
+  }, [eventIdFromUrl, titleFromUrl]);
   
   // Load user meetings if logged in
   useEffect(() => {
@@ -291,6 +297,7 @@ const MeetingsPage = () => {
                 value={selectedEvent}
                 onChange={(e) => handleEventChange(e.target.value)}
                 disabled={isLoadingEvents}
+                aria-label="Select an event"
               >
                 <option value="">-- Select an event --</option>
                 {events.map(event => (

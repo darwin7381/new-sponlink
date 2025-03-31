@@ -82,6 +82,17 @@ export interface EventSeries extends Omit<BaseResource, 'resourceType'> {
   timezone?: string;
 }
 
+// 活動材料接口
+export interface EventMaterials {
+  deck_url?: string;      // 活動簡報下載連結
+  brochure_url?: string;  // 活動手冊下載連結
+  agenda_url?: string;    // 活動議程下載連結
+  other_materials?: {     // 其他材料
+    name: string;
+    url: string;
+  }[];
+}
+
 // 活動 - 實現基礎資源接口
 export interface Event extends Omit<BaseResource, 'resourceType'> {
   organizer_id: string;  // 暫時保留，兼容舊代碼
@@ -101,4 +112,5 @@ export interface Event extends Omit<BaseResource, 'resourceType'> {
   series_id?: string; // 所屬的活動系列ID，如果有的話
   is_main_event?: boolean; // 是否為活動系列的主要活動
   event_type?: string; // 活動類型，例如：Main Event, Side Event, Feature Event等
+  materials?: EventMaterials; // 活動相關材料
 }

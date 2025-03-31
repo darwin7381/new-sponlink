@@ -369,10 +369,19 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   // 显示的日期和时间
-  const eventDate = formatEventDate(event.start_time);
+  const startDate = formatEventDate(event.start_time);
+  const endDate = formatEventDate(event.end_time);
   const startTime = formatEventTime(event.start_time);
   const endTime = formatEventTime(event.end_time);
-  const timeDisplay = `${startTime} - ${endTime}`;
+  
+  // 判断是否为跨天事件
+  const isMultiDayEvent = startDate !== endDate;
+  
+  // 根据是否跨天生成不同的显示文本
+  const dateTimeDisplay = isMultiDayEvent 
+    ? `${startDate} ${startTime} - ${endDate} ${endTime}` 
+    : `${startDate}, ${startTime} - ${endTime}`;
+  
   const timezoneText = event.timezone ? getTimezoneDisplay(event.timezone) : '';
 
   return (
@@ -385,6 +394,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
           className="object-cover"
           fill
           priority
+          sizes="100vw"
         />
         <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
           <div className="container mx-auto px-4 pb-12">
@@ -392,11 +402,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
             <div className="flex flex-wrap gap-4 text-white">
               <div className="flex items-center">
                 <Calendar className="h-5 w-5 mr-2" />
-                <span>{eventDate}</span>
+                <span>{dateTimeDisplay}</span>
               </div>
               <div className="flex items-center">
                 <Clock className="h-5 w-5 mr-2" />
-                <span>{timeDisplay} {timezoneText}</span>
+                <span>{timezoneText}</span>
               </div>
               <div className="flex items-center">
                 <MapPin className="h-5 w-5 mr-2" />
@@ -481,6 +491,52 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 <LocationDisplay location={event.location} />
               )}
             </div>
+
+            {/* 活動材料 */}
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-4">Event Materials</h2>
+              <div className="flex flex-wrap gap-4">
+                <Button 
+                  variant="default" 
+                  className="flex items-center gap-2"
+                  onClick={() => {
+                    // 處理下載活動資料
+                    const eventDeckUrl = event.materials?.deck_url || "https://example.com/event-deck.pdf";
+                    window.open(eventDeckUrl, '_blank');
+                  }}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Download Event Deck
+                </Button>
+                
+                {isUserAuthenticated && (
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center gap-2"
+                    onClick={() => {
+                      // 如果用戶已登入，導航到預約會議頁面
+                      if (event.organizer_id) {
+                        router.push(`/meetings?organizer=${event.organizer_id}&eventId=${event.id}&title=${encodeURIComponent(`Meeting about: ${event.title}`)}`);
+                      } else {
+                        alert("無法找到活動主辦方信息，請稍後再試");
+                      }
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    Schedule a Meeting with Organizer
+                  </Button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* 右边侧边栏 */}
@@ -491,7 +547,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold">日期與時間</h3>
-                    <p className="text-muted-foreground">{eventDate} • {timeDisplay} {timezoneText}</p>
+                    <p className="text-muted-foreground">{dateTimeDisplay}</p>
                   </div>
                   <div>
                     <h3 className="font-semibold">地點</h3>

@@ -9,8 +9,8 @@ export const mockEvents: Event[] = [
     title: "區塊鏈週 2025 台北 - Main Event",
     description: "An annual gathering of global technology leaders and innovators to explore the latest technology trends and future development directions.",
     cover_image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80",
-    start_time: "2025-05-15T09:00:00Z",
-    end_time: "2025-05-17T18:00:00Z",
+    start_time: "2025-05-15T08:00:00+08:00",
+    end_time: "2025-05-17T17:00:00+08:00",
     timezone: "Asia/Taipei",
     location: {
       id: "loc1",
@@ -32,6 +32,11 @@ export const mockEvents: Event[] = [
     series_id: "series1",
     is_main_event: true,
     event_type: "Main Event",
+    materials: {
+      deck_url: "https://storage.googleapis.com/sponlink-resources/events/blockchain-week-2025-deck.pdf",
+      brochure_url: "https://storage.googleapis.com/sponlink-resources/events/blockchain-week-2025-brochure.pdf",
+      agenda_url: "https://storage.googleapis.com/sponlink-resources/events/blockchain-week-2025-agenda.pdf",
+    },
     sponsorship_plans: [
       {
         id: "sp1",
