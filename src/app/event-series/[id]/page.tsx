@@ -8,7 +8,7 @@ import { zhTW } from "date-fns/locale";
 import { 
   Calendar, Clock, MapPin, Tag, Users, Check, Plus, Grid, 
   List, Calendar as CalendarIcon, ChevronLeft, ChevronRight, 
-  User, Filter, Instagram, Twitter, Globe, ExternalLink 
+  User, Filter, Instagram, Twitter, Globe, ExternalLink, X 
 } from "lucide-react";
 import { getEventSeriesById, getEventsInSeries, getMainEventInSeries } from "@/services/eventSeriesService";
 import { EventSeries, Event } from "@/types/event";
@@ -32,6 +32,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [showMode, setShowMode] = useState<"upcoming" | "past">("upcoming");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   // 解析参数
   useEffect(() => {
@@ -95,12 +96,14 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() - 1);
     setCurrentMonth(newDate);
+    setSelectedDate(null);
   };
 
   const handleNextMonth = () => {
     const newDate = new Date(currentMonth);
     newDate.setMonth(newDate.getMonth() + 1);
     setCurrentMonth(newDate);
+    setSelectedDate(null);
   };
 
   const toggleTag = (tag: string) => {
@@ -109,6 +112,11 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
     } else {
       setSelectedTags([...selectedTags, tag]);
     }
+  };
+
+  // 清除日期過濾
+  const clearDateFilter = () => {
+    setSelectedDate(null);
   };
 
   // 過濾活動
@@ -127,7 +135,12 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
     const isUpcoming = eventDate >= today;
     const isPast = eventDate < today;
     
-    return passesTagFilter && (
+    // 如果選擇了特定日期，則只顯示該日期的事件
+    const passesSelectedDateFilter = selectedDate ? 
+      format(eventDate, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd') : 
+      true;
+    
+    return passesTagFilter && passesSelectedDateFilter && (
       (showMode === "upcoming" && isUpcoming) ||
       (showMode === "past" && isPast)
     );
@@ -406,9 +419,29 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
           <div className="flex-1 min-w-0">
             {/* 頂部標題和控制區 */}
             <div className="flex justify-between items-center mb-6 sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-4">
-              <h2 className="text-xl font-semibold">活動</h2>
+              <h2 className="text-xl font-semibold">
+                活動
+                {selectedDate && (
+                  <span className="ml-2 text-sm font-normal text-neutral-400">
+                    ({format(selectedDate, 'yyyy年MM月dd日')})
+                  </span>
+                )}
+              </h2>
               
               <div className="flex items-center space-x-4">
+                {/* 日期篩選器（如果選擇了日期） */}
+                {selectedDate && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 flex items-center gap-1 px-3"
+                    onClick={clearDateFilter}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    <span className="text-xs">清除日期</span>
+                  </Button>
+                )}
+                
                 {/* 標籤篩選按鈕 */}
                 {allTags.length > 0 && (
                   <div className="relative">
@@ -684,6 +717,21 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
           
           {/* 右側邊欄 (1/3 寬度) */}
           <div className="w-full md:w-72 flex-shrink-0 space-y-6">
+            {/* 提交活動按鈕 - 移到日曆上方 */}
+            <div className="bg-card border border-neutral-800/30 rounded-md p-4 text-center">
+              <h3 className="font-medium mb-2 text-sm">提交您的活動到此日曆</h3>
+              <p className="text-xs text-neutral-400 mb-3">想將您的活動添加到這個系列中嗎？</p>
+              <Link href="/create-event">
+                <Button 
+                  className="w-full text-sm h-9"
+                  variant="outline"
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  提交活動
+                </Button>
+              </Link>
+            </div>
+            
             {/* 固定在頂部的日曆組件 */}
             <div className="bg-card border border-neutral-800/30 rounded-md overflow-hidden sticky top-4">
               <div className="p-3 border-b border-neutral-800/30 flex justify-between items-center">
@@ -708,6 +756,21 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                 </div>
               </div>
               
+              {/* 如果有選中日期，顯示日期和取消按鈕 */}
+              {selectedDate && (
+                <div className="p-2 bg-primary/10 flex justify-between items-center">
+                  <span className="text-xs font-medium">{format(selectedDate, 'MMMM d', { locale: zhTW })}</span>
+                  <Button 
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5 rounded-full hover:bg-primary/20"
+                    onClick={() => setSelectedDate(null)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+              
               <div className="p-3">
                 {/* 週日標題 */}
                 <div className="grid grid-cols-7 text-center mb-2">
@@ -716,25 +779,100 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                   ))}
                 </div>
                 
-                {/* 日曆天數，以4月為例 */}
+                {/* 日曆天數 */}
                 <div className="grid grid-cols-7 gap-1 text-xs">
-                  <div className="h-6 w-6 text-neutral-500 flex items-center justify-center">31</div>
-                  {Array.from({length: 30}, (_, i) => i + 1).map(day => (
-                    <div 
-                      key={`day-${day}`}
-                      className={`h-6 w-6 rounded-full flex items-center justify-center ${
-                        day === 2 ? 'bg-primary text-primary-foreground' :
-                        [5, 9, 15, 23].includes(day) ? 'bg-primary/20 text-primary' :
-                        'hover:bg-neutral-800/20'
-                      }`}
-                    >
-                      {day}
-                    </div>
-                  ))}
-                  <div className="h-6 w-6 text-neutral-500 flex items-center justify-center">1</div>
-                  <div className="h-6 w-6 text-neutral-500 flex items-center justify-center">2</div>
-                  <div className="h-6 w-6 text-neutral-500 flex items-center justify-center">3</div>
-                  <div className="h-6 w-6 text-neutral-500 flex items-center justify-center">4</div>
+                  {/* 計算本月第一天是星期幾 */}
+                  {(() => {
+                    // 獲取當月第一天是星期幾 (0-6)
+                    const firstDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+                    // 上個月的最後幾天
+                    const prevMonthDays = [];
+                    const prevMonthLastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 0).getDate();
+                    
+                    for (let i = 0; i < firstDay; i++) {
+                      const day = prevMonthLastDay - firstDay + i + 1;
+                      prevMonthDays.push(
+                        <div key={`prev-${day}`} className="h-6 w-6 text-neutral-500 flex items-center justify-center">
+                          {day}
+                        </div>
+                      );
+                    }
+                    
+                    return prevMonthDays;
+                  })()}
+                  
+                  {/* 當月的天數 */}
+                  {(() => {
+                    // 當月的天數
+                    const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+                    const days = [];
+                    
+                    for (let day = 1; day <= daysInMonth; day++) {
+                      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+                      
+                      // 檢查這一天是否有事件
+                      const hasEvents = events.some(event => {
+                        if (!event.start_time) return false;
+                        const eventDate = new Date(event.start_time);
+                        return format(eventDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+                      });
+                      
+                      // 檢查是否為選中的日期
+                      const isSelected = selectedDate && 
+                        format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd');
+                      
+                      // 檢查是否為今天
+                      const isToday = format(new Date(), 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
+                      
+                      days.push(
+                        <div 
+                          key={`day-${day}`}
+                          className={`h-6 w-6 rounded-full relative flex items-center justify-center ${
+                            isSelected ? 'bg-primary text-primary-foreground' :
+                            isToday ? 'border border-primary text-primary' :
+                            hasEvents ? 'text-primary hover:bg-primary/20 cursor-pointer' :
+                            'text-foreground'
+                          }`}
+                          onClick={() => {
+                            // 只有包含事件的日期可以點擊
+                            if (hasEvents) {
+                              // 如果已經選中，則清除選擇
+                              if (isSelected) {
+                                setSelectedDate(null);
+                              } else {
+                                setSelectedDate(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day));
+                              }
+                            }
+                          }}
+                        >
+                          {day}
+                          {/* 有活動的日期顯示小圓點 */}
+                          {hasEvents && !isSelected && (
+                            <div className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full"></div>
+                          )}
+                        </div>
+                      );
+                    }
+                    
+                    return days;
+                  })()}
+                  
+                  {/* 下個月的前幾天 */}
+                  {(() => {
+                    const lastDay = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDay();
+                    const nextMonthDays = [];
+                    const daysToAdd = 6 - lastDay;
+                    
+                    for (let i = 1; i <= daysToAdd; i++) {
+                      nextMonthDays.push(
+                        <div key={`next-${i}`} className="h-6 w-6 text-neutral-500 flex items-center justify-center">
+                          {i}
+                        </div>
+                      );
+                    }
+                    
+                    return nextMonthDays;
+                  })()}
                 </div>
               </div>
               
@@ -798,21 +936,6 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                   </Link>
                 ))}
               </div>
-            </div>
-            
-            {/* 提交活動按鈕 */}
-            <div className="bg-card border border-neutral-800/30 rounded-md p-4 text-center">
-              <h3 className="font-medium mb-2 text-sm">提交您的活動到此日曆</h3>
-              <p className="text-xs text-neutral-400 mb-3">想將您的活動添加到這個系列中嗎？</p>
-              <Link href="/create-event">
-                <Button 
-                  className="w-full text-sm h-9"
-                  variant="outline"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />
-                  提交活動
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
