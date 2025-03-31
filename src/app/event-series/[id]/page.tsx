@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, parseISO, isAfter, isBefore, isSameDay, addMonths, subMonths } from 'date-fns';
 import { zhTW } from "date-fns/locale";
 import { 
   Calendar, Clock, MapPin, Tag, Users, Check, Plus, Grid, 
@@ -16,6 +16,7 @@ import { EventSeries, Event } from "@/types/event";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EventStatus } from "@/types/event";
+import MapboxEventMap from '@/components/maps/MapboxEventMap';
 
 interface EventSeriesPageProps {
   params: Promise<{ id: string }>
@@ -1002,46 +1003,44 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
             {/* 活動地點地圖組件 */}
             <div className="bg-card border border-border rounded-md overflow-hidden">
               <div className="aspect-video w-full relative bg-neutral-900">
-                {/* 地圖預留區域 */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center">
-                    <MapPin className="h-8 w-8 text-primary/50 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-muted-foreground">Event Locations</p>
-                    <p className="text-xs text-muted-foreground mt-1">Showing {events.length} locations</p>
-                  </div>
-                </div>
-                
-                {/* 示例地點標記 */}
-                {events.slice(0, 3).map((_, index) => (
-                  <div 
-                    key={`marker-${index}`}
-                    className="absolute w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-[10px] text-white font-medium"
-                    style={{ top: `${20 + (index * 15)}%`, left: `${20 + (index * 20)}%` }}
-                  >
-                    {index + 1}
-                  </div>
-                ))}
+                <MapboxEventMap 
+                  locations={events
+                    .filter(event => event.location && (event.location.latitude && event.location.longitude))
+                    .map(event => ({
+                      id: event.id,
+                      title: event.title,
+                      location: event.location
+                    }))}
+                  height="100%"
+                  width="100%"
+                />
               </div>
               
               {/* 地點列表 */}
               <div className="p-3">
-                {events.slice(0, 3).map((event, index) => (
-                  <Link 
-                    key={event.id} 
-                    href={`/events/${event.id}`}
-                    className="flex items-start gap-2 p-2 -mx-2 hover:bg-secondary/5 rounded-md transition-colors"
-                  >
-                    <div className="w-5 h-5 rounded-full bg-green-500 flex-shrink-0 flex items-center justify-center text-[10px] text-white font-medium mt-0.5">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <div className="text-sm">{event.title}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {event.location?.name || event.location?.address || 'Location TBD'}
+                <h3 className="text-sm font-medium mb-2">活動地點</h3>
+                <p className="text-xs text-muted-foreground mb-3">顯示 {events.filter(e => e.location).length} 個地點</p>
+                
+                {events
+                  .filter(event => event.location)
+                  .slice(0, 3)
+                  .map((event, index) => (
+                    <Link 
+                      key={event.id} 
+                      href={`/events/${event.id}`}
+                      className="flex items-start gap-2 p-2 -mx-2 hover:bg-secondary/5 rounded-md transition-colors"
+                    >
+                      <div className="w-5 h-5 rounded-full bg-green-500 flex-shrink-0 flex items-center justify-center text-[10px] text-white font-medium mt-0.5">
+                        {index + 1}
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                      <div>
+                        <div className="text-sm">{event.title}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {event.location?.name || event.location?.address || 'Location TBD'}
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
               </div>
             </div>
           </div>

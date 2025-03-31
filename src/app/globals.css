@@ -292,3 +292,48 @@
     cursor: pointer;
   }
 }
+
+/* Mapbox 樣式定制 */
+.mapboxgl-ctrl-group {
+  background-color: #1f2937 !important;
+  border-radius: 4px !important;
+  border: 1px solid #374151 !important;
+}
+
+.mapboxgl-ctrl-group button {
+  color: #e5e7eb !important;
+}
+
+.mapboxgl-ctrl-group button:hover {
+  background-color: #374151 !important;
+}
+
+.mapboxgl-popup-content {
+  background-color: #ffffff !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  padding: 0 !important;
+}
+
+.mapboxgl-popup-close-button {
+  padding: 4px !important;
+  color: #6b7280 !important;
+}
+
+/* 深色模式下的Mapbox樣式 */
+.dark .mapboxgl-popup-content {
+  background-color: #1f2937 !important;
+  color: #e5e7eb !important;
+}
+
+.dark .mapboxgl-popup-content h3 {
+  color: #f3f4f6 !important;
+}
+
+.dark .mapboxgl-popup-content p {
+  color: #9ca3af !important;
+}
+
+.dark .mapboxgl-popup-close-button {
+  color: #9ca3af !important;
+}
