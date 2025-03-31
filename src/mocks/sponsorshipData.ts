@@ -145,5 +145,23 @@ export const mockSponsorshipPlans: SponsorshipPlan[] = [
     current_sponsors: 1,
     created_at: '2024-06-01T09:00:00Z',
     updated_at: '2024-06-01T09:00:00Z'
+  },
+  {
+    id: 'sp8-1',
+    event_id: '3',
+    ownerId: '4',
+    ownerType: OWNER_TYPE.USER,
+    title: '特別贊助計劃 8-1 / Special Package 8-1',
+    description: '針對短期活動的特別贊助方案 / Special sponsorship package for short-term events',
+    price: 22000,
+    benefits: [
+      '活動專屬廣告位 / Exclusive ad space at the event',
+      '產品展示機會 / Product display opportunity',
+      '與參與者互動機會 / Opportunity to interact with attendees'
+    ],
+    max_sponsors: 3,
+    current_sponsors: 0,
+    created_at: '2024-06-01T10:00:00Z',
+    updated_at: '2024-06-01T10:00:00Z'
   }
 ]; 

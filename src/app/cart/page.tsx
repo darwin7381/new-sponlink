@@ -12,13 +12,28 @@ import { SponsorshipPlan } from "@/types/sponsorshipPlan";
 import { getEventById } from "@/services/eventService";
 import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
 
+// 定義購物車項目詳情接口，允許部分缺失的屬性
+interface CartDetail {
+  plan: Partial<SponsorshipPlan> & {
+    id: string;
+    title?: string;
+    name?: string;
+    description?: string;
+    price: number;
+    event_id: string;
+  };
+  event: {
+    id: string;
+    title: string;
+  };
+  hasError?: boolean;
+  errorMessage?: string;
+}
+
 export default function CartPage() {
   const router = useRouter();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [cartDetails, setCartDetails] = useState<{
-    plan: SponsorshipPlan;
-    event: { id: string; title: string };
-  }[]>([]);
+  const [cartDetails, setCartDetails] = useState<CartDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,10 +142,11 @@ export default function CartPage() {
             try {
               console.log("正在獲取贊助計劃詳情，計劃ID:", item.sponsorship_plan_id);
               
-              // 1. 直接從模擬數據中獲取贊助計劃詳情
+              // 1. 從API獲取贊助計劃詳情
               const response = await fetch(`/api/sponsorships/${item.sponsorship_plan_id}`);
               
               if (!response.ok) {
+                console.error(`獲取贊助計劃 ${item.sponsorship_plan_id} 失敗: ${response.statusText}`);
                 throw new Error(`獲取贊助計劃詳情失敗: ${response.statusText}`);
               }
               
@@ -138,33 +154,42 @@ export default function CartPage() {
               console.log("獲取到贊助計劃:", planData);
               
               // 2. 獲取事件詳情
-              console.log("正在獲取事件詳情，事件ID:", planData.event_id);
-              const eventData = await getEventById(planData.event_id);
-              console.log("獲取到事件詳情:", eventData);
+              let eventData;
+              try {
+                console.log("正在獲取事件詳情，事件ID:", planData.event_id);
+                eventData = await getEventById(planData.event_id);
+                console.log("獲取到事件詳情:", eventData);
+              } catch (eventError) {
+                console.error(`獲取事件詳情錯誤，事件ID: ${planData.event_id}:`, eventError);
+                // 如果無法獲取事件，使用默認事件數據
+                eventData = { id: planData.event_id || "unknown", title: "未知活動" };
+              }
 
               return {
                 plan: planData,
                 event: {
-                  id: eventData?.id || "unknown",
+                  id: eventData?.id || planData.event_id || "unknown",
                   title: eventData?.title || "未知活動"
                 }
               };
             } catch (error) {
-              console.error(`處理購物車項目 ${item.id} 時出錯:`, error);
+              console.error(`處理購物車項目 ${item.id} (計劃ID: ${item.sponsorship_plan_id}) 時出錯:`, error);
               
-              // 返回一個默認項目，避免整個列表因為一個項目錯誤而失敗
+              // 返回一個帶有錯誤信息的默認項目
               return {
                 plan: {
                   id: item.sponsorship_plan_id,
-                  name: "無法載入贊助計劃",
-                  description: "無法獲取此贊助計劃的詳細信息",
+                  name: `無法載入計劃 (ID: ${item.sponsorship_plan_id})`,
+                  description: error instanceof Error ? error.message : "無法獲取此贊助計劃的詳細信息",
                   price: 0,
                   event_id: "unknown"
                 },
                 event: {
                   id: "unknown",
                   title: "未知活動"
-                }
+                },
+                hasError: true,
+                errorMessage: error instanceof Error ? error.message : "未知錯誤"
               };
             }
           })
@@ -172,6 +197,14 @@ export default function CartPage() {
 
         console.log("購物車詳情完成:", details);
         setCartDetails(details);
+        
+        // 檢查是否有項目出錯
+        const hasErrors = details.some(detail => detail.hasError);
+        if (hasErrors) {
+          setError("部分贊助方案詳情無法載入，請重試或聯繫客服。");
+        } else {
+          setError(null);
+        }
       } catch (error) {
         console.error("獲取購物車詳情錯誤:", error);
         setError("無法加載贊助方案詳情。請稍後再試。");
@@ -198,8 +231,17 @@ export default function CartPage() {
       setIsProcessing(true);
       setError(null);
 
-      // 計算總金額
-      const totalAmount = cartDetails.reduce((sum, item) => sum + item.plan.price, 0);
+      // 過濾掉有錯誤的購物車項目
+      const validCartDetails = cartDetails.filter(detail => !detail.hasError);
+      
+      if (validCartDetails.length === 0) {
+        setError("購物車中沒有有效的贊助方案，請重新添加或刷新頁面。");
+        setIsProcessing(false);
+        return;
+      }
+
+      // 計算有效項目的總金額
+      const totalAmount = validCartDetails.reduce((sum, item) => sum + item.plan.price, 0);
       console.log("結帳總金額:", totalAmount);
 
       // 處理結帳
@@ -225,14 +267,6 @@ export default function CartPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-background min-h-screen pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -250,125 +284,162 @@ export default function CartPage() {
               <CardTitle className="text-2xl text-center text-green-600">結帳成功！</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="text-center">
-                <p className="text-foreground">您的訂單已確認。</p>
-                <p className="text-foreground">訂單編號: <span className="font-medium">{checkoutResult.order_id}</span></p>
-                <p className="text-foreground">總金額: <span className="font-medium">${checkoutResult.total_amount}</span></p>
+              <p className="text-center">您的訂單已成功完成。</p>
+              <div className="bg-secondary/30 p-4 rounded-lg">
+                <div className="flex justify-between mb-2">
+                  <span className="font-medium">訂單編號:</span>
+                  <span>{checkoutResult.order_id}</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="font-medium">總金額:</span>
+                  <span>${checkoutResult.total_amount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="font-medium">贊助項目:</span>
+                  <span>{checkoutResult.confirmed_items} 項</span>
+                </div>
               </div>
             </CardContent>
-            <CardFooter className="flex justify-center space-x-4">
-              <Button variant="default" onClick={() => router.push('/events')}>
-                繼續瀏覽活動
-              </Button>
-              <Button variant="outline" onClick={() => router.push('/dashboard/sponsor')}>
-                前往儀表板
+            <CardFooter className="flex justify-center">
+              <Button asChild>
+                <Link href="/dashboard/sponsor/sponsorships">查看我的贊助</Link>
               </Button>
             </CardFooter>
           </Card>
-        ) : cartItems.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <div className="mb-4">
-                <svg className="mx-auto h-12 w-12 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-medium text-foreground">您的購物車是空的</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                看起來您還沒有添加任何贊助方案到購物車。
-              </p>
-              <div className="mt-6">
-                <Link href="/events">
-                  <Button variant="default">瀏覽活動</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
+          <>
+            {isLoading ? (
+              <div className="flex justify-center items-center min-h-[300px]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            ) : cartItems.length === 0 ? (
               <Card>
-                <CardHeader>
-                  <CardTitle>贊助方案 ({cartItems.length})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {cartItems.map((item, index) => {
-                    const detail = cartDetails[index];
-                    if (!detail) return null;
-
-                    return (
-                      <div key={item.id} className="mb-6">
-                        <div className="flex flex-col md:flex-row justify-between">
-                          <div className="flex-1">
-                            <h3 className="text-lg font-medium text-foreground">{detail.plan.name}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              活動: <Link href={`/events/${detail.event.id}`} className="text-primary hover:text-primary/80">
-                                {detail.event.title}
-                              </Link>
-                            </p>
-                            <p className="mt-1 text-sm text-muted-foreground">{detail.plan.description}</p>
-                          </div>
-                          <div className="mt-4 md:mt-0 text-right">
-                            <p className="text-lg font-medium text-foreground">${detail.plan.price}</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-destructive hover:text-destructive/80 mt-2"
-                              onClick={() => handleRemoveItem(item.id)}
-                              disabled={isProcessing}
-                            >
-                              移除
-                            </Button>
-                          </div>
-                        </div>
-                        {index < cartItems.length - 1 && <Separator className="my-4" />}
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div>
-              <Card>
-                <CardHeader>
-                  <CardTitle>訂單摘要</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">小計</span>
-                      <span className="font-medium">
-                        ${cartDetails.reduce((sum, item) => sum + item.plan.price, 0)}
-                      </span>
-                    </div>
-                    <Separator />
-                    <div className="flex justify-between text-lg font-medium">
-                      <span>總計</span>
-                      <span>${cartDetails.reduce((sum, item) => sum + item.plan.price, 0)}</span>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    variant="default"
-                    className="w-full"
-                    onClick={handleCheckout}
-                    disabled={isProcessing || cartItems.length === 0}
-                  >
-                    {isProcessing ? (
-                      <div className="flex items-center">
-                        <div className="mr-2">處理中</div>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      </div>
-                    ) : (
-                      '結帳'
-                    )}
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <h2 className="text-xl font-semibold mb-4">您的購物車是空的</h2>
+                  <p className="text-muted-foreground mb-6">添加贊助方案到購物車，開始您的贊助之旅。</p>
+                  <Button asChild>
+                    <Link href="/events">瀏覽活動</Link>
                   </Button>
-                </CardFooter>
+                </CardContent>
               </Card>
-            </div>
-          </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>贊助方案</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {/* 購物車項目列表 */}
+                      {cartDetails.length > 0 && (
+                        <div className="space-y-4">
+                          {cartDetails.map((detail, index) => (
+                            <div 
+                              key={index} 
+                              className={`flex justify-between items-start border-b border-border pb-4 mb-4 ${detail.hasError ? 'bg-destructive/10 p-3 rounded' : ''}`}
+                            >
+                              <div className="flex-1">
+                                <div className="mb-1">
+                                  <h3 className="text-lg font-semibold">
+                                    {detail.hasError ? (
+                                      <span className="text-destructive">{detail.plan.name}</span>
+                                    ) : (
+                                      detail.plan.title || detail.plan.name
+                                    )}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    活動: {detail.hasError ? '未知活動' : (
+                                      <Link href={`/events/${detail.event.id}`} className="text-primary hover:underline">
+                                        {detail.event.title}
+                                      </Link>
+                                    )}
+                                  </p>
+                                </div>
+                                <p className="text-sm">
+                                  {detail.hasError ? (
+                                    <span className="text-destructive">{detail.plan.description}</span>
+                                  ) : (
+                                    detail.plan.description
+                                  )}
+                                </p>
+                                {detail.hasError && (
+                                  <p className="text-xs text-destructive mt-1">
+                                    錯誤: {detail.errorMessage} (計劃ID: {detail.plan.id})
+                                  </p>
+                                )}
+                              </div>
+                              
+                              <div className="text-right flex flex-col items-end">
+                                <span className={`text-lg font-semibold ${detail.hasError ? 'text-destructive' : ''}`}>
+                                  ${detail.plan.price.toLocaleString()}
+                                </span>
+                                
+                                <button
+                                  onClick={() => {
+                                    const itemId = cartItems[index]?.id;
+                                    if (itemId) handleRemoveItem(itemId);
+                                  }}
+                                  className="text-destructive text-sm hover:underline mt-2"
+                                >
+                                  移除
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* 訂單摘要 */}
+                <div className="lg:col-span-1">
+                  <Card className="sticky top-4">
+                    <CardHeader>
+                      <CardTitle>訂單摘要</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {(() => {
+                        const validItems = cartDetails.filter(item => !item.hasError);
+                        const errorItems = cartDetails.filter(item => item.hasError);
+                        const subtotal = validItems.reduce((sum, item) => sum + item.plan.price, 0);
+                        
+                        return (
+                          <>
+                            <div className="flex justify-between">
+                              <span>小計</span>
+                              <span>${subtotal.toLocaleString()}</span>
+                            </div>
+                            
+                            {errorItems.length > 0 && (
+                              <div className="text-destructive text-sm py-2 px-2 bg-destructive/10 rounded">
+                                注意: {errorItems.length} 個項目無法載入，未計入總額
+                              </div>
+                            )}
+                            
+                            <Separator />
+                            
+                            <div className="flex justify-between font-bold">
+                              <span>總計</span>
+                              <span>${subtotal.toLocaleString()}</span>
+                            </div>
+                            
+                            <Button
+                              className="w-full"
+                              onClick={handleCheckout}
+                              disabled={isProcessing || validItems.length === 0}
+                            >
+                              {isProcessing ? "處理中..." : "結帳"}
+                            </Button>
+                          </>
+                        );
+                      })()}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

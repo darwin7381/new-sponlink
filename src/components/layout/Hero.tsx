@@ -39,14 +39,9 @@ export function Hero({ user }: HeroProps) {
           Browse Events
         </Link>
         {user ? (
-          <div className="w-full grid grid-cols-2 gap-2">
-            <Link href="/organizer/create-event" className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary-foreground hover:bg-primary-foreground/90 md:py-4 md:text-lg md:px-5">
-              Create Event
-            </Link>
-            <Link href="/cart" className="w-full flex items-center justify-center px-4 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary-foreground hover:bg-primary-foreground/90 md:py-4 md:text-lg md:px-5">
-              View Cart
-            </Link>
-          </div>
+          <Link href="/organizer/create-event" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary-foreground hover:bg-primary-foreground/90 md:py-4 md:text-lg md:px-10">
+            Create Event
+          </Link>
         ) : (
           <Link href="/register" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary-foreground hover:bg-primary-foreground/90 md:py-4 md:text-lg md:px-10">
             Get Started
