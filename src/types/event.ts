@@ -80,6 +80,10 @@ export interface EventSeries extends Omit<BaseResource, 'resourceType'> {
   tags: string[];
   locations: string[]; // 涵蓋的地點（城市名稱）
   timezone?: string;
+  organizer?: string; // 添加組織者姓名字段
+  website?: string; // 添加網站連結
+  twitter?: string; // 添加 Twitter 帳號
+  instagram?: string; // 添加 Instagram 帳號
 }
 
 // 活動材料接口
@@ -113,4 +117,10 @@ export interface Event extends Omit<BaseResource, 'resourceType'> {
   is_main_event?: boolean; // 是否為活動系列的主要活動
   event_type?: string; // 活動類型，例如：Main Event, Side Event, Feature Event等
   materials?: EventMaterials; // 活動相關材料
+  organizer?: string; // 添加組織者姓名字段
+  attendees_count?: number;
+  max_attendees?: number;
+  price?: number;
+  currency?: string;
+  event_series_id?: string;
 }

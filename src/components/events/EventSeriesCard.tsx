@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { EventSeries } from "@/types/event";
 import { MapPin, Calendar, Users } from "lucide-react";
 
@@ -33,9 +33,6 @@ export function EventSeriesCard({ series }: EventSeriesCardProps) {
             <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
           </div>
         </CardContent>
-        <CardFooter className="px-6 pb-6 pt-0">
-          <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-        </CardFooter>
       </Card>
     );
   }
@@ -53,48 +50,46 @@ export function EventSeriesCard({ series }: EventSeriesCardProps) {
   const dateRange = `${formattedStartDate} - ${formattedEndDate}`;
 
   return (
-    <Card className="overflow-hidden h-full flex flex-col border-2 hover:border-primary transition-colors">
-      <div className="h-48 w-full relative">
-        <Image 
-          fill
-          className="object-cover" 
-          src={series.cover_image || "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80"} 
-          alt={series.title}
-        />
-        <div className="absolute top-0 left-0 bg-primary text-primary-foreground px-3 py-1 text-sm font-medium">
-          {series.series_type.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+    <Link href={`/event-series/${series.id}`} className="block group">
+      <Card className="overflow-hidden h-full border hover:border-primary/50 hover:shadow-md transition-all duration-200 hover:-translate-y-1">
+        <div className="h-40 w-full relative">
+          <Image 
+            fill
+            className="object-cover" 
+            src={series.cover_image || "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80"} 
+            alt={series.title}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
+          <div className="absolute bottom-3 left-3 text-white text-sm font-medium px-2 py-1 bg-primary/80 rounded-full">
+            {series.series_type.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+          </div>
         </div>
-      </div>
-      <CardContent className="flex-1 p-6 flex flex-col justify-between">
-        <div className="flex-1">
-          <Link href={`/event-series/${series.id}`} className="block mt-2">
-            <h3 className="text-xl font-semibold text-foreground hover:text-primary transition-colors">{series.title}</h3>
-            <p className="mt-3 text-base text-muted-foreground line-clamp-3">
-              {series.description}
-            </p>
-          </Link>
+        
+        <CardContent className="p-5">
+          <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[3.5rem]">
+            {series.title}
+          </h3>
+          
           <div className="flex items-center mt-4 text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 mr-2" />
-            <span suppressHydrationWarning>{dateRange}</span>
+            <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span suppressHydrationWarning className="truncate">{dateRange}</span>
           </div>
+          
           <div className="flex items-center mt-2 text-sm text-muted-foreground">
-            <MapPin className="h-4 w-4 mr-2" />
-            <span>{series.locations.join(', ')}</span>
+            <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="truncate">{series.locations.join(', ')}</span>
           </div>
+          
           <div className="flex items-center mt-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4 mr-2" />
-            <span>{series.event_ids.length} 活動</span>
+            <Users className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span>{series.event_ids.length} 場活動</span>
           </div>
-        </div>
-      </CardContent>
-      <CardFooter className="px-6 pb-6 pt-0">
-        <Link 
-          href={`/event-series/${series.id}`} 
-          className="inline-flex items-center justify-center rounded-md text-sm font-medium text-primary hover:bg-primary/10 h-9 px-4 py-2"
-        >
-          查看系列活動 →
-        </Link>
-      </CardFooter>
-    </Card>
+          
+          <div className="mt-4 text-xs text-muted-foreground line-clamp-2 h-9">
+            {series.description}
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
   );
 } 

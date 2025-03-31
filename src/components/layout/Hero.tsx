@@ -39,7 +39,7 @@ export function Hero({ user }: HeroProps) {
           Browse Events
         </Link>
         {user ? (
-          <Link href="/organizer/create-event" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary-foreground hover:bg-primary-foreground/90 md:py-4 md:text-lg md:px-10">
+          <Link href="/organizer/events/create" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary bg-primary-foreground hover:bg-primary-foreground/90 md:py-4 md:text-lg md:px-10">
             Create Event
           </Link>
         ) : (
