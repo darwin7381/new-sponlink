@@ -50,7 +50,7 @@ export default function OrganizerPage() {
     <div className="bg-background min-h-screen">
       {/* 頂部導航欄 - 使用綠色背景，匹配截圖 */}
       <div className="bg-[#4c9f70] text-white">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between py-4 px-4">
             <div className="flex items-center space-x-8">
               <h1 className="text-xl font-bold">主辦方中心</h1>
@@ -86,7 +86,7 @@ export default function OrganizerPage() {
         </div>
       </div>
       
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex flex-col md:flex-row gap-8">
           {/* 左側欄位 */}
           <div className="w-full md:w-1/4 space-y-6">

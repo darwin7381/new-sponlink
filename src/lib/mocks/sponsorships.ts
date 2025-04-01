@@ -13,7 +13,7 @@ export interface SponsorshipPlan {
 
 export const MOCK_SPONSORSHIP_PLANS: SponsorshipPlan[] = [
   {
-    id: 'plan-1',
+    id: 'eth-tokyo-2025',
     event_id: 'event-1',
     title: '黃金贊助',
     description: '獲得最高曝光度和品牌展示機會',
@@ -31,8 +31,8 @@ export const MOCK_SPONSORSHIP_PLANS: SponsorshipPlan[] = [
     updated_at: '2024-02-01T08:00:00Z'
   },
   {
-    id: 'plan-2',
-    event_id: 'event-1',
+    id: 'web3-summit-2025',
+    event_id: 'event-2',
     title: '白銀贊助',
     description: '獲得優質的品牌曝光和展示機會',
     price: 30000,
@@ -49,7 +49,7 @@ export const MOCK_SPONSORSHIP_PLANS: SponsorshipPlan[] = [
     updated_at: '2024-02-01T08:30:00Z'
   },
   {
-    id: 'plan-3',
+    id: 'asia-blockchain-summit-2025',
     event_id: 'event-1',
     title: '青銅贊助',
     description: '基本品牌展示和參與機會',
@@ -66,7 +66,7 @@ export const MOCK_SPONSORSHIP_PLANS: SponsorshipPlan[] = [
     updated_at: '2024-02-01T09:00:00Z'
   },
   {
-    id: 'plan-4',
+    id: 'devcon-shanghai-2025',
     event_id: 'event-2',
     title: '鑽石贊助',
     description: '獨家最高級別贊助方案，獲得最大品牌曝光',
@@ -86,7 +86,7 @@ export const MOCK_SPONSORSHIP_PLANS: SponsorshipPlan[] = [
     updated_at: '2024-02-10T10:00:00Z'
   },
   {
-    id: 'plan-5',
+    id: 'paris-blockchain-week-2026',
     event_id: 'event-2',
     title: '白金贊助',
     description: '高級別贊助方案，獲得優質品牌曝光',
@@ -105,7 +105,7 @@ export const MOCK_SPONSORSHIP_PLANS: SponsorshipPlan[] = [
     updated_at: '2024-02-10T10:30:00Z'
   },
   {
-    id: 'plan-6',
+    id: 'consensus-2025',
     event_id: 'event-3',
     title: '主要贊助商',
     description: '成為活動主要贊助商，獲得全方位品牌曝光',
