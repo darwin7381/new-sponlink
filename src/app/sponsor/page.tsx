@@ -7,12 +7,21 @@ import { getCurrentUser } from '@/lib/services/authService';
 import { USER_ROLES, User } from '@/lib/types/users';
 import { Button } from '@/components/ui/button';
 import SwitchRoleToggle from '@/components/layout/SwitchRoleToggle';
+import { mockEvents } from '@/mocks/eventData';
+import { Event, EventStatus } from '@/types/event';
 
 export default function SponsorPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'sponsors' | 'meetings' | 'collection'>('meetings');
+  const [events, setEvents] = useState<Event[]>([]);
+  
+  useEffect(() => {
+    // 獲取模擬活動數據 - 不要用过滤条件，确保有数据显示
+    // 直接使用mockEvents数据，不进行状态和赞助方案过滤
+    setEvents(mockEvents);
+  }, []);
   
   useEffect(() => {
     const checkUser = async () => {
@@ -46,6 +55,72 @@ export default function SponsorPage() {
       </div>
     );
   }
+
+  // 根據螢幕大小分組顯示活動
+  const renderEventsList = () => {
+    // 確保有活動數據
+    if (!events || events.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <p className="text-lg font-medium">目前沒有可用的活動</p>
+          <p className="text-muted-foreground mt-2">請稍後再查看</p>
+        </div>
+      );
+    }
+    
+    // 將活動分為兩組，第一組最多顯示3個，第二組顯示剩餘的
+    const firstGroup = events.slice(0, 3);
+    const secondGroup = events.slice(3, 6);
+    
+    return (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          {firstGroup.map(event => (
+            <EventCard key={event.id} event={event} />
+          ))}
+        </div>
+        
+        {secondGroup.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {secondGroup.map(event => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+        )}
+      </>
+    );
+  };
+  
+  // 活動卡片組件
+  const EventCard = ({ event }: { event: Event }) => {
+    return (
+      <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
+        <div className="p-6">
+          <h3 className="text-xl font-bold">{event.title}</h3>
+          <p className="text-muted-foreground mt-1">
+            {event.start_time ? new Date(event.start_time).toLocaleDateString() : ''} - 
+            {event.end_time ? new Date(event.end_time).toLocaleDateString() : ''}
+          </p>
+          <p className="text-muted-foreground">
+            {event.location?.city || ''}{event.location?.city ? ', ' : ''}
+            {event.location?.country || ''}
+          </p>
+          
+          <div className="flex flex-wrap gap-2 mt-4">
+            {event.tags?.slice(0, 4).map((tag, index) => (
+              <span key={index} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">{tag}</span>
+            ))}
+          </div>
+          
+          <div className="mt-6">
+            <Link href={`/sponsor/event/${event.id}`}>
+              <Button className="w-full">查看贊助方案</Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="bg-background min-h-screen">
@@ -154,138 +229,7 @@ export default function SponsorPage() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            {/* ETH Tokyo 2025 */}
-            <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
-              <div className="p-6">
-                <h3 className="text-xl font-bold">ETH Tokyo 2025</h3>
-                <p className="text-muted-foreground mt-1">5/15/2025 - 5/17/2025</p>
-                <p className="text-muted-foreground">東京, 日本</p>
-                
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">DeFi</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">NFT</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Layer2</span>
-                </div>
-                
-                <div className="mt-6">
-                  <Link href="/sponsor/sponsorships/eth-tokyo-2025">
-                    <Button className="w-full">查看贊助方案</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-            
-            {/* Web3 Summit San Francisco 2025 */}
-            <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
-              <div className="p-6">
-                <h3 className="text-xl font-bold">Web3 Summit San Francisco 2025</h3>
-                <p className="text-muted-foreground mt-1">6/10/2025 - 6/14/2025</p>
-                <p className="text-muted-foreground">舊金山, 美國</p>
-                
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Web3 Social</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Infrastructure</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Layer2</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Security</span>
-                </div>
-                
-                <div className="mt-6">
-                  <Link href="/sponsor/sponsorships/web3-summit-2025">
-                    <Button className="w-full">查看贊助方案</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-            
-            {/* Asia Blockchain Summit 2025 */}
-            <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
-              <div className="p-6">
-                <h3 className="text-xl font-bold">Asia Blockchain Summit 2025</h3>
-                <p className="text-muted-foreground mt-1">7/15/2025 - 7/17/2025</p>
-                <p className="text-muted-foreground">新加坡, 新加坡</p>
-                
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">DeFi</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">GameFi</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Web3 Social</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Security</span>
-                </div>
-                
-                <div className="mt-6">
-                  <Link href="/sponsor/sponsorships/asia-blockchain-summit-2025">
-                    <Button className="w-full">查看贊助方案</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* 其他會議列表 */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Devcon Shanghai 2025 */}
-            <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
-              <div className="p-6">
-                <h3 className="text-xl font-bold">Devcon Shanghai 2025</h3>
-                <p className="text-muted-foreground mt-1">9/18/2025 - 9/21/2025</p>
-                <p className="text-muted-foreground">上海, 中國</p>
-                
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">DeFi</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Layer2</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Infrastructure</span>
-                </div>
-                
-                <div className="mt-6">
-                  <Link href="/sponsor/sponsorships/devcon-shanghai-2025">
-                    <Button className="w-full">查看贊助方案</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-            
-            {/* Paris Blockchain Week 2026 */}
-            <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
-              <div className="p-6">
-                <h3 className="text-xl font-bold">Paris Blockchain Week 2026</h3>
-                <p className="text-muted-foreground mt-1">3/15/2026 - 3/20/2026</p>
-                <p className="text-muted-foreground">巴黎, 法國</p>
-                
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">DeFi</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Web3 Social</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">NFT</span>
-                </div>
-                
-                <div className="mt-6">
-                  <Link href="/sponsor/sponsorships/paris-blockchain-week-2026">
-                    <Button className="w-full">查看贊助方案</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-            
-            {/* Consensus 2025 */}
-            <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
-              <div className="p-6">
-                <h3 className="text-xl font-bold">Consensus 2025</h3>
-                <p className="text-muted-foreground mt-1">5/28/2025 - 5/30/2025</p>
-                <p className="text-muted-foreground">奧斯汀, 美國</p>
-                
-                <div className="flex flex-wrap gap-2 mt-4">
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">DeFi</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Infrastructure</span>
-                  <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full">Security</span>
-                </div>
-                
-                <div className="mt-6">
-                  <Link href="/sponsor/sponsorships/consensus-2025">
-                    <Button className="w-full">查看贊助方案</Button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
+          {renderEventsList()}
         </div>
       ) : activeTab === 'sponsors' ? (
         <div className="max-w-7xl mx-auto px-6 py-8">
@@ -331,29 +275,33 @@ export default function SponsorPage() {
               <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
                 <h2 className="text-lg font-semibold mb-4">推薦贊助機會</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="border border-border rounded-lg p-4 hover:bg-accent/10 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium">ETH Tokyo 2025</h3>
-                      <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">推薦</span>
+                  {events.slice(0, 2).map((event, index) => (
+                    <div key={index} className="border border-border rounded-lg p-4 hover:bg-accent/10 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium">{event.title}</h3>
+                        <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
+                          {index === 0 ? '推薦' : '熱門'}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-2">
+                        {event.start_time ? new Date(event.start_time).toLocaleDateString() : ''} - 
+                        {event.end_time ? new Date(event.end_time).toLocaleDateString() : ''} · 
+                        {event.location?.city || ''}{event.location?.city ? ', ' : ''}
+                        {event.location?.country || ''}
+                      </p>
+                      <div className="flex justify-between items-center mt-4">
+                        <span className="text-sm font-medium">
+                          {event.sponsorship_plans && event.sponsorship_plans.length > 0 
+                            ? `$${event.sponsorship_plans.reduce((min, plan) => 
+                                Math.min(min, plan.price), Infinity).toLocaleString()} 起` 
+                            : '價格待定'}
+                        </span>
+                        <Link href={`/sponsor/event/${event.id}`}>
+                          <Button variant="outline" size="sm">查看詳情</Button>
+                        </Link>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">5/15/2025 - 5/17/2025 · 東京, 日本</p>
-                    <div className="flex justify-between items-center mt-4">
-                      <span className="text-sm font-medium">$5,000 起</span>
-                      <Button variant="outline" size="sm">查看詳情</Button>
-                    </div>
-                  </div>
-                  
-                  <div className="border border-border rounded-lg p-4 hover:bg-accent/10 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium">Web3 Summit 2025</h3>
-                      <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">熱門</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">6/10/2025 - 6/14/2025 · 舊金山, 美國</p>
-                    <div className="flex justify-between items-center mt-4">
-                      <span className="text-sm font-medium">$10,000 起</span>
-                      <Button variant="outline" size="sm">查看詳情</Button>
-                    </div>
-                  </div>
+                  ))}
                 </div>
                 
                 <div className="mt-4 text-right">
