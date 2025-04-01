@@ -1015,33 +1015,6 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
                   width="100%"
                 />
               </div>
-              
-              {/* 地點列表 */}
-              <div className="p-3">
-                <h3 className="text-sm font-medium mb-2">活動地點</h3>
-                <p className="text-xs text-muted-foreground mb-3">顯示 {events.filter(e => e.location).length} 個地點</p>
-                
-                {events
-                  .filter(event => event.location)
-                  .slice(0, 3)
-                  .map((event, index) => (
-                    <Link 
-                      key={event.id} 
-                      href={`/events/${event.id}`}
-                      className="flex items-start gap-2 p-2 -mx-2 hover:bg-secondary/5 rounded-md transition-colors"
-                    >
-                      <div className="w-5 h-5 rounded-full bg-green-500 flex-shrink-0 flex items-center justify-center text-[10px] text-white font-medium mt-0.5">
-                        {index + 1}
-                      </div>
-                      <div>
-                        <div className="text-sm">{event.title}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {event.location?.name || event.location?.address || 'Location TBD'}
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-              </div>
             </div>
           </div>
         </div>

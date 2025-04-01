@@ -320,6 +320,14 @@
   color: #6b7280 !important;
 }
 
+/* 完全隐藏 Mapbox 浮水印和 logo */
+.mapboxgl-ctrl-logo,
+.mapboxgl-ctrl-attrib,
+.mapboxgl-ctrl-bottom-right,
+.mapboxgl-ctrl-bottom-left {
+  display: none !important;
+}
+
 /* 深色模式下的Mapbox樣式 */
 .dark .mapboxgl-popup-content {
   background-color: #1f2937 !important;
@@ -331,9 +339,5 @@
 }
 
 .dark .mapboxgl-popup-content p {
-  color: #9ca3af !important;
-}
-
-.dark .mapboxgl-popup-close-button {
   color: #9ca3af !important;
 }
