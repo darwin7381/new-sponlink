@@ -18,8 +18,8 @@ export default function SponsorPage() {
   const [events, setEvents] = useState<Event[]>([]);
   
   useEffect(() => {
-    // 獲取模擬活動數據 - 不要用过滤条件，确保有数据显示
-    // 直接使用mockEvents数据，不进行状态和赞助方案过滤
+    // Get mock event data - without filtering to ensure data display
+    // Directly use mockEvents data without status and sponsorship plans filtering
     setEvents(mockEvents);
   }, []);
   
@@ -49,26 +49,26 @@ export default function SponsorPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-4">加載中...</h1>
-          <p className="text-muted-foreground">請稍候，正在檢查您的帳戶信息。</p>
+          <h1 className="text-2xl font-semibold mb-4">Loading...</h1>
+          <p className="text-muted-foreground">Please wait while we check your account information.</p>
         </div>
       </div>
     );
   }
 
-  // 根據螢幕大小分組顯示活動
+  // Render events list based on screen size
   const renderEventsList = () => {
-    // 確保有活動數據
+    // Ensure there is event data
     if (!events || events.length === 0) {
       return (
         <div className="text-center py-12">
-          <p className="text-lg font-medium">目前沒有可用的活動</p>
-          <p className="text-muted-foreground mt-2">請稍後再查看</p>
+          <p className="text-lg font-medium">No events available</p>
+          <p className="text-muted-foreground mt-2">Please check back later</p>
         </div>
       );
     }
     
-    // 將活動分為兩組，第一組最多顯示3個，第二組顯示剩餘的
+    // Split events into two groups, first group with max 3 events, second group with remaining
     const firstGroup = events.slice(0, 3);
     const secondGroup = events.slice(3, 6);
     
@@ -91,7 +91,7 @@ export default function SponsorPage() {
     );
   };
   
-  // 活動卡片組件
+  // Event card component
   const EventCard = ({ event }: { event: Event }) => {
     return (
       <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
@@ -114,7 +114,7 @@ export default function SponsorPage() {
           
           <div className="mt-6">
             <Link href={`/sponsor/event/${event.id}`}>
-              <Button className="w-full">查看贊助方案</Button>
+              <Button className="w-full">View Sponsorship Plans</Button>
             </Link>
           </div>
         </div>
@@ -124,30 +124,30 @@ export default function SponsorPage() {
 
   return (
     <div className="bg-background min-h-screen">
-      {/* 頂部導航欄 - 使用藍色背景，匹配截圖 */}
+      {/* Top navigation bar - using blue background to match screenshot */}
       <div className="bg-[#6966db] text-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between py-4 px-4">
             <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-bold">贊助商中心</h1>
+              <h1 className="text-xl font-bold">Sponsor Center</h1>
               <div className="flex space-x-8">
                 <button 
                   onClick={() => setActiveTab('meetings')} 
                   className={`text-white hover:text-white/90 py-1 border-b-2 ${activeTab === 'meetings' ? 'border-white' : 'border-transparent'}`}
                 >
-                  會議列表
+                  Events List
                 </button>
                 <button 
                   onClick={() => setActiveTab('collection')} 
                   className={`text-white hover:text-white/90 py-1 border-b-2 ${activeTab === 'collection' ? 'border-white' : 'border-transparent'}`}
                 >
-                  我的收藏
+                  My Collections
                 </button>
                 <button 
                   onClick={() => setActiveTab('sponsors')} 
                   className={`text-white hover:text-white/90 py-1 border-b-2 ${activeTab === 'sponsors' ? 'border-white' : 'border-transparent'}`}
                 >
-                  我的贊助
+                  My Sponsorships
                 </button>
               </div>
             </div>
@@ -170,7 +170,7 @@ export default function SponsorPage() {
                     d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
                   />
                 </svg>
-                切換到主辦方
+                Switch to Organizer
               </Link>
             </div>
           </div>
@@ -180,34 +180,34 @@ export default function SponsorPage() {
       {activeTab === 'meetings' ? (
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-6">篩選會議</h2>
+            <h2 className="text-2xl font-bold mb-6">Filter Events</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="w-full">
-                <p className="mb-2 font-medium">時間</p>
-                <select className="w-full p-2 border border-border rounded" aria-label="選擇時間範圍">
-                  <option>所有時間</option>
-                  <option>未來一週</option>
-                  <option>未來一個月</option>
-                  <option>未來三個月</option>
+                <p className="mb-2 font-medium">Time</p>
+                <select className="w-full p-2 border border-border rounded" aria-label="Select time range">
+                  <option>All Time</option>
+                  <option>Next Week</option>
+                  <option>Next Month</option>
+                  <option>Next 3 Months</option>
                 </select>
               </div>
               
               <div className="w-full">
-                <p className="mb-2 font-medium">地區</p>
-                <select className="w-full p-2 border border-border rounded" aria-label="選擇地區">
-                  <option>所有地區</option>
-                  <option>亞洲</option>
-                  <option>歐洲</option>
-                  <option>北美</option>
-                  <option>南美</option>
+                <p className="mb-2 font-medium">Region</p>
+                <select className="w-full p-2 border border-border rounded" aria-label="Select region">
+                  <option>All Regions</option>
+                  <option>Asia</option>
+                  <option>Europe</option>
+                  <option>North America</option>
+                  <option>South America</option>
                 </select>
               </div>
               
               <div className="w-full">
-                <p className="mb-2 font-medium">贊道</p>
-                <select className="w-full p-2 border border-border rounded" aria-label="選擇贊道">
-                  <option>所有贊道</option>
+                <p className="mb-2 font-medium">Category</p>
+                <select className="w-full p-2 border border-border rounded" aria-label="Select category">
+                  <option>All Categories</option>
                   <option>DeFi</option>
                   <option>NFT</option>
                   <option>Web3 Social</option>
@@ -218,12 +218,12 @@ export default function SponsorPage() {
               </div>
               
               <div className="w-full">
-                <p className="mb-2 font-medium">活動類型</p>
-                <select className="w-full p-2 border border-border rounded" aria-label="選擇活動類型">
-                  <option>所有類型</option>
-                  <option>線上</option>
-                  <option>線下</option>
-                  <option>混合式</option>
+                <p className="mb-2 font-medium">Event Type</p>
+                <select className="w-full p-2 border border-border rounded" aria-label="Select event type">
+                  <option>All Types</option>
+                  <option>Online</option>
+                  <option>Offline</option>
+                  <option>Hybrid</option>
                 </select>
               </div>
             </div>
@@ -234,53 +234,53 @@ export default function SponsorPage() {
       ) : activeTab === 'sponsors' ? (
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row gap-8">
-            {/* 左側欄位 */}
+            {/* Left sidebar */}
             <div className="w-full md:w-1/4 space-y-6">
               <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-                <h2 className="text-lg font-semibold mb-4">快速導航</h2>
+                <h2 className="text-lg font-semibold mb-4">Quick Navigation</h2>
                 <nav className="space-y-2">
                   <Link href="/sponsor/sponsorships" className="block p-2 text-sm hover:bg-accent rounded">
-                    我的贊助
+                    My Sponsorships
                   </Link>
                   <Link href="/events" className="block p-2 text-sm hover:bg-accent rounded">
-                    瀏覽活動
+                    Browse Events
                   </Link>
                   <Link href="/meetings" className="block p-2 text-sm hover:bg-accent rounded">
-                    會議安排
+                    Meeting Schedule
                   </Link>
                 </nav>
               </div>
               
               <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-                <h2 className="text-lg font-semibold mb-4">贊助統計</h2>
+                <h2 className="text-lg font-semibold mb-4">Sponsorship Stats</h2>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">已贊助活動</p>
+                    <p className="text-sm text-muted-foreground">Sponsored Events</p>
                     <p className="text-xl font-semibold">0</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">進行中贊助</p>
+                    <p className="text-sm text-muted-foreground">Active Sponsorships</p>
                     <p className="text-xl font-semibold">0</p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">總贊助金額</p>
+                    <p className="text-sm text-muted-foreground">Total Sponsorship Amount</p>
                     <p className="text-xl font-semibold">$0</p>
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* 主要內容區 */}
+            {/* Main content area */}
             <div className="w-full md:w-3/4 space-y-6">
               <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-                <h2 className="text-lg font-semibold mb-4">推薦贊助機會</h2>
+                <h2 className="text-lg font-semibold mb-4">Recommended Sponsorship Opportunities</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {events.slice(0, 2).map((event, index) => (
                     <div key={index} className="border border-border rounded-lg p-4 hover:bg-accent/10 transition-colors">
                       <div className="flex items-center justify-between">
                         <h3 className="font-medium">{event.title}</h3>
                         <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
-                          {index === 0 ? '推薦' : '熱門'}
+                          {index === 0 ? 'Recommended' : 'Popular'}
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground mt-2">
@@ -293,11 +293,11 @@ export default function SponsorPage() {
                         <span className="text-sm font-medium">
                           {event.sponsorship_plans && event.sponsorship_plans.length > 0 
                             ? `$${event.sponsorship_plans.reduce((min, plan) => 
-                                Math.min(min, plan.price), Infinity).toLocaleString()} 起` 
-                            : '價格待定'}
+                                Math.min(min, plan.price), Infinity).toLocaleString()} starting` 
+                            : 'Price TBD'}
                         </span>
                         <Link href={`/sponsor/event/${event.id}`}>
-                          <Button variant="outline" size="sm">查看詳情</Button>
+                          <Button variant="outline" size="sm">View Details</Button>
                         </Link>
                       </div>
                     </div>
@@ -307,7 +307,7 @@ export default function SponsorPage() {
                 <div className="mt-4 text-right">
                   <Link href="/events">
                     <Button variant="ghost" size="sm">
-                      查看更多活動
+                      View More Events
                       <svg 
                         className="ml-1 h-4 w-4" 
                         xmlns="http://www.w3.org/2000/svg" 
@@ -327,9 +327,9 @@ export default function SponsorPage() {
               
               <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">我的贊助</h2>
+                  <h2 className="text-lg font-semibold">My Sponsorships</h2>
                   <Link href="/sponsor/sponsorships">
-                    <Button variant="outline" size="sm">查看全部</Button>
+                    <Button variant="outline" size="sm">View All</Button>
                   </Link>
                 </div>
                 
@@ -348,13 +348,13 @@ export default function SponsorPage() {
                       d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
                     />
                   </svg>
-                  <h3 className="mt-4 text-lg font-medium">還沒有贊助</h3>
+                  <h3 className="mt-4 text-lg font-medium">No Sponsorships Yet</h3>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    開始贊助您感興趣的活動，提升您的品牌影響力！
+                    Start sponsoring events to enhance your brand visibility!
                   </p>
                   <div className="mt-6">
                     <Link href="/events">
-                      <Button>瀏覽活動</Button>
+                      <Button>Browse Events</Button>
                     </Link>
                   </div>
                 </div>
@@ -362,28 +362,28 @@ export default function SponsorPage() {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-                  <h2 className="text-lg font-semibold mb-4">贊助收益分析</h2>
+                  <h2 className="text-lg font-semibold mb-4">Sponsorship ROI Analysis</h2>
                   <p className="text-sm text-muted-foreground mb-4">
-                    了解贊助如何影響您的品牌曝光度和業務增長。
+                    Understand how sponsorships impact your brand exposure and business growth.
                   </p>
-                  <Button variant="outline" size="sm">查看分析</Button>
+                  <Button variant="outline" size="sm">View Analysis</Button>
                 </div>
                 
                 <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-                  <h2 className="text-lg font-semibold mb-4">贊助策略指南</h2>
+                  <h2 className="text-lg font-semibold mb-4">Sponsorship Strategy Guide</h2>
                   <p className="text-sm text-muted-foreground mb-4">
-                    探索如何制定有效的贊助策略，最大化投資回報率。
+                    Explore how to create effective sponsorship strategies and maximize ROI.
                   </p>
-                  <Button variant="outline" size="sm">查看指南</Button>
+                  <Button variant="outline" size="sm">View Guide</Button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       ) : (
-        // 我的收藏頁面
+        // My Collections page
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <h2 className="text-2xl font-bold mb-6">我的收藏</h2>
+          <h2 className="text-2xl font-bold mb-6">My Collections</h2>
           
           <div className="text-center py-12 bg-card rounded-lg border border-border">
             <svg 
@@ -400,13 +400,13 @@ export default function SponsorPage() {
                 d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" 
               />
             </svg>
-            <h3 className="mt-4 text-lg font-medium">還沒有收藏</h3>
+            <h3 className="mt-4 text-lg font-medium">No Collections Yet</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              收藏您感興趣的活動，方便後續查看
+              Save events you&apos;re interested in for easy reference later
             </p>
             <div className="mt-6">
               <Link href="/events">
-                <Button>瀏覽活動</Button>
+                <Button>Browse Events</Button>
               </Link>
             </div>
           </div>

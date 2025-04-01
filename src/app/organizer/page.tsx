@@ -39,8 +39,8 @@ export default function OrganizerPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-4">加載中...</h1>
-          <p className="text-muted-foreground">請稍候，正在檢查您的帳戶信息。</p>
+          <h1 className="text-2xl font-semibold mb-4">Loading...</h1>
+          <p className="text-muted-foreground">Please wait while we check your account information.</p>
         </div>
       </div>
     );
@@ -48,16 +48,16 @@ export default function OrganizerPage() {
 
   return (
     <div className="bg-background min-h-screen">
-      {/* 頂部導航欄 - 使用綠色背景，匹配截圖 */}
+      {/* Top navigation bar - using green background to match screenshot */}
       <div className="bg-[#4c9f70] text-white">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between py-4 px-4">
             <div className="flex items-center space-x-8">
-              <h1 className="text-xl font-bold">主辦方中心</h1>
+              <h1 className="text-xl font-bold">Organizer Center</h1>
               <nav className="hidden md:flex space-x-4">
-                <Link href="/organizer" className="py-1 px-2 border-b-2 border-white">我的活動</Link>
-                <Link href="/organizer/create" className="py-1 px-2 border-b-2 border-transparent hover:border-white/60">創建活動</Link>
-                <Link href="/organizer/applications" className="py-1 px-2 border-b-2 border-transparent hover:border-white/60">贊助申請</Link>
+                <Link href="/organizer" className="py-1 px-2 border-b-2 border-white">My Events</Link>
+                <Link href="/organizer/create" className="py-1 px-2 border-b-2 border-transparent hover:border-white/60">Create Event</Link>
+                <Link href="/organizer/applications" className="py-1 px-2 border-b-2 border-transparent hover:border-white/60">Sponsor Applications</Link>
               </nav>
             </div>
             <div className="flex items-center">
@@ -79,7 +79,7 @@ export default function OrganizerPage() {
                     d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
                   />
                 </svg>
-                切換到贊助商
+                Switch to Sponsor
               </Link>
             </div>
           </div>
@@ -88,71 +88,71 @@ export default function OrganizerPage() {
       
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex flex-col md:flex-row gap-8">
-          {/* 左側欄位 */}
+          {/* Left sidebar */}
           <div className="w-full md:w-1/4 space-y-6">
             <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-              <h2 className="text-lg font-semibold mb-4">快速導航</h2>
+              <h2 className="text-lg font-semibold mb-4">Quick Navigation</h2>
               <nav className="space-y-2">
                 <Link href="/organizer/events" className="block p-2 text-sm hover:bg-accent rounded">
-                  我的活動
+                  My Events
                 </Link>
                 <Link href="/organizer/events/create" className="block p-2 text-sm hover:bg-accent rounded">
-                  創建活動
+                  Create Event
                 </Link>
                 <Link href="/meetings" className="block p-2 text-sm hover:bg-accent rounded">
-                  會議安排
+                  Meeting Schedule
                 </Link>
               </nav>
             </div>
             
             <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-              <h2 className="text-lg font-semibold mb-4">主辦方統計</h2>
+              <h2 className="text-lg font-semibold mb-4">Organizer Stats</h2>
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">已創建活動</p>
+                  <p className="text-sm text-muted-foreground">Created Events</p>
                   <p className="text-xl font-semibold">0</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">進行中活動</p>
+                  <p className="text-sm text-muted-foreground">Active Events</p>
                   <p className="text-xl font-semibold">0</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">已完成活動</p>
+                  <p className="text-sm text-muted-foreground">Completed Events</p>
                   <p className="text-xl font-semibold">0</p>
                 </div>
               </div>
             </div>
           </div>
           
-          {/* 主要內容區 */}
+          {/* Main content area */}
           <div className="w-full md:w-3/4 space-y-6">
             <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-              <h2 className="text-lg font-semibold mb-4">推薦活動模板</h2>
+              <h2 className="text-lg font-semibold mb-4">Recommended Event Templates</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-border rounded-lg p-4 hover:bg-accent/10 cursor-pointer">
-                  <h3 className="font-medium">線上研討會</h3>
-                  <p className="text-sm text-muted-foreground mt-2">適合遠程參與者的虛擬活動模板</p>
+                  <h3 className="font-medium">Online Webinar</h3>
+                  <p className="text-sm text-muted-foreground mt-2">Virtual event template suitable for remote participants</p>
                 </div>
                 <div className="border border-border rounded-lg p-4 hover:bg-accent/10 cursor-pointer">
-                  <h3 className="font-medium">線下會議</h3>
-                  <p className="text-sm text-muted-foreground mt-2">適合實體場地的面對面活動模板</p>
+                  <h3 className="font-medium">Offline Conference</h3>
+                  <p className="text-sm text-muted-foreground mt-2">Face-to-face event template for physical venues</p>
                 </div>
                 <div className="border border-border rounded-lg p-4 hover:bg-accent/10 cursor-pointer">
-                  <h3 className="font-medium">混合式活動</h3>
-                  <p className="text-sm text-muted-foreground mt-2">線上與線下結合的活動模板</p>
+                  <h3 className="font-medium">Hybrid Event</h3>
+                  <p className="text-sm text-muted-foreground mt-2">Event template combining online and offline components</p>
                 </div>
                 <div className="border border-border rounded-lg p-4 hover:bg-accent/10 cursor-pointer">
-                  <h3 className="font-medium">區塊鏈大會</h3>
-                  <p className="text-sm text-muted-foreground mt-2">專為區塊鏈行業設計的活動模板</p>
+                  <h3 className="font-medium">Blockchain Summit</h3>
+                  <p className="text-sm text-muted-foreground mt-2">Event template designed for the blockchain industry</p>
                 </div>
               </div>
             </div>
             
             <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">我的活動</h2>
+                <h2 className="text-lg font-semibold">My Events</h2>
                 <Link href="/organizer/events">
-                  <Button variant="outline" size="sm">查看全部</Button>
+                  <Button variant="outline" size="sm">View All</Button>
                 </Link>
               </div>
               
@@ -177,13 +177,13 @@ export default function OrganizerPage() {
                     d="M16 2v4M8 2v4M3 10h18" 
                   />
                 </svg>
-                <h3 className="mt-4 text-lg font-medium">還沒有活動</h3>
+                <h3 className="mt-4 text-lg font-medium">No Events Yet</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  立即創建您的第一個活動，開始您的主辦方之旅！
+                  Create your first event now and begin your journey as an organizer!
                 </p>
                 <div className="mt-6">
                   <Link href="/organizer/events/create">
-                    <Button>創建活動</Button>
+                    <Button>Create Event</Button>
                   </Link>
                 </div>
               </div>
@@ -191,19 +191,19 @@ export default function OrganizerPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-                <h2 className="text-lg font-semibold mb-4">贊助商指南</h2>
+                <h2 className="text-lg font-semibold mb-4">Sponsor Guide</h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  了解如何吸引更多贊助商支持您的活動，提升活動價值。
+                  Learn how to attract more sponsors to support your events and increase their value.
                 </p>
-                <Button variant="outline" size="sm">查看指南</Button>
+                <Button variant="outline" size="sm">View Guide</Button>
               </div>
               
               <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-                <h2 className="text-lg font-semibold mb-4">活動推廣技巧</h2>
+                <h2 className="text-lg font-semibold mb-4">Event Promotion Tips</h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  探索有效的活動推廣策略，提高活動曝光度和參與度。
+                  Explore effective strategies to promote your events and increase visibility and engagement.
                 </p>
-                <Button variant="outline" size="sm">查看技巧</Button>
+                <Button variant="outline" size="sm">View Tips</Button>
               </div>
             </div>
           </div>

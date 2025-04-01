@@ -15,9 +15,9 @@ interface EventSponsorshipPageProps {
   params: Promise<{ id: string }>;
 }
 
-// 辅助函数
+// Helper function
 function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('zh-TW', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
     minimumFractionDigits: 0,
@@ -32,7 +32,7 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 解析params参数
+  // Parse params
   useEffect(() => {
     const resolveParams = async () => {
       try {
@@ -40,14 +40,14 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
         setEventId(resolvedParams.id);
       } catch (error) {
         console.error("Error resolving params:", error);
-        setError("無法獲取活動ID");
+        setError("Unable to get event ID");
       }
     };
     
     resolveParams();
   }, [params]);
 
-  // 获取活动数据
+  // Fetch event data
   useEffect(() => {
     const fetchData = async () => {
       if (!eventId) return;
@@ -55,19 +55,19 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
       try {
         setLoading(true);
         
-        // 从模拟数据中获取活动信息
+        // Get event information from mock data
         const eventData = mockEvents.find(e => e.id === eventId);
         
         if (!eventData) {
-          setError('找不到該活動');
+          setError('Event not found');
           setLoading(false);
           return;
         }
         
         setEvent(eventData);
       } catch (error) {
-        console.error('获取活动详情失败:', error);
-        setError('获取活动信息失败，请稍后重试');
+        console.error('Failed to get event details:', error);
+        setError('Failed to load event information, please try again later');
       } finally {
         setLoading(false);
       }
@@ -80,7 +80,7 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
     if (loading) {
       return (
         <div className="flex items-center justify-center min-h-[60vh]">
-          <p className="text-lg">載入中...</p>
+          <p className="text-lg">Loading...</p>
         </div>
       );
     }
@@ -89,19 +89,19 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
       return (
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <h2 className="text-xl font-semibold text-red-600 mb-2">
-            {error || '找不到該活動'}
+            {error || 'Event not found'}
           </h2>
           <Button 
             onClick={() => router.push('/sponsor')} 
             className="mt-4"
           >
-            返回贊助商中心
+            Return to Sponsor Center
           </Button>
         </div>
       );
     }
     
-    // 如果活动没有赞助方案
+    // If the event has no sponsorship plans
     if (!event.sponsorship_plans || event.sponsorship_plans.length === 0) {
       return (
         <div className="max-w-7xl mx-auto px-6 py-8">
@@ -118,11 +118,11 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
-                  返回贊助商中心
+                  Return to Sponsor Center
                 </Button>
               </Link>
               <h1 className="text-3xl font-bold">{event.title}</h1>
-              <p className="text-muted-foreground mt-2">{event.start_time ? new Date(event.start_time).toLocaleDateString('zh-TW') : ''} - {event.end_time ? new Date(event.end_time).toLocaleDateString('zh-TW') : ''}</p>
+              <p className="text-muted-foreground mt-2">{event.start_time ? new Date(event.start_time).toLocaleDateString('en-US') : ''} - {event.end_time ? new Date(event.end_time).toLocaleDateString('en-US') : ''}</p>
             </div>
           </div>
           
@@ -141,13 +141,13 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
                 d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
               />
             </svg>
-            <h3 className="mt-4 text-xl font-medium">此活動目前沒有贊助方案</h3>
+            <h3 className="mt-4 text-xl font-medium">No Sponsorship Plans Available</h3>
             <p className="mt-2 text-center text-muted-foreground max-w-md">
-              此活動目前尚未開放贊助，請稍後再查看或查看其他活動的贊助機會。
+              This event is not currently open for sponsorships. Please check back later or explore other events.
             </p>
             <div className="mt-6">
               <Link href="/sponsor">
-                <Button>返回贊助商中心</Button>
+                <Button>Return to Sponsor Center</Button>
               </Link>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
     
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* 顶部导航和标题 */}
+        {/* Top navigation and title */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <Link href="/sponsor">
@@ -171,18 +171,18 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
-                返回贊助商中心
+                Return to Sponsor Center
               </Button>
             </Link>
             <h1 className="text-3xl font-bold">{event.title}</h1>
-            <p className="text-muted-foreground mt-2">{event.start_time ? new Date(event.start_time).toLocaleDateString('zh-TW') : ''} - {event.end_time ? new Date(event.end_time).toLocaleDateString('zh-TW') : ''}</p>
+            <p className="text-muted-foreground mt-2">{event.start_time ? new Date(event.start_time).toLocaleDateString('en-US') : ''} - {event.end_time ? new Date(event.end_time).toLocaleDateString('en-US') : ''}</p>
           </div>
         </div>
         
-        {/* 活动详情卡片 */}
+        {/* Event details card */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>活動詳情</CardTitle>
+            <CardTitle>Event Details</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -200,14 +200,14 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
               
               <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium">活動時間</p>
+                  <p className="text-sm font-medium">Event Date</p>
                   <p className="text-sm text-muted-foreground">
-                    {event.start_time ? new Date(event.start_time).toLocaleDateString('zh-TW') : ''} - {event.end_time ? new Date(event.end_time).toLocaleDateString('zh-TW') : ''}
+                    {event.start_time ? new Date(event.start_time).toLocaleDateString('en-US') : ''} - {event.end_time ? new Date(event.end_time).toLocaleDateString('en-US') : ''}
                   </p>
                 </div>
                 
                 <div>
-                  <p className="text-sm font-medium">活動地點</p>
+                  <p className="text-sm font-medium">Location</p>
                   <p className="text-sm text-muted-foreground">
                     {event.location?.name}
                     {event.location?.city && `, ${event.location.city}`}
@@ -219,8 +219,8 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
           </CardContent>
         </Card>
         
-        {/* 贊助方案列表 */}
-        <h2 className="text-2xl font-bold mb-6">可用贊助方案</h2>
+        {/* Sponsorship plans list */}
+        <h2 className="text-2xl font-bold mb-6">Available Sponsorship Plans</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {event.sponsorship_plans?.map((plan) => (
@@ -240,7 +240,7 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
               <CardContent className="flex-grow">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="text-sm font-medium mb-2">贊助權益</h3>
+                    <h3 className="text-sm font-medium mb-2">Benefits</h3>
                     <ul className="space-y-2">
                       {plan.benefits.map((benefit, index) => (
                         <li key={index} className="flex items-start">
@@ -265,10 +265,10 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
                   <div className="pt-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
-                        已有 {plan.current_sponsors || 0} 位贊助商，共 {plan.max_sponsors || 0} 個名額
+                        {plan.current_sponsors || 0} sponsors out of {plan.max_sponsors || 0} slots
                       </span>
                       <Badge variant="outline" className="text-xs">
-                        剩餘 {(plan.max_sponsors || 0) - (plan.current_sponsors || 0)} 個名額
+                        {(plan.max_sponsors || 0) - (plan.current_sponsors || 0)} slots left
                       </Badge>
                     </div>
                     <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
@@ -282,23 +282,23 @@ export default function EventSponsorshipPage({ params }: EventSponsorshipPagePro
               </CardContent>
               
               <CardFooter>
-                <Button className="w-full">申請此贊助方案</Button>
+                <Button className="w-full">Apply for This Plan</Button>
               </CardFooter>
             </Card>
           ))}
         </div>
         
-        {/* 联系主办方区域 */}
+        {/* Contact organizer section */}
         <div className="mt-12 bg-muted/30 rounded-lg p-8 border border-border">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h3 className="text-xl font-bold mb-2">需要更多信息？</h3>
+              <h3 className="text-xl font-bold mb-2">Need More Information?</h3>
               <p className="text-muted-foreground">
-                如果您有關於贊助方案的問題，或想了解定制贊助選項，請直接與活動主辦方聯繫。
+                If you have questions about sponsorship plans or would like to explore custom options, contact the event organizer directly.
               </p>
             </div>
             <Button variant="outline" className="whitespace-nowrap">
-              聯繫主辦方
+              Contact Organizer
             </Button>
           </div>
         </div>
