@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getAllEvents } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
+import { SearchInput } from "@/components/ui/search-input";
 
 // Dynamic import of EventList component
 const EventList = dynamic(() => import('@/components/events/EventList'), {
@@ -30,11 +32,14 @@ const EventList = dynamic(() => import('@/components/events/EventList'), {
 });
 
 export default function EventsPage() {
+  const searchParams = useSearchParams();
+  const initialSearchTerm = searchParams.get('search') || '';
+  
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   
   // Fetch event data
   useEffect(() => {
@@ -54,6 +59,11 @@ export default function EventsPage() {
     
     fetchEvents();
   }, []);
+  
+  // Apply search from URL parameter on page load
+  useEffect(() => {
+    setSearchTerm(initialSearchTerm);
+  }, [initialSearchTerm]);
   
   // Filter events when search term changes
   useEffect(() => {
@@ -90,24 +100,19 @@ export default function EventsPage() {
               Find sponsorship opportunities that align with your brand and goals
             </p>
             
-            <form className="mt-6 max-w-xl mx-auto" onSubmit={handleSearch}>
-              <div className="flex rounded-md shadow-sm">
-                <Input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search events by title, description, or location"
-                  className="rounded-l-md rounded-r-none"
-                />
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  className="rounded-l-none"
-                >
-                  Search
-                </Button>
-              </div>
-            </form>
+            <div className="mt-6 max-w-xl mx-auto">
+              <SearchInput
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onSearch={(value) => setSearchTerm(value)}
+                placeholder="Search events by title, description, or location"
+                containerClassName="shadow-lg rounded-md overflow-hidden"
+                className="h-12 backdrop-blur-sm bg-white/20 border-white/30 text-white placeholder:text-white/70 rounded-r-none"
+                buttonClassName="h-12 bg-white/30 hover:bg-white/40 text-white border-white/30 rounded-l-none min-w-[100px]"
+                iconClassName="bg-white/40 rounded-full p-1"
+                searchButtonText="Search"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -131,6 +136,23 @@ export default function EventsPage() {
               <h2 className="text-2xl font-bold text-foreground">
                 {searchTerm ? `Search Results (${filteredEvents.length})` : `All Events (${filteredEvents.length})`}
               </h2>
+              
+              {searchTerm && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setSearchTerm("");
+                    setFilteredEvents(events);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6L6 18"></path>
+                    <path d="M6 6l12 12"></path>
+                  </svg>
+                  Clear Search
+                </Button>
+              )}
             </div>
             
             <Suspense fallback={

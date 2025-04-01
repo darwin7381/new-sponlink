@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { User } from "@/lib/types/users";
+import { useRouter } from "next/navigation";
+import { SearchInput } from "@/components/ui/search-input";
 
 interface HeroProps {
   user: User | null;
@@ -11,10 +13,18 @@ interface HeroProps {
 
 export function Hero({ user }: HeroProps) {
   const [mounted, setMounted] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleSearch = (value: string) => {
+    if (value.trim()) {
+      router.push(`/events?search=${encodeURIComponent(value)}`);
+    }
+  };
 
   // 渲染按鈕，只在客戶端渲染時依賴用戶狀態
   const renderButtons = () => {
@@ -73,6 +83,21 @@ export function Hero({ user }: HeroProps) {
         <p className="mt-6 max-w-lg mx-auto text-center text-xl text-indigo-100 sm:max-w-3xl">
           The ultimate platform connecting event organizers with sponsors. Create, manage, and discover events that align with your goals and interests.
         </p>
+        
+        {/* Add Search Box */}
+        <div className="mt-8 max-w-lg mx-auto px-4">
+          <SearchInput 
+            placeholder="Search events by title, category, or location..." 
+            containerClassName="shadow-lg rounded-md overflow-hidden"
+            className="h-12 backdrop-blur-sm bg-white/20 border-white/30 text-white placeholder:text-white/70 focus:bg-white/20 rounded-r-none"
+            buttonClassName="h-12 bg-white/30 hover:bg-white/40 text-white border-white/30 border-l-0 rounded-l-none min-w-[120px]"
+            iconClassName="bg-white/40 rounded-full p-1"
+            onSearch={handleSearch}
+            showSearchButton={true}
+            searchButtonText="Explore"
+          />
+        </div>
+        
         <div className="mt-10 max-w-sm mx-auto sm:max-w-none sm:flex sm:justify-center">
           <div className="space-y-4 sm:space-y-0 sm:mx-auto sm:inline-grid sm:grid-cols-2 sm:gap-5">
             {renderButtons()}

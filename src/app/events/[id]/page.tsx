@@ -389,14 +389,14 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       {/* 顶部横幅 */}
       <div className="relative w-full h-[400px]">
         <Image
-          src={event.cover_image}
+          src={event.cover_image || "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80"}
           alt={event.title}
           className="object-cover"
           fill
           priority
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/70 flex items-end">
           <div className="container mx-auto px-4 pb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{event.title}</h1>
             <div className="flex flex-wrap gap-4 text-white">
@@ -441,9 +441,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 </div>
                 
                 <div className="flex items-center">
-                  <div className="h-16 w-16 relative mr-4 flex-shrink-0">
+                  <div className="h-16 w-16 relative mr-4 flex-shrink-0 bg-gray-200 rounded-md overflow-hidden">
                     <Image 
-                      src={eventSeries.cover_image} 
+                      src={eventSeries.cover_image || "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80"} 
                       alt={eventSeries.title}
                       className="rounded-md object-cover"
                       fill
