@@ -20,7 +20,7 @@ export default function SponsorshipsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // 獲取用戶資料，無需檢查角色
+        // Get user data, no need to check role
         const user = await getCurrentUser();
         if (!user) {
           return;
@@ -30,7 +30,7 @@ export default function SponsorshipsPage() {
         setSponsorships(sponsorshipsData);
       } catch (error) {
         console.error('Error fetching sponsorships:', error);
-        setError('無法載入贊助資料。請稍後再試。');
+        setError('Unable to load sponsorship data. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -39,13 +39,13 @@ export default function SponsorshipsPage() {
     fetchData();
   }, [router]);
 
-  // 頁面內容組件
+  // Page content component
   const SponsorshipsContent = () => {
     if (loading) {
       return (
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-center min-h-[60vh]">
-            <p className="text-lg">載入中...</p>
+            <p className="text-lg">Loading...</p>
           </div>
         </div>
       );
@@ -56,13 +56,13 @@ export default function SponsorshipsPage() {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-red-600 mb-2">發生錯誤</h2>
+              <h2 className="text-xl font-semibold text-red-600 mb-2">Error Occurred</h2>
               <p>{error}</p>
               <Button 
                 onClick={() => window.location.reload()} 
                 className="mt-4"
               >
-                重試
+                Retry
               </Button>
             </div>
           </div>
@@ -73,7 +73,7 @@ export default function SponsorshipsPage() {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">我的贊助</h1>
+          <h1 className="text-3xl font-bold">My Sponsorships</h1>
           <Link href="/sponsor">
             <Button variant="outline" className="flex items-center gap-2">
               <svg 
@@ -90,16 +90,16 @@ export default function SponsorshipsPage() {
                   d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
                 />
               </svg>
-              返回贊助商中心
+              Back to Sponsor Center
             </Button>
           </Link>
         </div>
         
         <Tabs defaultValue="active" className="w-full">
           <TabsList className="mb-6">
-            <TabsTrigger value="active">進行中</TabsTrigger>
-            <TabsTrigger value="completed">已完成</TabsTrigger>
-            <TabsTrigger value="all">全部</TabsTrigger>
+            <TabsTrigger value="active">Active</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+            <TabsTrigger value="all">All</TabsTrigger>
           </TabsList>
           
           <TabsContent value="active">
@@ -109,7 +109,7 @@ export default function SponsorshipsPage() {
               ))}
               {sponsorships.filter(s => s.status === CART_ITEM_STATUS.CONFIRMED).length === 0 && (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">目前沒有進行中的贊助</p>
+                  <p className="text-muted-foreground">No active sponsorships currently</p>
                 </div>
               )}
             </div>
@@ -122,7 +122,7 @@ export default function SponsorshipsPage() {
               ))}
               {sponsorships.filter(s => s.status === CART_ITEM_STATUS.CONFIRMED).length === 0 && (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">目前沒有已完成的贊助</p>
+                  <p className="text-muted-foreground">No completed sponsorships currently</p>
                 </div>
               )}
             </div>
@@ -135,12 +135,12 @@ export default function SponsorshipsPage() {
               ))}
               {sponsorships.length === 0 && (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">目前沒有贊助記錄</p>
+                  <p className="text-muted-foreground">No sponsorship records currently</p>
                   <Button 
                     onClick={() => router.push('/sponsor')} 
                     className="mt-4"
                   >
-                    返回贊助商中心
+                    Back to Sponsor Center
                   </Button>
                 </div>
               )}
@@ -151,7 +151,7 @@ export default function SponsorshipsPage() {
     );
   };
 
-  // 使用 ProtectedRouteWrapper 包裝頁面
+  // Wrap page with ProtectedRouteWrapper
   return (
     <ProtectedRouteWrapper requiredView={VIEW_TYPE.SPONSORSHIP_MANAGER}>
       <SponsorshipsContent />
@@ -167,22 +167,22 @@ function SponsorshipCard({ sponsorship }: SponsorshipCardProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>贊助計畫 #{sponsorship.id.slice(-4)}</CardTitle>
+        <CardTitle>Sponsorship Plan #{sponsorship.id.slice(-4)}</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="mb-2">
-          <span className="font-semibold">狀態：</span> 
-          {sponsorship.status === CART_ITEM_STATUS.CONFIRMED ? '進行中' : 
-           sponsorship.status === CART_ITEM_STATUS.CANCELLED ? '已取消' : '待處理'}
+          <span className="font-semibold">Status:</span> 
+          {sponsorship.status === CART_ITEM_STATUS.CONFIRMED ? 'Active' : 
+           sponsorship.status === CART_ITEM_STATUS.CANCELLED ? 'Cancelled' : 'Pending'}
         </p>
         <p className="mb-2">
-          <span className="font-semibold">建立日期：</span> 
-          {new Date(sponsorship.created_at).toLocaleDateString('zh-TW')}
+          <span className="font-semibold">Created Date:</span> 
+          {new Date(sponsorship.created_at).toLocaleDateString('en-US')}
         </p>
         <div className="mt-4">
           <Link href={`/sponsor/sponsorships/${sponsorship.sponsorship_plan_id}`}>
             <Button variant="outline" className="w-full">
-              查看詳情
+              View Details
             </Button>
           </Link>
         </div>

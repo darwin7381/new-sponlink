@@ -12,7 +12,7 @@ import { SponsorshipPlan } from "@/types/sponsorshipPlan";
 import { getEventById } from "@/services/eventService";
 import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
 
-// 定義購物車項目詳情接口，允許部分缺失的屬性
+// Define cart item detail interface, allowing partial missing properties
 interface CartDetail {
   plan: Partial<SponsorshipPlan> & {
     id: string;
@@ -40,7 +40,7 @@ export default function CartPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null);
 
-  // 檢查用戶身份
+  // Check user identity
   useEffect(() => {
     const checkAuth = async () => {
       if (!isAuthenticated()) {
@@ -57,7 +57,7 @@ export default function CartPage() {
         
         setUserId(userData.id);
       } catch (e) {
-        console.error("獲取用戶數據錯誤:", e);
+        console.error("Error getting user data:", e);
         router.push('/login');
       }
     };
@@ -65,50 +65,50 @@ export default function CartPage() {
     checkAuth();
   }, [router]);
 
-  // 獲取購物車項目
+  // Get cart items
   useEffect(() => {
     async function fetchCartItems() {
       if (!userId) return;
 
       try {
         setIsLoading(true);
-        console.log("正在獲取購物車項目，用戶ID:", userId);
+        console.log("Getting cart items, user ID:", userId);
         
         const items = await getCartItems(userId);
-        console.log("購物車原始項目:", items);
+        console.log("Original cart items:", items);
         
-        // 只顯示狀態為PENDING的項目
+        // Only show items with PENDING status
         const pendingItems = items.filter(item => item.status === CartItemStatus.PENDING);
-        console.log("待處理的購物車項目:", pendingItems);
+        console.log("Pending cart items:", pendingItems);
         
         setCartItems(pendingItems);
 
-        // 如果购物车为空，检查localStorage
+        // If cart is empty, check localStorage
         if (pendingItems.length === 0) {
-          console.log("检查本地存储中的购物车项目");
-          // 这里不需要做额外的操作，但在控制台记录一下，方便调试
+          console.log("Checking cart items in local storage");
+          // No extra operations needed here, just logging for debugging
           try {
             if (typeof window !== 'undefined') {
               const storageData = localStorage.getItem('sponlink_cart_items');
-              console.log("本地存储购物车原始数据:", storageData);
+              console.log("Raw cart data in local storage:", storageData);
               if (storageData) {
                 const parsedData = JSON.parse(storageData);
-                console.log("本地存储购物车解析数据:", parsedData);
+                console.log("Parsed cart data from local storage:", parsedData);
                 
-                // 查找当前用户的项目
+                // Find items for current user
                 const userItems = parsedData.filter((item: CartItem) => 
                   item.sponsor_id === userId && item.status === CartItemStatus.PENDING
                 );
-                console.log("本地存储中当前用户的待处理项目:", userItems);
+                console.log("Current user's pending items in local storage:", userItems);
               }
             }
           } catch (e) {
-            console.error("检查本地存储时出错:", e);
+            console.error("Error checking local storage:", e);
           }
         }
       } catch (error) {
-        console.error("獲取購物車項目錯誤:", error);
-        setError("無法加載購物車項目。請稍後再試。");
+        console.error("Error fetching cart items:", error);
+        setError("Unable to load cart items. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -116,9 +116,9 @@ export default function CartPage() {
 
     fetchCartItems();
     
-    // 添加事件監聽器
+    // Add event listener
     const handleCartUpdate = () => {
-      console.log("触发购物车更新事件，重新获取购物车项目");
+      console.log("Cart update event triggered, fetching cart items again");
       fetchCartItems();
     };
     
@@ -129,85 +129,85 @@ export default function CartPage() {
     };
   }, [userId]);
 
-  // 獲取購物車項目的詳細信息
+  // Get detailed information for cart items
   useEffect(() => {
     async function fetchCartDetails() {
       if (cartItems.length === 0) return;
 
       try {
-        console.log("正在獲取購物車詳情，項目數量:", cartItems.length);
+        console.log("Getting cart details, number of items:", cartItems.length);
         
         const details = await Promise.all(
           cartItems.map(async (item) => {
             try {
-              console.log("正在獲取贊助計劃詳情，計劃ID:", item.sponsorship_plan_id);
+              console.log("Getting sponsorship plan details, plan ID:", item.sponsorship_plan_id);
               
-              // 1. 從API獲取贊助計劃詳情
+              // 1. Get sponsorship plan details from API
               const response = await fetch(`/api/sponsorships/${item.sponsorship_plan_id}`);
               
               if (!response.ok) {
-                console.error(`獲取贊助計劃 ${item.sponsorship_plan_id} 失敗: ${response.statusText}`);
-                throw new Error(`獲取贊助計劃詳情失敗: ${response.statusText}`);
+                console.error(`Failed to get sponsorship plan ${item.sponsorship_plan_id}: ${response.statusText}`);
+                throw new Error(`Failed to get sponsorship plan details: ${response.statusText}`);
               }
               
               const planData = await response.json();
-              console.log("獲取到贊助計劃:", planData);
+              console.log("Retrieved sponsorship plan:", planData);
               
-              // 2. 獲取事件詳情
+              // 2. Get event details
               let eventData;
               try {
-                console.log("正在獲取事件詳情，事件ID:", planData.event_id);
+                console.log("Getting event details, event ID:", planData.event_id);
                 eventData = await getEventById(planData.event_id);
-                console.log("獲取到事件詳情:", eventData);
+                console.log("Retrieved event details:", eventData);
               } catch (eventError) {
-                console.error(`獲取事件詳情錯誤，事件ID: ${planData.event_id}:`, eventError);
-                // 如果無法獲取事件，使用默認事件數據
-                eventData = { id: planData.event_id || "unknown", title: "未知活動" };
+                console.error(`Error getting event details, event ID: ${planData.event_id}:`, eventError);
+                // If event cannot be retrieved, use default event data
+                eventData = { id: planData.event_id || "unknown", title: "Unknown Event" };
               }
 
               return {
                 plan: planData,
                 event: {
                   id: eventData?.id || planData.event_id || "unknown",
-                  title: eventData?.title || "未知活動"
+                  title: eventData?.title || "Unknown Event"
                 }
               };
             } catch (error) {
-              console.error(`處理購物車項目 ${item.id} (計劃ID: ${item.sponsorship_plan_id}) 時出錯:`, error);
+              console.error(`Error processing cart item ${item.id} (plan ID: ${item.sponsorship_plan_id}):`, error);
               
-              // 返回一個帶有錯誤信息的默認項目
+              // Return a default item with error information
               return {
                 plan: {
                   id: item.sponsorship_plan_id,
-                  name: `無法載入計劃 (ID: ${item.sponsorship_plan_id})`,
-                  description: error instanceof Error ? error.message : "無法獲取此贊助計劃的詳細信息",
+                  name: `Unable to load plan (ID: ${item.sponsorship_plan_id})`,
+                  description: error instanceof Error ? error.message : "Unable to get details for this sponsorship plan",
                   price: 0,
                   event_id: "unknown"
                 },
                 event: {
                   id: "unknown",
-                  title: "未知活動"
+                  title: "Unknown Event"
                 },
                 hasError: true,
-                errorMessage: error instanceof Error ? error.message : "未知錯誤"
+                errorMessage: error instanceof Error ? error.message : "Unknown error"
               };
             }
           })
         );
 
-        console.log("購物車詳情完成:", details);
+        console.log("Cart details completed:", details);
         setCartDetails(details);
         
-        // 檢查是否有項目出錯
+        // Check if any items have errors
         const hasErrors = details.some(detail => detail.hasError);
         if (hasErrors) {
-          setError("部分贊助方案詳情無法載入，請重試或聯繫客服。");
+          setError("Some sponsorship plan details could not be loaded. Please try again or contact customer service.");
         } else {
           setError(null);
         }
       } catch (error) {
-        console.error("獲取購物車詳情錯誤:", error);
-        setError("無法加載贊助方案詳情。請稍後再試。");
+        console.error("Error fetching cart details:", error);
+        setError("Unable to load sponsorship plan details. Please try again later.");
       }
     }
 
@@ -219,8 +219,8 @@ export default function CartPage() {
       await removeFromCart(itemId);
       setCartItems(cartItems.filter(item => item.id !== itemId));
     } catch (error) {
-      console.error("移除購物車項目錯誤:", error);
-      setError("無法移除項目。請稍後再試。");
+      console.error("Error removing cart item:", error);
+      setError("Unable to remove item. Please try again later.");
     }
   };
 
@@ -231,37 +231,37 @@ export default function CartPage() {
       setIsProcessing(true);
       setError(null);
 
-      // 過濾掉有錯誤的購物車項目
+      // Filter out cart items with errors
       const validCartDetails = cartDetails.filter(detail => !detail.hasError);
       
       if (validCartDetails.length === 0) {
-        setError("購物車中沒有有效的贊助方案，請重新添加或刷新頁面。");
+        setError("There are no valid sponsorship plans in your cart. Please add new ones or refresh the page.");
         setIsProcessing(false);
         return;
       }
 
-      // 計算有效項目的總金額
+      // Calculate total amount for valid items
       const totalAmount = validCartDetails.reduce((sum, item) => sum + item.plan.price, 0);
-      console.log("結帳總金額:", totalAmount);
+      console.log("Checkout total amount:", totalAmount);
 
-      // 處理結帳
-      console.log("開始結帳流程，用戶ID:", userId);
+      // Process checkout
+      console.log("Starting checkout process, user ID:", userId);
       const result = await checkout(userId, { amount: totalAmount });
-      console.log("結帳成功，結果:", result);
+      console.log("Checkout successful, result:", result);
       
       setCheckoutResult(result);
 
-      // 清空購物車狀態
+      // Clear cart state
       setCartItems([]);
       setCartDetails([]);
       
-      // 觸發購物車更新事件
+      // Trigger cart update event
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('cartUpdate'));
       }
     } catch (error) {
-      console.error("結帳錯誤:", error);
-      setError("結帳過程中發生錯誤。請稍後再試。");
+      console.error("Checkout error:", error);
+      setError("An error occurred during checkout. Please try again later.");
     } finally {
       setIsProcessing(false);
     }
@@ -270,7 +270,7 @@ export default function CartPage() {
   return (
     <div className="bg-background min-h-screen pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <h1 className="text-3xl font-bold text-foreground mb-8">購物車</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-8">Cart</h1>
 
         {error && (
           <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded mb-6">
@@ -281,28 +281,28 @@ export default function CartPage() {
         {checkoutResult ? (
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl text-center text-green-600">結帳成功！</CardTitle>
+              <CardTitle className="text-2xl text-center text-green-600">Checkout Successful!</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-center">您的訂單已成功完成。</p>
+              <p className="text-center">Your order has been completed successfully.</p>
               <div className="bg-secondary/30 p-4 rounded-lg">
                 <div className="flex justify-between mb-2">
-                  <span className="font-medium">訂單編號:</span>
+                  <span className="font-medium">Order ID:</span>
                   <span>{checkoutResult.order_id}</span>
                 </div>
                 <div className="flex justify-between mb-2">
-                  <span className="font-medium">總金額:</span>
+                  <span className="font-medium">Total Amount:</span>
                   <span>${checkoutResult.total_amount.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-medium">贊助項目:</span>
-                  <span>{checkoutResult.confirmed_items} 項</span>
+                  <span className="font-medium">Sponsored Items:</span>
+                  <span>{checkoutResult.confirmed_items} items</span>
                 </div>
               </div>
             </CardContent>
             <CardFooter className="flex justify-center">
               <Button asChild>
-                <Link href="/dashboard/sponsor/sponsorships">查看我的贊助</Link>
+                <Link href="/dashboard/sponsor/sponsorships">View My Sponsorships</Link>
               </Button>
             </CardFooter>
           </Card>
@@ -315,10 +315,10 @@ export default function CartPage() {
             ) : cartItems.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  <h2 className="text-xl font-semibold mb-4">您的購物車是空的</h2>
-                  <p className="text-muted-foreground mb-6">添加贊助方案到購物車，開始您的贊助之旅。</p>
+                  <h2 className="text-xl font-semibold mb-4">Your cart is empty</h2>
+                  <p className="text-muted-foreground mb-6">Add sponsorship plans to your cart to begin your sponsorship journey.</p>
                   <Button asChild>
-                    <Link href="/events">瀏覽活動</Link>
+                    <Link href="/events">Browse Events</Link>
                   </Button>
                 </CardContent>
               </Card>
@@ -327,10 +327,10 @@ export default function CartPage() {
                 <div className="lg:col-span-2">
                   <Card>
                     <CardHeader>
-                      <CardTitle>贊助方案</CardTitle>
+                      <CardTitle>Sponsorship Plans</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {/* 購物車項目列表 */}
+                      {/* Cart items list */}
                       {cartDetails.length > 0 && (
                         <div className="space-y-4">
                           {cartDetails.map((detail, index) => (
@@ -348,7 +348,7 @@ export default function CartPage() {
                                     )}
                                   </h3>
                                   <p className="text-sm text-muted-foreground">
-                                    活動: {detail.hasError ? '未知活動' : (
+                                    Event: {detail.hasError ? 'Unknown Event' : (
                                       <Link href={`/events/${detail.event.id}`} className="text-primary hover:underline">
                                         {detail.event.title}
                                       </Link>
@@ -364,7 +364,7 @@ export default function CartPage() {
                                 </p>
                                 {detail.hasError && (
                                   <p className="text-xs text-destructive mt-1">
-                                    錯誤: {detail.errorMessage} (計劃ID: {detail.plan.id})
+                                    Error: {detail.errorMessage} (Plan ID: {detail.plan.id})
                                   </p>
                                 )}
                               </div>
@@ -381,7 +381,7 @@ export default function CartPage() {
                                   }}
                                   className="text-destructive text-sm hover:underline mt-2"
                                 >
-                                  移除
+                                  Remove
                                 </button>
                               </div>
                             </div>
@@ -392,11 +392,11 @@ export default function CartPage() {
                   </Card>
                 </div>
 
-                {/* 訂單摘要 */}
+                {/* Order summary */}
                 <div className="lg:col-span-1">
                   <Card className="sticky top-4">
                     <CardHeader>
-                      <CardTitle>訂單摘要</CardTitle>
+                      <CardTitle>Order Summary</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {(() => {
@@ -407,20 +407,20 @@ export default function CartPage() {
                         return (
                           <>
                             <div className="flex justify-between">
-                              <span>小計</span>
+                              <span>Subtotal</span>
                               <span>${subtotal.toLocaleString()}</span>
                             </div>
                             
                             {errorItems.length > 0 && (
                               <div className="text-destructive text-sm py-2 px-2 bg-destructive/10 rounded">
-                                注意: {errorItems.length} 個項目無法載入，未計入總額
+                                Note: {errorItems.length} item(s) could not be loaded and are not included in the total
                               </div>
                             )}
                             
                             <Separator />
                             
                             <div className="flex justify-between font-bold">
-                              <span>總計</span>
+                              <span>Total</span>
                               <span>${subtotal.toLocaleString()}</span>
                             </div>
                             
@@ -429,7 +429,7 @@ export default function CartPage() {
                               onClick={handleCheckout}
                               disabled={isProcessing || validItems.length === 0}
                             >
-                              {isProcessing ? "處理中..." : "結帳"}
+                              {isProcessing ? "Processing..." : "Checkout"}
                             </Button>
                           </>
                         );

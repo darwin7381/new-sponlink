@@ -23,26 +23,26 @@ export default function DashboardPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // 檢查是否已登入
+        // Check if logged in
         if (!isAuthenticated()) {
           router.push('/login');
           return;
         }
         
-        // 獲取用戶資料
+        // Get user data
         const currentUser = await getCurrentUser();
         if (!currentUser) {
           router.push('/login');
           return;
         }
         
-        // 檢查當前視角
+        // Check current view
         let view = getActiveView();
         
-        // 如果沒有活躍視角，預設設置一個
+        // If no active view, set a default one
         if (!view) {
-          // 根據用戶資料決定預設視角
-          // 這只是模擬實現，真實系統可能基於用戶行為或資料
+          // Determine default view based on user data
+          // This is a simulated implementation, real system might base on user behavior or data
           view = VIEW_TYPE.EVENT_ORGANIZER; 
           setActiveView(view);
         }
@@ -57,7 +57,7 @@ export default function DashboardPage() {
 
     checkAuth();
     
-    // 監聽視角變更
+    // Listen for view changes
     const handleViewChange = () => {
       setActiveViewState(getActiveView());
     };
@@ -77,7 +77,7 @@ export default function DashboardPage() {
     );
   }
 
-  // 根據當前視角渲染相應內容
+  // Render content based on current view
   const renderDashboardContent = () => {
     if (activeView === VIEW_TYPE.EVENT_ORGANIZER) {
       return (
@@ -85,66 +85,66 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">活動總數</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Events</CardTitle>
                 <CalendarIcon className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">12</div>
-                <p className="text-xs text-muted-foreground">已創建的活動數量</p>
+                <p className="text-xs text-muted-foreground">Number of created events</p>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">即將到來的會議</CardTitle>
+                <CardTitle className="text-sm font-medium">Upcoming Meetings</CardTitle>
                 <CalendarIcon className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">4</div>
-                <p className="text-xs text-muted-foreground">未來七天內的會議</p>
+                <p className="text-xs text-muted-foreground">Meetings in the next seven days</p>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">贊助總額</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Sponsorships</CardTitle>
                 <WalletIcon className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">$24,300</div>
-                <p className="text-xs text-muted-foreground">所有活動贊助總額</p>
+                <p className="text-xs text-muted-foreground">Total sponsorship amount for all events</p>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">贊助商數量</CardTitle>
+                <CardTitle className="text-sm font-medium">Sponsors Count</CardTitle>
                 <Users2Icon className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">18</div>
-                <p className="text-xs text-muted-foreground">參與贊助的贊助商</p>
+                <p className="text-xs text-muted-foreground">Number of participating sponsors</p>
               </CardContent>
             </Card>
           </div>
           
           <Tabs defaultValue="events" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="events">我的活動</TabsTrigger>
-              <TabsTrigger value="meetings">我的會議</TabsTrigger>
+              <TabsTrigger value="events">My Events</TabsTrigger>
+              <TabsTrigger value="meetings">My Meetings</TabsTrigger>
             </TabsList>
             
             <TabsContent value="events" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>活動列表</CardTitle>
-                  <CardDescription>管理您創建的所有活動</CardDescription>
+                  <CardTitle>Events List</CardTitle>
+                  <CardDescription>Manage all your created events</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-6">
-                    <p className="text-muted-foreground mb-4">這裡將顯示您創建的活動列表</p>
+                    <p className="text-muted-foreground mb-4">Your created events will be displayed here</p>
                     <Button onClick={() => router.push('/events/create')}>
-                      創建新活動
+                      Create New Event
                     </Button>
                   </div>
                 </CardContent>
@@ -154,12 +154,12 @@ export default function DashboardPage() {
             <TabsContent value="meetings" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>會議列表</CardTitle>
-                  <CardDescription>管理您與贊助商的會議</CardDescription>
+                  <CardTitle>Meetings List</CardTitle>
+                  <CardDescription>Manage your meetings with sponsors</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-6">
-                    <p className="text-muted-foreground">您目前沒有排定的會議</p>
+                    <p className="text-muted-foreground">You don&apos;t have any scheduled meetings</p>
                   </div>
                 </CardContent>
               </Card>
@@ -173,55 +173,55 @@ export default function DashboardPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">贊助總數</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Sponsorships</CardTitle>
                 <BarChart3Icon className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">7</div>
-                <p className="text-xs text-muted-foreground">已贊助的活動數量</p>
+                <p className="text-xs text-muted-foreground">Number of sponsored events</p>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">贊助總額</CardTitle>
+                <CardTitle className="text-sm font-medium">Total Amount</CardTitle>
                 <WalletIcon className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">$12,500</div>
-                <p className="text-xs text-muted-foreground">已投資的總金額</p>
+                <p className="text-xs text-muted-foreground">Total invested amount</p>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">即將到來的會議</CardTitle>
+                <CardTitle className="text-sm font-medium">Upcoming Meetings</CardTitle>
                 <CalendarIcon className="h-4 w-4 text-primary" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">3</div>
-                <p className="text-xs text-muted-foreground">已確認的會議</p>
+                <p className="text-xs text-muted-foreground">Confirmed meetings</p>
               </CardContent>
             </Card>
           </div>
           
           <Tabs defaultValue="sponsorships" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="sponsorships">我的贊助</TabsTrigger>
-              <TabsTrigger value="meetings">我的會議</TabsTrigger>
+              <TabsTrigger value="sponsorships">My Sponsorships</TabsTrigger>
+              <TabsTrigger value="meetings">My Meetings</TabsTrigger>
             </TabsList>
             
             <TabsContent value="sponsorships" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>贊助列表</CardTitle>
-                  <CardDescription>所有已確認的贊助</CardDescription>
+                  <CardTitle>Sponsorship List</CardTitle>
+                  <CardDescription>All confirmed sponsorships</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-6">
-                    <p className="text-muted-foreground mb-4">這裡將顯示您的贊助記錄</p>
+                    <p className="text-muted-foreground mb-4">Your sponsorship records will be displayed here</p>
                     <Button onClick={() => router.push('/events')}>
-                      瀏覽活動
+                      Browse Events
                     </Button>
                   </div>
                 </CardContent>
@@ -231,12 +231,12 @@ export default function DashboardPage() {
             <TabsContent value="meetings" className="space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle>會議列表</CardTitle>
-                  <CardDescription>所有已安排的會議</CardDescription>
+                  <CardTitle>Meetings List</CardTitle>
+                  <CardDescription>All scheduled meetings</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="text-center py-6">
-                    <p className="text-muted-foreground">您目前沒有排定的會議</p>
+                    <p className="text-muted-foreground">You don&apos;t have any scheduled meetings</p>
                   </div>
                 </CardContent>
               </Card>
@@ -246,12 +246,12 @@ export default function DashboardPage() {
       );
     }
     
-    // 沒有選擇視角時顯示選擇器
+    // Show selector when no view is selected
     return (
       <div className="min-h-[calc(100vh-150px)] flex flex-col justify-center items-center">
-        <h1 className="text-2xl font-bold mb-6">選擇您的視角</h1>
+        <h1 className="text-2xl font-bold mb-6">Choose Your View</h1>
         <p className="text-muted-foreground mb-8 text-center max-w-md">
-          請選擇您想要使用的視角以自定義您的體驗。您可以隨時切換視角。
+          Please select the view you want to use to customize your experience. You can switch views at any time.
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
@@ -260,12 +260,12 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <CalendarIcon className="mr-2 h-5 w-5" />
-                活動組織
+                Event Organizer
               </CardTitle>
-              <CardDescription>管理您的活動和贊助商關係</CardDescription>
+              <CardDescription>Manage your events and sponsor relationships</CardDescription>
             </CardHeader>
             <CardContent>
-              <p>此視角讓您可以創建和管理活動、設置贊助方案、與贊助商會面。</p>
+              <p>This view allows you to create and manage events, set up sponsorship plans, and meet with sponsors.</p>
             </CardContent>
           </Card>
           
@@ -274,12 +274,12 @@ export default function DashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center">
                 <WalletIcon className="mr-2 h-5 w-5" />
-                贊助管理
+                Sponsorship Manager
               </CardTitle>
-              <CardDescription>管理您的贊助投資和會議</CardDescription>
+              <CardDescription>Manage your sponsorship investments and meetings</CardDescription>
             </CardHeader>
             <CardContent>
-              <p>此視角讓您可以瀏覽活動、購買贊助方案、安排與活動組織者的會議。</p>
+              <p>This view allows you to browse events, purchase sponsorship plans, and schedule meetings with event organizers.</p>
             </CardContent>
           </Card>
         </div>
@@ -290,7 +290,7 @@ export default function DashboardPage() {
   return (
     <div className="container mx-auto px-4 py-8 mt-16">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">儀表盤</h1>
+        <h1 className="text-3xl font-bold">Dashboard</h1>
         <ViewSwitcher />
       </div>
       

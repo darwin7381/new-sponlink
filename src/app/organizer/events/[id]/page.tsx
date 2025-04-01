@@ -20,7 +20,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
 
-  // 檢查用戶身份
+  // Check user identity
   useEffect(() => {
     const userJson = localStorage.getItem('user');
     if (userJson) {
@@ -35,34 +35,34 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     }
   }, []);
 
-  // 如果未登錄或不是組織者，則重定向
+  // Redirect if not logged in or not an organizer
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/login");
     }
   }, [isAuthenticated, router, isLoading]);
 
-  // 獲取活動詳情
+  // Get event details
   useEffect(() => {
     async function fetchEventDetails() {
       setIsLoading(true);
       setError("");
       
       try {
-        // 在 Next.js 15 中需要等待解析params
+        // In Next.js 15, we need to await for params resolution
         const resolvedParams = await params;
         const id = resolvedParams.id;
-        setEventId(id); // 保存ID以便後續使用
+        setEventId(id); // Save ID for later use
         
         const eventData = await getEventById(id);
         if (!eventData) {
-          setError("找不到該活動");
+          setError("Event not found");
           return;
         }
         
-        // 檢查當前用戶是否為活動的主辦方
+        // Check if current user is the event organizer
         if (currentUser && eventData.organizer_id !== currentUser.id) {
-          setError("您沒有權限查看此活動");
+          setError("You don&apos;t have permission to view this event");
           router.push("/organizer/events");
           return;
         }
@@ -70,7 +70,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         setEvent(eventData);
       } catch (error) {
         console.error("Error fetching event details:", error);
-        setError("無法加載活動詳情。請稍後再試。");
+        setError("Unable to load event details. Please try again later.");
       } finally {
         setIsLoading(false);
       }
@@ -81,7 +81,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
     }
   }, [params, currentUser, isOrganizer, router]);
 
-  // 發布活動
+  // Publish event
   const handlePublishEvent = async () => {
     if (!event) return;
     
@@ -94,25 +94,25 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
       }
     } catch (error) {
       console.error("Error publishing event:", error);
-      setError("發布活動時出錯。請稍後再試。");
+      setError("Error publishing event. Please try again later.");
     } finally {
       setIsPublishing(false);
     }
   };
 
-  // 獲取活動狀態標籤
+  // Get event status badge
   const getStatusBadge = (status: EventStatus) => {
     switch (status) {
       case EventStatus.DRAFT:
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">草稿</Badge>;
+        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Draft</Badge>;
       case EventStatus.PUBLISHED:
-        return <Badge variant="outline" className="bg-green-100 text-green-800">已發布</Badge>;
+        return <Badge variant="outline" className="bg-green-100 text-green-800">Published</Badge>;
       case EventStatus.CANCELLED:
-        return <Badge variant="outline" className="bg-red-100 text-red-800">已取消</Badge>;
+        return <Badge variant="outline" className="bg-red-100 text-red-800">Cancelled</Badge>;
       case EventStatus.COMPLETED:
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800">已完成</Badge>;
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Completed</Badge>;
       default:
-        return <Badge variant="outline">未知</Badge>;
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
 
@@ -132,7 +132,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             <p className="text-red-600">{error}</p>
           </div>
           <Button variant="outline" onClick={() => router.push("/organizer/events")}>
-            返回活動列表
+            Back to Events List
           </Button>
         </div>
       </div>
@@ -145,12 +145,12 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Card>
             <CardContent className="p-6 text-center">
-              <h2 className="text-lg font-medium text-gray-900">找不到活動</h2>
+              <h2 className="text-lg font-medium text-gray-900">Event Not Found</h2>
               <p className="mt-2 text-gray-500">
-                該活動可能已被刪除或您沒有權限查看。
+                This event may have been deleted or you don't have permission to view it.
               </p>
               <Button variant="outline" className="mt-4" onClick={() => router.push("/organizer/events")}>
-                返回活動列表
+                Back to Events List
               </Button>
             </CardContent>
           </Card>
@@ -165,14 +165,14 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-4">
             <Button variant="outline" onClick={() => router.push("/organizer/events")}>
-              返回
+              Back
             </Button>
             <h1 className="text-3xl font-bold text-gray-900">{event.title}</h1>
             {getStatusBadge(event.status)}
           </div>
           <div className="flex gap-3">
             <Link href={`/organizer/events/${event.id}/edit`}>
-              <Button variant="outline">編輯活動</Button>
+              <Button variant="outline">Edit Event</Button>
             </Link>
             {event.status === EventStatus.DRAFT && (
               <Button 
@@ -180,7 +180,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 onClick={handlePublishEvent}
                 disabled={isPublishing}
               >
-                {isPublishing ? "發布中..." : "發布活動"}
+                {isPublishing ? "Publishing..." : "Publish Event"}
               </Button>
             )}
           </div>
@@ -190,7 +190,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>活動詳情</CardTitle>
+                <CardTitle>Event Details</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="aspect-video w-full mb-6 overflow-hidden rounded-lg">
@@ -203,20 +203,20 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">描述</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Description</h3>
                     <p className="mt-2 text-gray-600">{event.description}</p>
                   </div>
                   
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">時間</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Time</h3>
                     <div className="mt-2 text-gray-600">
-                      <p>開始時間：{new Date(event.start_time).toLocaleString()}</p>
-                      <p>結束時間：{new Date(event.end_time).toLocaleString()}</p>
+                      <p>Start Time: {new Date(event.start_time).toLocaleString()}</p>
+                      <p>End Time: {new Date(event.end_time).toLocaleString()}</p>
                     </div>
                   </div>
                   
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">地點</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Location</h3>
                     <div className="mt-2 text-gray-600">
                       <p>{event.location.name}, {event.location.city}</p>
                       <p>{event.location.address}</p>
@@ -225,7 +225,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                   </div>
                   
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">分類與標籤</h3>
+                    <h3 className="text-lg font-medium text-gray-900">Categories & Tags</h3>
                     <div className="mt-2">
                       <Badge variant="secondary" className="mr-2">{event.category}</Badge>
                       {event.tags.map(tag => (
@@ -241,11 +241,11 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           <div>
             <Card>
               <CardHeader>
-                <CardTitle>贊助方案</CardTitle>
+                <CardTitle>Sponsorship Plans</CardTitle>
               </CardHeader>
               <CardContent>
                 {event.sponsorship_plans.length === 0 ? (
-                  <p className="text-gray-500">尚未設置贊助方案</p>
+                  <p className="text-gray-500">No sponsorship plans set up yet</p>
                 ) : (
                   <div className="space-y-4">
                     {event.sponsorship_plans.map(plan => (
@@ -256,7 +256,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                         </div>
                         <p className="mt-1 text-sm text-gray-600">{plan.description}</p>
                         <div className="mt-3">
-                          <h4 className="text-sm font-medium text-gray-700">權益：</h4>
+                          <h4 className="text-sm font-medium text-gray-700">Benefits:</h4>
                           <ul className="mt-1 text-sm text-gray-600 list-disc list-inside">
                             {plan.benefits.map((benefit, index) => (
                               <li key={index}>{benefit}</li>
@@ -265,7 +265,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                         </div>
                         {(plan.max_sponsors !== undefined && plan.current_sponsors !== undefined) && (
                           <div className="mt-3 text-sm text-gray-600">
-                            贊助商：{plan.current_sponsors} / {plan.max_sponsors}
+                            Sponsors: {plan.current_sponsors} / {plan.max_sponsors}
                           </div>
                         )}
                       </div>
@@ -276,7 +276,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 <div className="mt-6">
                   <Link href={`/organizer/events/${event.id}/plans`}>
                     <Button variant="outline" className="w-full">
-                      管理贊助方案
+                      Manage Sponsorship Plans
                     </Button>
                   </Link>
                 </div>
@@ -285,20 +285,20 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             
             <Card className="mt-6">
               <CardHeader>
-                <CardTitle>活動狀態</CardTitle>
+                <CardTitle>Event Status</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <span className="text-sm text-gray-500">創建時間</span>
+                    <span className="text-sm text-gray-500">Created</span>
                     <p>{new Date(event.created_at).toLocaleString()}</p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-500">最後更新</span>
+                    <span className="text-sm text-gray-500">Last Updated</span>
                     <p>{new Date(event.updated_at).toLocaleString()}</p>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-500">當前狀態</span>
+                    <span className="text-sm text-gray-500">Current Status</span>
                     <div className="mt-1">{getStatusBadge(event.status)}</div>
                   </div>
                 </div>

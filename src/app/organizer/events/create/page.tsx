@@ -26,7 +26,7 @@ import { convertToDatetimeLocalFormat, getBrowserTimezone } from "@/utils/dateUt
 import { TimezoneSelect } from "@/components/ui/timezone-select";
 import ProtectedRouteWrapper from "@/components/auth/ProtectedRouteWrapper";
 
-// 贊助方案類型定義
+// Sponsorship plan type definition
 interface SponsorshipPlanForm {
   id: string;
   title: string;
@@ -52,7 +52,7 @@ export default function CreateEventPage() {
     end_time: "",
     category: "",
     tags: "",
-    timezone: getBrowserTimezone(), // 初始化為瀏覽器時區
+    timezone: getBrowserTimezone(), // Initialize with browser timezone
     location: {
       id: "",
       name: "",
@@ -64,20 +64,20 @@ export default function CreateEventPage() {
       longitude: undefined as number | undefined
     } as Location
   });
-  // 初始化贊助方案
+  // Initialize sponsorship plans
   const [sponsorshipPlans, setSponsorshipPlans] = useState<SponsorshipPlanForm[]>([]);
   const [newBenefit, setNewBenefit] = useState("");
   
   const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
 
-  // 檢查用戶身份
+  // Check user identity
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // 為了確保 localStorage 資料已載入，添加短暫延遲
+        // Add a short delay to ensure localStorage data is loaded
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        // 獲取當前用戶，不再檢查角色
+        // Get current user, no longer checking role
         const user = await getCurrentUser();
         if (user) {
           setCurrentUser(user);
@@ -85,7 +85,7 @@ export default function CreateEventPage() {
         }
       } catch (error) {
         console.error("Auth check error:", error);
-        setError("驗證過程中發生錯誤");
+        setError("Error occurred during authentication");
         setIsLoading(false);
       }
     };
@@ -93,7 +93,7 @@ export default function CreateEventPage() {
     checkAuth();
   }, []);
 
-  // 處理表單輸入變化
+  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
@@ -114,7 +114,7 @@ export default function CreateEventPage() {
     }
   };
 
-  // 處理 Luma 導入對話框開關
+  // Handle Luma import dialog toggle
   const handleLumaImportDialog = (isOpen: boolean) => {
     setLumaImportDialogOpen(isOpen);
     if (!isOpen) {
@@ -123,10 +123,10 @@ export default function CreateEventPage() {
     }
   };
 
-  // 處理從 Luma 導入
+  // Handle import from Luma
   const handleImportFromLuma = async () => {
     if (!lumaUrl || !lumaUrl.includes('lu.ma') || !currentUser) {
-      setImportError("請提供有效的 Luma 活動 URL");
+      setImportError("Please provide a valid Luma event URL");
       return;
     }
 
@@ -134,28 +134,28 @@ export default function CreateEventPage() {
       setIsImporting(true);
       setImportError("");
 
-      // 抓取 Luma 活動數據
+      // Scrape Luma event data
       const eventData = await scrapeLumaEvent(lumaUrl, currentUser.id);
       
       if (!eventData) {
-        setImportError("無法從提供的 URL 導入活動數據");
+        setImportError("Unable to import event data from the provided URL");
         return;
       }
       
-      // 保留 Luma 原始時區，如果沒有則使用 UTC
+      // Keep Luma's original timezone, use UTC if not available
       const timezone = eventData.timezone || 'UTC';
-      console.log('Luma 活動原始時區:', timezone);
+      console.log('Luma event original timezone:', timezone);
       
-      // 將 ISO 格式的時間轉換為 datetime-local 格式用於表單顯示
+      // Convert ISO format time to datetime-local format for form display
       const startTime = convertToDatetimeLocalFormat(eventData.start_time, timezone);
       const endTime = convertToDatetimeLocalFormat(eventData.end_time, timezone);
       
-      console.log('Luma 原始開始時間:', eventData.start_time);
-      console.log('表單顯示開始時間:', startTime);
-      console.log('Luma 原始結束時間:', eventData.end_time);
-      console.log('表單顯示結束時間:', endTime);
+      console.log('Luma original start time:', eventData.start_time);
+      console.log('Form display start time:', startTime);
+      console.log('Luma original end time:', eventData.end_time);
+      console.log('Form display end time:', endTime);
       
-      // 更新表單數據
+      // Update form data
       setFormData({
         title: eventData.title,
         description: eventData.description,
@@ -164,26 +164,26 @@ export default function CreateEventPage() {
         end_time: endTime,
         category: eventData.category,
         tags: eventData.tags.join(", "),
-        timezone: timezone, // 完整保存 Luma 原始時區，不進行格式轉換
+        timezone: timezone, // Fully preserve Luma's original timezone, no format conversion
         location: eventData.location
       });
       
-      // 關閉對話框
+      // Close dialog
       handleLumaImportDialog(false);
     } catch (error) {
-      console.error("Luma 導入錯誤:", error);
-      // 顯示更具體的錯誤信息
+      console.error("Luma import error:", error);
+      // Show more specific error message
       const errorMessage = error instanceof Error 
         ? error.message 
-        : "導入過程中發生未知錯誤";
+        : "Unknown error occurred during import";
       
-      setImportError(`導入失敗: ${errorMessage}`);
+      setImportError(`Import failed: ${errorMessage}`);
     } finally {
       setIsImporting(false);
     }
   };
 
-  // 添加贊助方案
+  // Add sponsorship plan
   const addSponsorshipPlan = () => {
     const newPlan: SponsorshipPlanForm = {
       id: `temp_${Date.now()}`,
@@ -197,7 +197,7 @@ export default function CreateEventPage() {
     setSponsorshipPlans([...sponsorshipPlans, newPlan]);
   };
 
-  // 更新贊助方案
+  // Update sponsorship plan
   const updateSponsorshipPlan = (index: number, field: string, value: string | number) => {
     const updatedPlans = [...sponsorshipPlans];
     updatedPlans[index] = {
@@ -207,14 +207,14 @@ export default function CreateEventPage() {
     setSponsorshipPlans(updatedPlans);
   };
 
-  // 刪除贊助方案
+  // Remove sponsorship plan
   const removeSponsorshipPlan = (index: number) => {
     const updatedPlans = [...sponsorshipPlans];
     updatedPlans.splice(index, 1);
     setSponsorshipPlans(updatedPlans);
   };
 
-  // 添加福利項目
+  // Add benefit item
   const addBenefit = (index: number) => {
     if (newBenefit.trim() === "") return;
     
@@ -228,7 +228,7 @@ export default function CreateEventPage() {
     setNewBenefit("");
   };
 
-  // 刪除福利項目
+  // Remove benefit item
   const removeBenefit = (planIndex: number, benefitIndex: number) => {
     const updatedPlans = [...sponsorshipPlans];
     const updatedBenefits = [...updatedPlans[planIndex].benefits];
@@ -242,38 +242,38 @@ export default function CreateEventPage() {
     setSponsorshipPlans(updatedPlans);
   };
 
-  // 處理表單提交
+  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       setIsLoading(true);
       
-      // 驗證結束時間必須晚於開始時間
+      // Validate that end time must be after start time
       const startTime = new Date(formData.start_time);
       const endTime = new Date(formData.end_time);
       
       if (endTime <= startTime) {
-        setError("結束時間必須晚於開始時間");
+        setError("End time must be after start time");
         setIsLoading(false);
         return;
       }
       
-      // 將標籤字符串轉換為陣列
+      // Convert tags string to array
       const tags = formData.tags
         .split(',')
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
       
-      // 獲取當前用戶信息
+      // Get current user information
       const currentUser = await getCurrentUser();
       if (!currentUser) {
-        setError("未登入或會話已過期");
+        setError("Not logged in or session expired");
         setIsLoading(false);
         return;
       }
       
-      // 準備事件數據 - 不包含贊助計劃，這些會在事件創建後添加
+      // Prepare event data - not including sponsorship plans, these will be added after the event is created
       const eventData = {
         organizer_id: currentUser.id,
         title: formData.title,
@@ -285,10 +285,10 @@ export default function CreateEventPage() {
         status: EventStatus.DRAFT,
         category: formData.category,
         tags,
-        sponsorship_plans: [], // 先設為空數組，在創建事件後再添加贊助計劃
-        timezone: formData.timezone, // 使用表單中的 timezone
-        ownerId: currentUser.id, // 添加所有者ID
-        ownerType: OWNER_TYPE.USER // 添加所有者類型
+        sponsorship_plans: [], // Set as empty array, will add sponsorship plans after event creation
+        timezone: formData.timezone, // Use timezone from form
+        ownerId: currentUser.id, // Add owner ID
+        ownerType: OWNER_TYPE.USER // Add owner type
       };
       
       const createdEvent = await createEvent(eventData);
@@ -296,17 +296,17 @@ export default function CreateEventPage() {
       if (createdEvent) {
         router.push(`/organizer/events/${createdEvent.id}`);
       } else {
-        setError("創建活動時出錯。請稍後再試。");
+        setError("Error creating event. Please try again later.");
       }
     } catch (error) {
       console.error("Error creating event:", error);
-      setError("創建活動時出錯。請稍後再試。");
+      setError("Error creating event. Please try again later.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 時區變更處理
+  // Timezone change handler
   const handleTimezoneChange = (newTimezone: string) => {
     setFormData(prev => ({
       ...prev,
@@ -314,16 +314,16 @@ export default function CreateEventPage() {
     }));
   };
 
-  // 頁面內容組件
+  // Page content component
   const EventCreationContent = () => {
-    // 如果在載入中，顯示載入狀態
+    // If loading, show loading state
     if (isLoading) {
       return (
         <div className="flex justify-center items-center min-h-screen bg-background">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-            <h2 className="text-2xl font-semibold mb-2 text-foreground">載入中...</h2>
-            <p className="text-muted-foreground">正在驗證您的身份</p>
+            <h2 className="text-2xl font-semibold mb-2 text-foreground">Loading...</h2>
+            <p className="text-muted-foreground">Verifying your identity</p>
           </div>
         </div>
       );
@@ -333,13 +333,13 @@ export default function CreateEventPage() {
       <div className="bg-background min-h-screen pt-24 pb-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground">創建新活動</h1>
+            <h1 className="text-3xl font-bold text-foreground">Create New Event</h1>
             <Button variant="outline" onClick={() => router.push("/organizer/events")} className="border-border hover:bg-accent">
-              取消
+              Cancel
             </Button>
           </div>
           
-          {/* 從 Luma 導入按鈕 */}
+          {/* Import from Luma button */}
           <div className="mb-6">
             <Button 
               variant="outline" 
@@ -349,17 +349,17 @@ export default function CreateEventPage() {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
-              從 Luma 導入
+              Import from Luma
             </Button>
           </div>
 
-          {/* Luma 導入對話框 */}
+          {/* Luma import dialog */}
           <Dialog open={lumaImportDialogOpen} onOpenChange={handleLumaImportDialog}>
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>從 Luma 導入活動</DialogTitle>
+                <DialogTitle>Import Event from Luma</DialogTitle>
                 <DialogDescription>
-                  輸入 Luma 活動網址以自動填充活動詳情
+                  Enter a Luma event URL to automatically populate event details
                 </DialogDescription>
               </DialogHeader>
               
@@ -372,10 +372,10 @@ export default function CreateEventPage() {
               
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="luma-url">Luma 活動 URL</Label>
+                  <Label htmlFor="luma-url">Luma Event URL</Label>
                   <Input
                     id="luma-url"
-                    placeholder="例如：https://lu.ma/aiuc25-designer-day"
+                    placeholder="Example: https://lu.ma/aiuc25-designer-day"
                     value={lumaUrl}
                     onChange={(e) => setLumaUrl(e.target.value)}
                     disabled={isImporting}
@@ -390,7 +390,7 @@ export default function CreateEventPage() {
                   onClick={() => handleLumaImportDialog(false)}
                   disabled={isImporting}
                 >
-                  取消
+                  Cancel
                 </Button>
                 <Button
                   type="button"
@@ -399,7 +399,7 @@ export default function CreateEventPage() {
                 >
                   {isImporting ? (
                     <>
-                      <span className="opacity-0">導入</span>
+                      <span className="opacity-0">Import</span>
                       <span className="absolute inset-0 flex items-center justify-center">
                         <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -407,7 +407,7 @@ export default function CreateEventPage() {
                         </svg>
                       </span>
                     </>
-                  ) : "導入"}
+                  ) : "Import"}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -431,7 +431,7 @@ export default function CreateEventPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="title" className="text-foreground">活動標題</Label>
+                    <Label htmlFor="title" className="text-foreground">Event Title</Label>
                     <Input
                       id="title"
                       name="title"
@@ -443,7 +443,7 @@ export default function CreateEventPage() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="description" className="text-foreground">活動描述</Label>
+                    <Label htmlFor="description" className="text-foreground">Event Description</Label>
                     <Textarea
                       id="description"
                       name="description"
@@ -456,7 +456,7 @@ export default function CreateEventPage() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="cover_image" className="text-foreground">封面圖片 URL</Label>
+                    <Label htmlFor="cover_image" className="text-foreground">Cover Image URL</Label>
                     <Input
                       id="cover_image"
                       name="cover_image"
@@ -469,9 +469,9 @@ export default function CreateEventPage() {
                       <div className="mt-2 rounded-md overflow-hidden h-36">
                         <img 
                           src={formData.cover_image} 
-                          alt="封面預覽" 
+                          alt="Cover preview" 
                           className="w-full h-full object-cover"
-                          onError={(e) => (e.target as HTMLImageElement).src = "https://via.placeholder.com/800x400?text=預覽不可用"}
+                          onError={(e) => (e.target as HTMLImageElement).src = "https://via.placeholder.com/800x400?text=Preview Unavailable"}
                         />
                       </div>
                     )}
@@ -479,7 +479,7 @@ export default function CreateEventPage() {
                   
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="timezone" className="text-foreground">活動時區</Label>
+                      <Label htmlFor="timezone" className="text-foreground">Event Timezone</Label>
                       <div className="mt-1">
                         <TimezoneSelect 
                           value={formData.timezone} 
@@ -488,13 +488,13 @@ export default function CreateEventPage() {
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
                         <Clock className="inline-block mr-1 h-3 w-3" />
-                        選擇活動的主要時區，參與者將根據此時區查看活動時間
+                        Select the primary timezone for the event, participants will view event times based on this timezone
                       </p>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="start_time" className="text-foreground">開始時間</Label>
+                        <Label htmlFor="start_time" className="text-foreground">Start Time</Label>
                         <Input
                           id="start_time"
                           name="start_time"
@@ -507,7 +507,7 @@ export default function CreateEventPage() {
                       </div>
                       
                       <div>
-                        <Label htmlFor="end_time" className="text-foreground">結束時間</Label>
+                        <Label htmlFor="end_time" className="text-foreground">End Time</Label>
                         <Input
                           id="end_time"
                           name="end_time"
@@ -523,7 +523,7 @@ export default function CreateEventPage() {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="category" className="text-foreground">分類</Label>
+                      <Label htmlFor="category" className="text-foreground">Category</Label>
                       <Input
                         id="category"
                         name="category"
@@ -535,13 +535,13 @@ export default function CreateEventPage() {
                     </div>
                     
                     <div>
-                      <Label htmlFor="tags" className="text-foreground">標籤（以逗號分隔）</Label>
+                      <Label htmlFor="tags" className="text-foreground">Tags (comma separated)</Label>
                       <Input
                         id="tags"
                         name="tags"
                         value={formData.tags}
                         onChange={handleInputChange}
-                        placeholder="科技, 創新, AI"
+                        placeholder="Technology, Innovation, AI"
                         className="mt-1 bg-background border-border"
                       />
                     </div>
@@ -558,16 +558,16 @@ export default function CreateEventPage() {
                   />
                   
                   <div className="mt-6 pt-6 border-t border-border">
-                    <h3 className="text-lg font-medium text-foreground mb-4">贊助方案</h3>
+                    <h3 className="text-lg font-medium text-foreground mb-4">Sponsorship Plans</h3>
                     
                     {sponsorshipPlans.length === 0 ? (
                       <div className="text-center py-8 border border-dashed border-border rounded-md">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-muted-foreground mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a4 4 0 00-4-4H8a4 4 0 00-4 4v12h8zm0 0V5.5A2.5 2.5 0 0114.5 3h1A2.5 2.5 0 0118 5.5V8m-6 0h6m0 0v12a2 2 0 01-2 2h-4a2 2 0 01-2-2z" />
                         </svg>
-                        <p className="text-muted-foreground mb-4">您還沒有添加任何贊助方案</p>
+                        <p className="text-muted-foreground mb-4">You haven&apos;t added any sponsorship plans yet</p>
                         <Button onClick={addSponsorshipPlan} type="button">
-                          添加贊助方案
+                          Add Sponsorship Plan
                         </Button>
                       </div>
                     ) : (
@@ -578,30 +578,30 @@ export default function CreateEventPage() {
                               type="button"
                               onClick={() => removeSponsorshipPlan(index)}
                               className="absolute right-3 top-3 text-muted-foreground hover:text-destructive"
-                              aria-label="刪除贊助方案"
+                              aria-label="Delete sponsorship plan"
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             </button>
                             
-                            <h4 className="text-md font-semibold mb-4">贊助方案 {index + 1}</h4>
+                            <h4 className="text-md font-semibold mb-4">Sponsorship Plan {index + 1}</h4>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                               <div>
-                                <Label htmlFor={`plan-title-${index}`}>方案名稱</Label>
+                                <Label htmlFor={`plan-title-${index}`}>Plan Name</Label>
                                 <Input
                                   id={`plan-title-${index}`}
                                   value={plan.title}
                                   onChange={(e) => updateSponsorshipPlan(index, 'title', e.target.value)}
-                                  placeholder="鑽石贊助商"
+                                  placeholder="Diamond Sponsor"
                                   required
                                   className="mt-1 bg-background border-border"
                                 />
                               </div>
                               
                               <div>
-                                <Label htmlFor={`plan-price-${index}`}>價格 (TWD)</Label>
+                                <Label htmlFor={`plan-price-${index}`}>Price (TWD)</Label>
                                 <Input
                                   id={`plan-price-${index}`}
                                   type="number"
@@ -616,12 +616,12 @@ export default function CreateEventPage() {
                             </div>
                             
                             <div className="mb-4">
-                              <Label htmlFor={`plan-description-${index}`}>方案描述</Label>
+                              <Label htmlFor={`plan-description-${index}`}>Plan Description</Label>
                               <Textarea
                                 id={`plan-description-${index}`}
                                 value={plan.description}
                                 onChange={(e) => updateSponsorshipPlan(index, 'description', e.target.value)}
-                                placeholder="提供最高級別的品牌曝光和獨家權益..."
+                                placeholder="Provides the highest level of brand exposure and exclusive benefits..."
                                 rows={2}
                                 required
                                 className="mt-1 bg-background border-border"
@@ -629,7 +629,7 @@ export default function CreateEventPage() {
                             </div>
                             
                             <div className="mb-4">
-                              <Label htmlFor={`plan-max-sponsors-${index}`}>最大贊助商數量</Label>
+                              <Label htmlFor={`plan-max-sponsors-${index}`}>Maximum Number of Sponsors</Label>
                               <Input
                                 id={`plan-max-sponsors-${index}`}
                                 type="number"
@@ -642,7 +642,7 @@ export default function CreateEventPage() {
                             </div>
                             
                             <div>
-                              <Label>權益與福利</Label>
+                              <Label>Benefits</Label>
                               <div className="mt-2 space-y-2">
                                 {plan.benefits.map((benefit, benefitIndex) => (
                                   <div key={benefitIndex} className="flex items-center gap-2">
@@ -652,7 +652,7 @@ export default function CreateEventPage() {
                                         type="button"
                                         onClick={() => removeBenefit(index, benefitIndex)}
                                         className="ml-auto text-muted-foreground hover:text-destructive"
-                                        aria-label="移除權益"
+                                        aria-label="Remove benefit"
                                       >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -664,7 +664,7 @@ export default function CreateEventPage() {
                                 
                                 <div className="flex items-center gap-2">
                                   <Input
-                                    placeholder="如：主舞台演講機會、VIP晚宴席位等"
+                                    placeholder="E.g.: Main stage speaking opportunity, VIP dinner seats, etc."
                                     value={newBenefit}
                                     onChange={(e) => setNewBenefit(e.target.value)}
                                     className="flex-grow bg-background border-border"
@@ -675,7 +675,7 @@ export default function CreateEventPage() {
                                     onClick={() => addBenefit(index)}
                                     className="shrink-0"
                                   >
-                                    添加
+                                    Add
                                   </Button>
                                 </div>
                               </div>
@@ -692,7 +692,7 @@ export default function CreateEventPage() {
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                           </svg>
-                          添加另一個贊助方案
+                          Add Another Sponsorship Plan
                         </Button>
                       </div>
                     )}
@@ -706,7 +706,7 @@ export default function CreateEventPage() {
                     onClick={() => router.push("/organizer/events")}
                     className="border-border hover:bg-accent"
                   >
-                    取消
+                    Cancel
                   </Button>
                   <Button
                     type="submit"
@@ -715,7 +715,7 @@ export default function CreateEventPage() {
                   >
                     {isLoading ? (
                       <>
-                        <span className="opacity-0">創建活動</span>
+                        <span className="opacity-0">Create Event</span>
                         <span className="absolute inset-0 flex items-center justify-center">
                           <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -723,7 +723,7 @@ export default function CreateEventPage() {
                           </svg>
                         </span>
                       </>
-                    ) : "創建活動"}
+                    ) : "Create Event"}
                   </Button>
                 </div>
               </form>
@@ -734,7 +734,7 @@ export default function CreateEventPage() {
     );
   };
 
-  // 使用 ProtectedRouteWrapper 包裝頁面
+  // Wrap page with ProtectedRouteWrapper
   return (
     <ProtectedRouteWrapper requiredView={VIEW_TYPE.EVENT_ORGANIZER}>
       <EventCreationContent />

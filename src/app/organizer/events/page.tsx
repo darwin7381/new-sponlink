@@ -16,27 +16,27 @@ export default function ManageEventsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 獲取活動數據
+  // Get event data
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        // 獲取當前用戶
+        // Get current user
         const user = await getCurrentUser();
         if (!user) {
           return;
         }
           
-        // 獲取活動數據
+        // Get event data
         try {
           const eventsData = await getOrganizerEvents(user.id);
           setEvents(eventsData);
         } catch (error) {
           console.error("Error fetching events:", error);
-          setError("無法加載您的活動。請稍後再試。");
+          setError("Unable to load your events. Please try again later.");
         }
       } catch (error) {
         console.error("Error fetching user:", error);
-        setError("獲取用戶資料時發生錯誤");
+        setError("Error occurred while retrieving user data");
       } finally {
         setIsLoading(false);
       }
@@ -45,38 +45,38 @@ export default function ManageEventsPage() {
     fetchEvents();
   }, []);
 
-  // 獲取活動狀態標籤
+  // Get event status badge
   const getStatusBadge = (status: EventStatus) => {
     switch (status) {
       case EventStatus.DRAFT:
-        return <Badge className="bg-yellow-600/20 text-yellow-600 dark:bg-yellow-300/20 dark:text-yellow-300 border-yellow-600/30 dark:border-yellow-300/30">草稿</Badge>;
+        return <Badge className="bg-yellow-600/20 text-yellow-600 dark:bg-yellow-300/20 dark:text-yellow-300 border-yellow-600/30 dark:border-yellow-300/30">Draft</Badge>;
       case EventStatus.PUBLISHED:
-        return <Badge className="bg-emerald-600/20 text-emerald-600 dark:bg-emerald-300/20 dark:text-emerald-300 border-emerald-600/30 dark:border-emerald-300/30">已發布</Badge>;
+        return <Badge className="bg-emerald-600/20 text-emerald-600 dark:bg-emerald-300/20 dark:text-emerald-300 border-emerald-600/30 dark:border-emerald-300/30">Published</Badge>;
       case EventStatus.CANCELLED:
-        return <Badge className="bg-red-600/20 text-red-600 dark:bg-red-300/20 dark:text-red-300 border-red-600/30 dark:border-red-300/30">已取消</Badge>;
+        return <Badge className="bg-red-600/20 text-red-600 dark:bg-red-300/20 dark:text-red-300 border-red-600/30 dark:border-red-300/30">Cancelled</Badge>;
       case EventStatus.COMPLETED:
-        return <Badge className="bg-blue-600/20 text-blue-600 dark:bg-blue-300/20 dark:text-blue-300 border-blue-600/30 dark:border-blue-300/30">已完成</Badge>;
+        return <Badge className="bg-blue-600/20 text-blue-600 dark:bg-blue-300/20 dark:text-blue-300 border-blue-600/30 dark:border-blue-300/30">Completed</Badge>;
       default:
-        return <Badge>未知</Badge>;
+        return <Badge>Unknown</Badge>;
     }
   };
 
-  // 按狀態過濾活動
+  // Filter events by status
   const draftEvents = events.filter(event => event.status === EventStatus.DRAFT);
   const publishedEvents = events.filter(event => event.status === EventStatus.PUBLISHED);
   const completedEvents = events.filter(event => 
     event.status === EventStatus.COMPLETED || event.status === EventStatus.CANCELLED
   );
 
-  // 頁面內容組件
+  // Page content component
   const EventsPageContent = () => {
     if (isLoading) {
       return (
         <div className="flex justify-center items-center min-h-screen bg-background">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-            <h2 className="text-2xl font-semibold mb-2 text-foreground">載入中...</h2>
-            <p className="text-muted-foreground">正在獲取您的活動資料</p>
+            <h2 className="text-2xl font-semibold mb-2 text-foreground">Loading...</h2>
+            <p className="text-muted-foreground">Retrieving your event data</p>
           </div>
         </div>
       );
@@ -86,10 +86,10 @@ export default function ManageEventsPage() {
       <div className="bg-background min-h-screen pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground">管理活動</h1>
+            <h1 className="text-3xl font-bold text-foreground">Manage Events</h1>
             <Link href="/organizer/events/create">
               <Button variant="default">
-                創建新活動
+                Create New Event
               </Button>
             </Link>
           </div>
@@ -108,22 +108,22 @@ export default function ManageEventsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-medium text-foreground">您還沒有創建任何活動</h2>
+                <h2 className="text-xl font-medium text-foreground">You haven&apos;t created any events yet</h2>
                 <p className="mt-2 text-muted-foreground">
-                  點擊上方的「創建新活動」按鈕開始創建您的第一個活動。
+                  Click the &quot;Create New Event&quot; button above to create your first event.
                 </p>
                 <Link href="/organizer/events/create" className="mt-6 inline-block">
-                  <Button>開始創建活動</Button>
+                  <Button>Start Creating Event</Button>
                 </Link>
               </CardContent>
             </Card>
           ) : (
             <Tabs defaultValue="all" className="w-full">
               <TabsList className="mb-6 bg-card border border-border rounded-lg p-1">
-                <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">所有活動 ({events.length})</TabsTrigger>
-                <TabsTrigger value="draft" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">草稿 ({draftEvents.length})</TabsTrigger>
-                <TabsTrigger value="published" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">已發布 ({publishedEvents.length})</TabsTrigger>
-                <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">已完成 ({completedEvents.length})</TabsTrigger>
+                <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All Events ({events.length})</TabsTrigger>
+                <TabsTrigger value="draft" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Drafts ({draftEvents.length})</TabsTrigger>
+                <TabsTrigger value="published" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Published ({publishedEvents.length})</TabsTrigger>
+                <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Completed ({completedEvents.length})</TabsTrigger>
               </TabsList>
               
               <TabsContent value="all">
@@ -148,7 +148,7 @@ export default function ManageEventsPage() {
     );
   };
 
-  // 使用 ProtectedRouteWrapper 包裝頁面
+  // Wrap page with ProtectedRouteWrapper
   return (
     <ProtectedRouteWrapper requiredView={VIEW_TYPE.EVENT_ORGANIZER}>
       <EventsPageContent />
@@ -156,7 +156,7 @@ export default function ManageEventsPage() {
   );
 }
 
-// 活動列表組件
+// Event list component
 function EventList({ 
   events, 
   getStatusBadge 
@@ -199,7 +199,7 @@ function EventList({
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
-                    {event.sponsorship_plans.length} 個贊助方案
+                    {event.sponsorship_plans.length} sponsorship plans
                   </span>
                   {event.location && (
                     <span className="inline-flex items-center text-sm text-muted-foreground">
@@ -219,7 +219,7 @@ function EventList({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
-                      查看詳情
+                      View Details
                     </Button>
                   </Link>
                   <Link href={`/organizer/events/${event.id}/edit`}>
@@ -227,7 +227,7 @@ function EventList({
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                      編輯活動
+                      Edit Event
                     </Button>
                   </Link>
                   <Link href={`/organizer/events/${event.id}/plans`}>
@@ -235,7 +235,7 @@ function EventList({
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 group-hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                       </svg>
-                      管理贊助方案
+                      Manage Sponsorship Plans
                     </Button>
                   </Link>
                 </div>

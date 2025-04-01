@@ -37,7 +37,7 @@ export default function ProfilePage() {
         }
         setUser(currentUser);
         
-        // 獲取用戶詳細資料
+        // Get user profile details
         const profile = await getUserProfile(
           currentUser.id, 
           currentUser.role.toLowerCase()
@@ -68,8 +68,8 @@ export default function ProfilePage() {
     return (
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium text-foreground">基本資訊</h3>
-          <p className="mt-1 text-sm text-muted-foreground">更新您的個人資料和聯繫方式</p>
+          <h3 className="text-lg font-medium text-foreground">Basic Information</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Update your profile and contact information</p>
         </div>
         
         <div className="flex items-center space-x-6">
@@ -83,10 +83,10 @@ export default function ProfilePage() {
           <div>
             <h4 className="text-md font-medium text-foreground">{user.email}</h4>
             <p className="text-sm text-muted-foreground">
-              {user.role === USER_ROLES.ORGANIZER ? '活動組織者' : '贊助商'}
+              {user.role === USER_ROLES.ORGANIZER ? 'Event Organizer' : 'Sponsor'}
             </p>
             <p className="text-sm text-muted-foreground">
-              註冊於: {new Date(user.created_at).toLocaleDateString()}
+              Registered on: {new Date(user.created_at).toLocaleDateString()}
             </p>
           </div>
         </div>
@@ -94,7 +94,7 @@ export default function ProfilePage() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-foreground">
-              電子郵件
+              Email
             </label>
             <input
               type="email"
@@ -108,7 +108,7 @@ export default function ProfilePage() {
           
           <div>
             <label htmlFor="language" className="block text-sm font-medium text-foreground">
-              偏好語言
+              Preferred Language
             </label>
             <select
               id="language"
@@ -123,7 +123,7 @@ export default function ProfilePage() {
           
           <div className="sm:col-span-2">
             <label htmlFor="bio" className="block text-sm font-medium text-foreground">
-              簡介
+              Bio
             </label>
             <textarea
               id="bio"
@@ -140,7 +140,7 @@ export default function ProfilePage() {
             type="button"
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
-            保存變更
+            Save Changes
           </button>
         </div>
       </div>
@@ -153,8 +153,8 @@ export default function ProfilePage() {
     return (
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium text-foreground">活動管理</h3>
-          <p className="mt-1 text-sm text-muted-foreground">查看和管理您的活動</p>
+          <h3 className="text-lg font-medium text-foreground">Event Management</h3>
+          <p className="mt-1 text-sm text-muted-foreground">View and manage your events</p>
         </div>
         
         <div className="bg-card shadow overflow-hidden sm:rounded-md">
@@ -171,14 +171,14 @@ export default function ProfilePage() {
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
                             : 'bg-muted text-muted-foreground'
                         }`}>
-                          {event.status === 'upcoming' ? '即將到來' : '已完成'}
+                          {event.status === 'upcoming' ? 'Upcoming' : 'Completed'}
                         </p>
                       </div>
                     </div>
                     <div className="mt-2 sm:flex sm:justify-between">
                       <div className="sm:flex">
                         <p className="flex items-center text-sm text-muted-foreground">
-                          日期: {event.date}
+                          Date: {event.date}
                         </p>
                       </div>
                     </div>
@@ -187,36 +187,36 @@ export default function ProfilePage() {
               ))
             ) : (
               <li className="px-4 py-4 sm:px-6 text-center text-muted-foreground">
-                尚未創建任何活動
+                No events created yet
               </li>
             )}
           </ul>
         </div>
         
         <div>
-          <h4 className="text-md font-medium text-foreground mb-2">統計數據</h4>
+          <h4 className="text-md font-medium text-foreground mb-2">Statistics</h4>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="bg-card overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-muted-foreground truncate">總活動數</dt>
+                <dt className="text-sm font-medium text-muted-foreground truncate">Total Events</dt>
                 <dd className="mt-1 text-3xl font-semibold text-foreground">{profileData.statistics?.totalEvents || 0}</dd>
               </div>
             </div>
             <div className="bg-card overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-muted-foreground truncate">即將到來的活動</dt>
+                <dt className="text-sm font-medium text-muted-foreground truncate">Upcoming Events</dt>
                 <dd className="mt-1 text-3xl font-semibold text-foreground">{profileData.statistics?.upcomingEvents || 0}</dd>
               </div>
             </div>
             <div className="bg-card overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-muted-foreground truncate">平均參與者</dt>
+                <dt className="text-sm font-medium text-muted-foreground truncate">Average Attendees</dt>
                 <dd className="mt-1 text-3xl font-semibold text-foreground">{profileData.statistics?.averageAttendees || 0}</dd>
               </div>
             </div>
             <div className="bg-card overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-muted-foreground truncate">總收入</dt>
+                <dt className="text-sm font-medium text-muted-foreground truncate">Total Revenue</dt>
                 <dd className="mt-1 text-3xl font-semibold text-foreground">{profileData.statistics?.totalRevenue || '$0'}</dd>
               </div>
             </div>
@@ -232,8 +232,8 @@ export default function ProfilePage() {
     return (
       <div className="space-y-6">
         <div>
-          <h3 className="text-lg font-medium text-foreground">贊助詳情</h3>
-          <p className="mt-1 text-sm text-muted-foreground">查看和管理您的贊助</p>
+          <h3 className="text-lg font-medium text-foreground">Sponsorship Details</h3>
+          <p className="mt-1 text-sm text-muted-foreground">View and manage your sponsorships</p>
         </div>
         
         <div className="bg-card shadow overflow-hidden sm:rounded-md">
@@ -250,14 +250,14 @@ export default function ProfilePage() {
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
                             : 'bg-muted text-muted-foreground'
                         }`}>
-                          {sponsorship.status === 'confirmed' ? '已確認' : '處理中'}
+                          {sponsorship.status === 'confirmed' ? 'Confirmed' : 'Processing'}
                         </p>
                       </div>
                     </div>
                     <div className="mt-2 sm:flex sm:justify-between">
                       <div className="sm:flex">
                         <p className="flex items-center text-sm text-muted-foreground">
-                          贊助金額: {sponsorship.amount}
+                          Sponsorship Amount: {sponsorship.amount}
                         </p>
                       </div>
                     </div>
@@ -266,36 +266,36 @@ export default function ProfilePage() {
               ))
             ) : (
               <li className="px-4 py-4 sm:px-6 text-center text-muted-foreground">
-                尚未進行任何贊助
+                No sponsorships yet
               </li>
             )}
           </ul>
         </div>
         
         <div>
-          <h4 className="text-md font-medium text-foreground mb-2">統計數據</h4>
+          <h4 className="text-md font-medium text-foreground mb-2">Statistics</h4>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="bg-card overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-muted-foreground truncate">總贊助數</dt>
+                <dt className="text-sm font-medium text-muted-foreground truncate">Total Sponsorships</dt>
                 <dd className="mt-1 text-3xl font-semibold text-foreground">{profileData.analytics?.totalSponsored || 0}</dd>
               </div>
             </div>
             <div className="bg-card overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-muted-foreground truncate">活躍贊助</dt>
+                <dt className="text-sm font-medium text-muted-foreground truncate">Active Sponsorships</dt>
                 <dd className="mt-1 text-3xl font-semibold text-foreground">{profileData.analytics?.activeSponsorship || 0}</dd>
               </div>
             </div>
             <div className="bg-card overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-muted-foreground truncate">總投資</dt>
+                <dt className="text-sm font-medium text-muted-foreground truncate">Total Investment</dt>
                 <dd className="mt-1 text-3xl font-semibold text-foreground">{profileData.analytics?.totalInvestment || '$0'}</dd>
               </div>
             </div>
             <div className="bg-card overflow-hidden shadow rounded-lg">
               <div className="px-4 py-5 sm:p-6">
-                <dt className="text-sm font-medium text-muted-foreground truncate">平均投資回報率</dt>
+                <dt className="text-sm font-medium text-muted-foreground truncate">Average ROI</dt>
                 <dd className="mt-1 text-3xl font-semibold text-foreground">{profileData.analytics?.averageRoi || '0%'}</dd>
               </div>
             </div>
@@ -317,7 +317,7 @@ export default function ProfilePage() {
         }
         return (
           <div className="text-center p-8">
-            <p>此用戶類型無法使用個人資料詳細信息。</p>
+            <p>Profile details are not available for this user type.</p>
           </div>
         );
       default:
@@ -330,9 +330,9 @@ export default function ProfilePage() {
       <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6 lg:px-8">
         <div className="bg-card rounded-lg shadow-md overflow-hidden">
           <div className="px-4 py-5 sm:px-6 bg-muted border-b border-border">
-            <h1 className="text-xl font-bold text-foreground">我的個人資料</h1>
+            <h1 className="text-xl font-bold text-foreground">My Profile</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              管理您的帳戶信息和偏好設置
+              Manage your account information and preferences
             </p>
           </div>
           
@@ -347,7 +347,7 @@ export default function ProfilePage() {
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                   }`}
                 >
-                  基本信息
+                  Basic Information
                 </button>
                 <button
                   onClick={() => setActiveTab('details')}
@@ -357,7 +357,7 @@ export default function ProfilePage() {
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border'
                   }`}
                 >
-                  {user.role === USER_ROLES.ORGANIZER ? '活動管理' : '贊助詳情'}
+                  {user.role === USER_ROLES.ORGANIZER ? 'Event Management' : 'Sponsorship Details'}
                 </button>
               </nav>
             </div>
