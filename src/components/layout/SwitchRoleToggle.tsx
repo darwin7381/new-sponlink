@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 interface SwitchRoleToggleProps {
   currentRole: 'organizer' | 'sponsor';
@@ -19,29 +19,29 @@ export default function SwitchRoleToggle({ currentRole }: SwitchRoleToggleProps)
     }
   };
 
+  // 使用原網站的SVG實現
   return (
-    <div className="flex items-center justify-end px-4">
-      <Button 
-        onClick={handleSwitch}
-        variant="outline"
-        className="text-sm py-1 h-auto flex items-center gap-2"
+    <div className="flex items-center">
+      <Link 
+        href={currentRole === 'organizer' ? '/sponsor' : '/organizer'}
+        className="flex items-center text-white hover:text-white/90 transition-colors px-4 py-2"
       >
-        <span className="hidden sm:inline">切換到</span>
-        {currentRole === 'organizer' ? '贊助商中心' : '主辦方中心'}
         <svg 
           xmlns="http://www.w3.org/2000/svg" 
-          width="16" 
-          height="16" 
-          viewBox="0 0 24 24" 
+          className="h-5 w-5 mr-2" 
           fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
         >
-          <path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3Z" />
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth="2" 
+            d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+          />
         </svg>
-      </Button>
+        {currentRole === 'organizer' ? '切換到贊助商' : '切換到主辦方'}
+      </Link>
     </div>
   );
 } 

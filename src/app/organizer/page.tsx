@@ -48,12 +48,40 @@ export default function OrganizerPage() {
 
   return (
     <div className="bg-background min-h-screen">
-      {/* 頂部導航欄 */}
-      <div className="bg-primary text-primary-foreground">
+      {/* 頂部導航欄 - 使用綠色背景，匹配截圖 */}
+      <div className="bg-[#4c9f70] text-white">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-between py-4">
-            <h1 className="text-xl font-bold px-4">主辦方中心</h1>
-            <SwitchRoleToggle currentRole="organizer" />
+          <div className="flex items-center justify-between py-4 px-4">
+            <div className="flex items-center space-x-8">
+              <h1 className="text-xl font-bold">主辦方中心</h1>
+              <nav className="hidden md:flex space-x-4">
+                <Link href="/organizer" className="py-1 px-2 border-b-2 border-white">我的活動</Link>
+                <Link href="/organizer/create" className="py-1 px-2 border-b-2 border-transparent hover:border-white/60">創建活動</Link>
+                <Link href="/organizer/applications" className="py-1 px-2 border-b-2 border-transparent hover:border-white/60">贊助申請</Link>
+              </nav>
+            </div>
+            <div className="flex items-center">
+              <Link 
+                href="/sponsor"
+                className="flex items-center text-white hover:text-white/90 transition-colors px-4 py-2"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-5 w-5 mr-2" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth="2" 
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                  />
+                </svg>
+                切換到贊助商
+              </Link>
+            </div>
           </div>
         </div>
       </div>
