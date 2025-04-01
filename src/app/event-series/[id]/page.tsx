@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { format } from 'date-fns';
+import Link from 'next/link';
 import { EventSeries, Event } from "@/types/event";
 import { getEventSeriesById, getEventsInSeries, getMainEventInSeries } from "@/services/eventSeriesService";
 
