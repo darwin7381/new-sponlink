@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { Plus, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MapboxEventMap from '@/components/maps/MapboxEventMap';
 import { Event } from '@/types/event';
+import SubmitEventDialog from './SubmitEventDialog';
 
 interface EventCalendarPanelProps {
   events: Event[];
@@ -17,6 +17,7 @@ interface EventCalendarPanelProps {
   handleNextMonth: () => void;
   setSelectedDate: (date: Date | null) => void;
   setShowMode: (mode: "upcoming" | "past") => void;
+  seriesId: string;
 }
 
 const EventCalendarPanel: React.FC<EventCalendarPanelProps> = ({
@@ -27,24 +28,31 @@ const EventCalendarPanel: React.FC<EventCalendarPanelProps> = ({
   handlePrevMonth,
   handleNextMonth,
   setSelectedDate,
-  setShowMode
+  setShowMode,
+  seriesId
 }) => {
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
+
   return (
     <div className="w-full md:w-72 flex-shrink-0">
       {/* 提交活動按鈕 */}
-      <div className="bg-card border border-border rounded-md p-4 text-center">
-        <h3 className="font-medium mb-2 text-sm">Submit your event to this calendar</h3>
-        <p className="text-xs text-muted-foreground mb-3">Want to add your event to this series?</p>
-        <Link href="/create-event">
-          <Button 
-            className="w-full text-sm h-9"
-            variant="outline"
-          >
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
-            Submit Event
-          </Button>
-        </Link>
+      <div className="text-center">
+        <Button 
+          className="w-full text-sm h-9"
+          variant="outline"
+          onClick={() => setSubmitDialogOpen(true)}
+        >
+          <Plus className="h-3.5 w-3.5 mr-1.5" />
+          Submit Event
+        </Button>
       </div>
+      
+      {/* 提交活動彈窗 */}
+      <SubmitEventDialog 
+        isOpen={submitDialogOpen}
+        onOpenChange={setSubmitDialogOpen}
+        seriesId={seriesId}
+      />
       
       {/* 固定容器 - 包含日曆和地圖 */}
       <div className="sticky top-20 mt-6 space-y-6">

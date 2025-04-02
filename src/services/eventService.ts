@@ -95,7 +95,8 @@ export const createEvent = async (eventData: Partial<Event>): Promise<Event> => 
       tags: eventData.tags || [],
       sponsorship_plans: [],
       created_at: now,
-      updated_at: now
+      updated_at: now,
+      event_series_id: eventData.event_series_id
     };
     
     // Add to mock data

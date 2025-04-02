@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { createEvent } from "@/services/eventService";
+import { addEventToSeries } from "@/services/eventSeriesService";
 import { EventStatus, Location, OWNER_TYPE } from "@/types/event";
 import { getCurrentUser, VIEW_TYPE } from "@/lib/services/authService";
 import LocationSelector from "@/components/maps/LocationSelector";
@@ -38,6 +39,7 @@ interface SponsorshipPlanForm {
 
 export default function CreateEventPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [lumaImportDialogOpen, setLumaImportDialogOpen] = useState(false);
@@ -69,6 +71,7 @@ export default function CreateEventPage() {
   const [newBenefit, setNewBenefit] = useState("");
   
   const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
+  const [seriesId, setSeriesId] = useState<string | null>(null);
 
   // Check user identity
   useEffect(() => {
@@ -92,6 +95,14 @@ export default function CreateEventPage() {
     
     checkAuth();
   }, []);
+
+  // Get series ID from URL parameters
+  useEffect(() => {
+    const seriesIdParam = searchParams.get('seriesId');
+    if (seriesIdParam) {
+      setSeriesId(seriesIdParam);
+    }
+  }, [searchParams]);
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -288,13 +299,21 @@ export default function CreateEventPage() {
         sponsorship_plans: [], // Set as empty array, will add sponsorship plans after event creation
         timezone: formData.timezone, // Use timezone from form
         ownerId: currentUser.id, // Add owner ID
-        ownerType: OWNER_TYPE.USER // Add owner type
+        ownerType: OWNER_TYPE.USER, // Add owner type
+        event_series_id: seriesId || undefined // 添加活动系列ID
       };
       
       const createdEvent = await createEvent(eventData);
       
       if (createdEvent) {
-        router.push(`/organizer/events/${createdEvent.id}`);
+        // 如果有系列ID，将事件添加到系列中
+        if (seriesId) {
+          await addEventToSeries(seriesId, createdEvent.id);
+          // 创建完成后跳转回系列页面
+          router.push(`/event-series/${seriesId}`);
+        } else {
+          router.push(`/organizer/events/${createdEvent.id}`);
+        }
       } else {
         setError("Error creating event. Please try again later.");
       }
@@ -333,8 +352,14 @@ export default function CreateEventPage() {
       <div className="bg-background min-h-screen pt-24 pb-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Create New Event</h1>
-            <Button variant="outline" onClick={() => router.push("/organizer/events")} className="border-border hover:bg-accent">
+            <h1 className="text-3xl font-bold text-foreground">
+              {seriesId ? "Submit Event to Series" : "Create New Event"}
+            </h1>
+            <Button 
+              variant="outline" 
+              onClick={() => seriesId ? router.push(`/event-series/${seriesId}`) : router.push("/organizer/events")} 
+              className="border-border hover:bg-accent"
+            >
               Cancel
             </Button>
           </div>

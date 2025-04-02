@@ -380,6 +380,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
             handleNextMonth={handleNextMonth}
             setSelectedDate={setSelectedDate}
             setShowMode={setShowMode}
+            seriesId={seriesId}
           />
         </div>
       </div>

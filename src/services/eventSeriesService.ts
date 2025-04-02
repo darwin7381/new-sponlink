@@ -111,4 +111,30 @@ export const getFeaturedEventSeries = async (limit: number = 3): Promise<EventSe
     console.error('Error getting featured event series:', error);
     throw error;
   }
+};
+
+/**
+ * 将事件添加到活动系列中
+ */
+export const addEventToSeries = async (seriesId: string, eventId: string): Promise<boolean> => {
+  try {
+    await delay(500);
+    const seriesIndex = mockEventSeries.findIndex(series => series.id === seriesId);
+    
+    if (seriesIndex === -1) return false;
+    
+    // 检查事件是否已经在系列中
+    if (mockEventSeries[seriesIndex].event_ids.includes(eventId)) {
+      return true; // 事件已经存在于系列中
+    }
+    
+    // 将事件添加到系列的event_ids数组中
+    mockEventSeries[seriesIndex].event_ids.push(eventId);
+    mockEventSeries[seriesIndex].updated_at = new Date().toISOString();
+    
+    return true;
+  } catch (error) {
+    console.error(`Error adding event ${eventId} to series ${seriesId}:`, error);
+    throw error;
+  }
 }; 
