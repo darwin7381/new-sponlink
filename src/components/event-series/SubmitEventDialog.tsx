@@ -38,7 +38,7 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // 获取用户的活动列表
+  // Fetch user's events
   useEffect(() => {
     const fetchOrganizerEvents = async () => {
       if (!isOpen) return;
@@ -47,21 +47,21 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
         setIsLoading(true);
         setErrorMessage('');
         
-        // 获取当前用户
+        // Get current user
         const currentUser = await getCurrentUser();
         if (!currentUser) {
-          setErrorMessage('需要登錄才能提交活動');
+          setErrorMessage('You need to be logged in to submit events');
           setIsLoading(false);
           return;
         }
         
-        // 获取用户组织的活动
+        // Get user's organized events
         const events = await getOrganizerEvents(currentUser.id);
-        // 过滤掉已经在系列中的活动
+        // Filter out events already in the series
         setOrganizerEvents(events.filter(event => event.event_series_id !== seriesId));
       } catch (error) {
         console.error('Error fetching organizer events:', error);
-        setErrorMessage('獲取活動列表失敗');
+        setErrorMessage('Failed to load events');
       } finally {
         setIsLoading(false);
       }
@@ -70,7 +70,7 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
     fetchOrganizerEvents();
   }, [isOpen, seriesId]);
 
-  // 处理复选框变更
+  // Handle checkbox changes
   const handleCheckboxChange = (eventId: string) => {
     setSelectedEvents(prev => {
       if (prev.includes(eventId)) {
@@ -81,10 +81,10 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
     });
   };
 
-  // 处理提交事件
+  // Handle event submission
   const handleSubmitEvents = async () => {
     if (selectedEvents.length === 0) {
-      setErrorMessage('請至少選擇一個活動');
+      setErrorMessage('Please select at least one event');
       return;
     }
     
@@ -92,23 +92,23 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
       setIsSubmitting(true);
       setErrorMessage('');
       
-      // 将选择的活动添加到系列中
+      // Add selected events to the series
       for (const eventId of selectedEvents) {
         await addEventToSeries(seriesId, eventId);
       }
       
-      // 重新加载页面以显示更新
+      // Refresh page to show updates
       router.refresh();
       onOpenChange(false);
     } catch (error) {
       console.error('Error submitting events to series:', error);
-      setErrorMessage('提交活動失敗');
+      setErrorMessage('Failed to submit events');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // 跳转到创建活动页面
+  // Navigate to create event page
   const handleCreateEvent = () => {
     router.push(`/organizer/events/create?seriesId=${seriesId}`);
   };
@@ -117,9 +117,9 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>提交活動到此系列</DialogTitle>
+          <DialogTitle>Submit Event to Series</DialogTitle>
           <DialogDescription>
-            選擇您想要添加到此系列的活動，或者創建新活動
+            Select events to add to this series or create a new event
           </DialogDescription>
         </DialogHeader>
         
@@ -133,15 +133,15 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
           {isLoading ? (
             <div className="text-center py-8">
               <div className="w-8 h-8 border-2 border-t-primary rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-muted-foreground">載入活動中...</p>
+              <p className="text-muted-foreground">Loading events...</p>
             </div>
           ) : organizerEvents.length === 0 ? (
             <div className="text-center py-8">
               <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
-              <p className="text-muted-foreground mb-4">您還沒有可以提交的活動</p>
+              <p className="text-muted-foreground mb-4">You don't have any events to submit</p>
               <Button onClick={handleCreateEvent} variant="outline">
                 <PlusCircle className="w-4 h-4 mr-2" />
-                創建新活動
+                Create New Event
               </Button>
             </div>
           ) : (
@@ -164,7 +164,7 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
                     <div className="text-sm text-muted-foreground mt-1">
                       {event.start_time && (
                         <span className="block">
-                          {format(new Date(event.start_time), 'yyyy年MM月dd日 HH:mm')}
+                          {format(new Date(event.start_time), 'MMM d, yyyy HH:mm')}
                         </span>
                       )}
                       {event.location?.name && (
@@ -178,7 +178,7 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
               <div className="pt-4 border-t">
                 <Button onClick={handleCreateEvent} variant="outline" className="w-full">
                   <PlusCircle className="w-4 h-4 mr-2" />
-                  創建新活動
+                  Create New Event
                 </Button>
               </div>
             </div>
@@ -191,7 +191,7 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            取消
+            Cancel
           </Button>
           {organizerEvents.length > 0 && (
             <Button
@@ -201,7 +201,7 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
             >
               {isSubmitting ? (
                 <>
-                  <span className="opacity-0">提交所選活動</span>
+                  <span className="opacity-0">Submit Selected</span>
                   <span className="absolute inset-0 flex items-center justify-center">
                     <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -209,7 +209,7 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
                     </svg>
                   </span>
                 </>
-              ) : `提交所選活動 (${selectedEvents.length})`}
+              ) : `Submit Selected (${selectedEvents.length})`}
             </Button>
           )}
         </DialogFooter>
