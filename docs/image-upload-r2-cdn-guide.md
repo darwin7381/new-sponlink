@@ -15,7 +15,9 @@
 7. [效能優化策略](#效能優化策略)
 8. [使用指南](#使用指南)
 9. [性能驗證方法](#性能驗證方法)
-10. [注意事項與限制](#注意事項與限制)
+10. [故障排除與常見問題](#故障排除與常見問題)
+11. [注意事項與限制](#注意事項與限制)
+12. [修改日誌](#修改日誌)
 
 ## 系統架構
 
@@ -152,26 +154,82 @@ export async function uploadFileToR2(file: Buffer, fileName: string, contentType
 ### 圖片處理 API (api/image/[...path]/route.ts)
 
 ```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import sharp from 'sharp';
+
+// 初始化 S3 客戶端
+const s3Client = new S3Client({
+  region: 'auto',
+  endpoint: process.env.R2_ENDPOINT || '',
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+  },
+});
+
+const bucketName = process.env.R2_BUCKET_NAME || '';
+
+// 使用字串URL直接處理而非動態路由參數
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { path: string[] } }
+  request: NextRequest
 ) {
   try {
-    // 獲取圖片路徑和查詢參數
-    const fullPath = params.path.join('/');
+    // 直接從 URL 路徑獲取圖片路徑
+    const fullUrl = new URL(request.url);
+    const pathParts = fullUrl.pathname.split('/');
+    // 移除 /api/image/ 部分 (前3個元素)
+    const imagePath = pathParts.slice(3).join('/');
+    
+    if (!imagePath) {
+      return NextResponse.json({ error: '無效的圖片路徑' }, { status: 400 });
+    }
+    
+    // 獲取查詢參數
     const searchParams = request.nextUrl.searchParams;
     const width = searchParams.get('width') ? parseInt(searchParams.get('width')!) : null;
     const height = searchParams.get('height') ? parseInt(searchParams.get('height')!) : null;
     const quality = searchParams.get('quality') ? parseInt(searchParams.get('quality')!) : 80;
     const format = searchParams.get('format') || null;
 
-    // 獲取原始圖片
+    // 從 R2 獲取原始圖片
     const response = await s3Client.send(
       new GetObjectCommand({
         Bucket: bucketName,
-        Key: fullPath,
+        Key: imagePath,
       })
     );
+
+    if (!response.Body) {
+      return NextResponse.json({ error: '圖片不存在' }, { status: 404 });
+    }
+
+    // 將 S3 響應轉換為 buffer
+    const arrayBuffer = await response.Body.transformToByteArray();
+    const imageBuffer = Buffer.from(arrayBuffer);
+
+    // 如果沒有指定尺寸或格式轉換，直接返回圖片
+    if (!width && !height && !format) {
+      const headers = new Headers();
+      
+      // 設置內容類型
+      if (response.ContentType) {
+        headers.set('Content-Type', response.ContentType);
+      }
+      
+      // 設置快取控制
+      const cacheControl = response.CacheControl || 'public, max-age=31536000, immutable';
+      headers.set('Cache-Control', cacheControl);
+      
+      // 設置 CDN 相關頭部
+      headers.set('CDN-Cache-Control', cacheControl);
+      headers.set('Cloudflare-CDN-Cache-Control', cacheControl);
+
+      return new NextResponse(imageBuffer, {
+        headers,
+        status: 200,
+      });
+    }
 
     // 使用 sharp 處理圖片
     let sharpInstance = sharp(imageBuffer);
@@ -190,14 +248,51 @@ export async function GET(
         case 'webp':
           sharpInstance = sharpInstance.webp({ quality });
           break;
-        // ... 其他格式
+        case 'jpeg':
+        case 'jpg':
+          sharpInstance = sharpInstance.jpeg({ quality });
+          break;
+        case 'png':
+          sharpInstance = sharpInstance.png();
+          break;
+        case 'avif':
+          sharpInstance = sharpInstance.avif({ quality });
+          break;
       }
     }
     
-    // 設置快取控制
+    // 處理圖片並轉換為 buffer
+    const processedImageBuffer = await sharpInstance.toBuffer();
+    
+    // 設置響應頭
     const headers = new Headers();
+    
+    // 設置內容類型
+    if (format) {
+      switch (format.toLowerCase()) {
+        case 'webp':
+          headers.set('Content-Type', 'image/webp');
+          break;
+        case 'jpeg':
+        case 'jpg':
+          headers.set('Content-Type', 'image/jpeg');
+          break;
+        case 'png':
+          headers.set('Content-Type', 'image/png');
+          break;
+        case 'avif':
+          headers.set('Content-Type', 'image/avif');
+          break;
+      }
+    } else if (response.ContentType) {
+      headers.set('Content-Type', response.ContentType);
+    }
+    
+    // 設置快取控制
     const cacheControl = 'public, max-age=2592000'; // 30 天快取
     headers.set('Cache-Control', cacheControl);
+    headers.set('CDN-Cache-Control', cacheControl);
+    headers.set('Cloudflare-CDN-Cache-Control', cacheControl);
     
     return new NextResponse(processedImageBuffer, {
       headers,
@@ -464,6 +559,149 @@ Cache-Control: public, max-age=31536000, immutable
 
 使用 [PageSpeed Insights](https://pagespeed.web.dev/) 或 [WebPageTest](https://www.webpagetest.org/) 檢查圖片加載時間和優化建議。
 
+## 故障排除與常見問題
+
+### 1. Next.js App Router 動態路由參數錯誤
+
+**問題描述**：  
+在使用 Next.js App Router 實現 `/api/image/[...path]` 類似的動態路由時，可能會遇到以下錯誤：
+
+```
+Error: Route "/api/image/[...path]" used `params.path`. `params` should be awaited before using its properties. Learn more: https://nextjs.org/docs/messages/sync-dynamic-apis
+```
+
+**原因**：  
+從 Next.js 13+ 版本開始，動態路由參數在 App Router 中是異步的，直接訪問 `params.path` 會導致錯誤。
+
+**解決方案**：  
+方案一：使用 URL 直接解析路徑（推薦）
+```typescript
+export async function GET(
+  request: NextRequest
+) {
+  try {
+    // 直接從 URL 路徑獲取圖片路徑
+    const fullUrl = new URL(request.url);
+    const pathParts = fullUrl.pathname.split('/');
+    // 移除 /api/image/ 部分 (前3個元素)
+    const imagePath = pathParts.slice(3).join('/');
+    
+    if (!imagePath) {
+      return NextResponse.json({ error: '無效的圖片路徑' }, { status: 400 });
+    }
+    
+    // 獲取查詢參數
+    const searchParams = request.nextUrl.searchParams;
+    const width = searchParams.get('width') ? parseInt(searchParams.get('width')!) : null;
+    const height = searchParams.get('height') ? parseInt(searchParams.get('height')!) : null;
+    const quality = searchParams.get('quality') ? parseInt(searchParams.get('quality')!) : 80;
+    const format = searchParams.get('format') || null;
+
+    // 從 R2 獲取原始圖片
+    const response = await s3Client.send(
+      new GetObjectCommand({
+        Bucket: bucketName,
+        Key: imagePath,
+      })
+    );
+
+    // 如果沒有指定尺寸或格式轉換，直接返回圖片
+    if (!width && !height && !format) {
+      const headers = new Headers();
+      
+      // 設置內容類型
+      if (response.ContentType) {
+        headers.set('Content-Type', response.ContentType);
+      }
+      
+      // 設置快取控制
+      const cacheControl = response.CacheControl || 'public, max-age=31536000, immutable';
+      headers.set('Cache-Control', cacheControl);
+      
+      // 設置 CDN 相關頭部
+      headers.set('CDN-Cache-Control', cacheControl);
+      headers.set('Cloudflare-CDN-Cache-Control', cacheControl);
+
+      return new NextResponse(imageBuffer, {
+        headers,
+        status: 200,
+      });
+    }
+
+    // 使用 sharp 處理圖片
+    let sharpInstance = sharp(imageBuffer);
+    if (width || height) {
+      sharpInstance = sharpInstance.resize({
+        width: width || undefined,
+        height: height || undefined,
+        fit: 'inside',
+        withoutEnlargement: true,
+      });
+    }
+    
+    // 轉換格式
+    if (format) {
+      switch (format.toLowerCase()) {
+        case 'webp':
+          sharpInstance = sharpInstance.webp({ quality });
+          break;
+        // ... 其他格式
+      }
+    }
+    
+    // 設置快取控制
+    const cacheControl = 'public, max-age=2592000'; // 30 天快取
+    headers.set('Cache-Control', cacheControl);
+    
+    return new NextResponse(processedImageBuffer, {
+      headers,
+      status: 200,
+    });
+  } catch (error) {
+    console.error('處理圖片失敗:', error);
+    return NextResponse.json({ error: '處理圖片失敗' }, { status: 500 });
+  }
+}
+```
+
+方案二：異步等待 params
+```typescript
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ path: string[] }> }
+) {
+  try {
+    // 等待動態路徑參數解析完成
+    const params = await context.params;
+    const pathArray = params.path;
+    const fullPath = pathArray.join('/');
+    
+    // 後續處理...
+  }
+}
+```
+
+**實施建議**：
+- 盡量使用第一種方法（直接處理 URL），可以避免 Next.js 動態路由參數的異步處理邏輯
+- 保持路由處理邏輯簡單，減少對框架特定功能的依賴
+- 在控制台添加日誌輸出，幫助調試路徑處理問題
+
+### 2. 圖片無法訪問問題
+
+**問題描述**：  
+上傳後的圖片無法通過 API 訪問，顯示 404 錯誤。
+
+**可能原因**：
+- R2 存儲桶權限配置錯誤
+- 文件路徑解析不正確
+- 環境變量未正確設置
+
+**解決方案**：
+1. 檢查 R2 存儲桶是否設置為公共訪問
+2. 確認環境變量已正確配置（R2_BUCKET_NAME, R2_ENDPOINT 等）
+3. 在處理路徑時添加調試日誌，確認實際路徑與預期一致
+4. 檢查 API 密鑰是否具有足夠的權限
+
 ## 注意事項與限制
 
 1. **Cloudflare Edge Cache 限制**：
@@ -490,4 +728,18 @@ Cache-Control: public, max-age=31536000, immutable
 
 **文檔作者**: 系統自動生成  
 **最後更新**: 2025年4月5日  
-**版本**: 1.0 
+**版本**: 1.1 
+
+## 修改日誌
+
+### v1.1 (2025年4月5日)
+- 新增「故障排除與常見問題」章節
+- 添加處理 Next.js App Router 動態路由參數錯誤的解決方案
+- 更新圖片處理 API 代碼示例，使用更安全的 URL 解析方式
+- 添加圖片無法訪問問題的排查步驟
+
+### v1.0 (2025年4月1日)
+- 初始文檔創建
+- 添加系統架構、文件結構和實現步驟
+- 提供使用指南和代碼示例
+- 說明 Cloudflare 設定和性能優化策略 
