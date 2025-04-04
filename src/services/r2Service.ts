@@ -20,6 +20,12 @@ export async function uploadFileToR2(file: Buffer, fileName: string, contentType
   try {
     // 生成唯一文件名
     const uniqueFileName = `${uuidv4()}-${fileName}`;
+    
+    // 設置 Cache-Control 頭部，圖片快取 1 年
+    const cacheControl = 'public, max-age=31536000, immutable';
+    
+    // 決定是否允許壓縮
+    const contentEncoding = shouldCompressFile(contentType) ? 'gzip' : undefined;
 
     // 上傳文件
     await s3Client.send(
@@ -28,6 +34,12 @@ export async function uploadFileToR2(file: Buffer, fileName: string, contentType
         Key: uniqueFileName,
         Body: file,
         ContentType: contentType,
+        CacheControl: cacheControl,
+        ContentEncoding: contentEncoding,
+        Metadata: {
+          'original-filename': encodeURIComponent(fileName),
+          'upload-date': new Date().toISOString(),
+        },
       })
     );
 
@@ -64,6 +76,21 @@ export async function deleteFileFromR2(fileName: string) {
     console.error('從 R2 刪除文件失敗:', error);
     throw error;
   }
+}
+
+/**
+ * 根據文件類型判斷是否需要壓縮
+ */
+function shouldCompressFile(contentType: string): boolean {
+  // 圖片格式如 JPEG, PNG 通常已經壓縮，不需要進一步壓縮
+  const noCompressTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+  ];
+  
+  return !noCompressTypes.includes(contentType);
 }
 
 export default {

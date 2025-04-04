@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -61,10 +62,15 @@ export default function ImageUploadExample() {
               <CardContent>
                 {uploadedImageUrl ? (
                   <div className="flex flex-col items-center">
-                    <img 
+                    <OptimizedImage 
                       src={uploadedImageUrl} 
                       alt="已上傳的圖片" 
-                      className="max-w-full max-h-[300px] object-contain rounded-md border border-gray-200"
+                      width={300}
+                      height={300}
+                      objectFit="contain"
+                      className="rounded-md border border-gray-200"
+                      format="webp"
+                      quality={85}
                     />
                     <p className="mt-4 text-sm break-all">{uploadedImageUrl}</p>
                   </div>
@@ -118,10 +124,15 @@ export default function ImageUploadExample() {
               <CardContent>
                 {uploadedImageUrl ? (
                   <div className="flex flex-col items-center">
-                    <img 
+                    <OptimizedImage 
                       src={uploadedImageUrl} 
                       alt="已上傳的圖片" 
-                      className="max-w-full max-h-[300px] object-contain rounded-md border border-gray-200"
+                      width={300}
+                      height={300}
+                      objectFit="contain"
+                      className="rounded-md border border-gray-200"
+                      format="webp"
+                      quality={85}
                     />
                     <p className="mt-4 text-sm break-all">{uploadedImageUrl}</p>
                   </div>
@@ -152,7 +163,19 @@ export default function ImageUploadExample() {
               <li>在服務端使用 Cloudflare R2 SDK 將圖片上傳到 R2 存儲空間</li>
               <li>使用自定義域名 img.blockmeet.io 提供圖片訪問服務</li>
               <li>所有上傳的圖片都生成唯一文件名，確保不會發生衝突</li>
+              <li>使用 Cache-Control 頭部設定長期快取，提升全球加載速度</li>
+              <li>利用 Cloudflare CDN 自動優化圖片分發，減少加載時間</li>
+              <li>使用圖片處理 API (/api/image) 按需提供不同尺寸和格式的圖片</li>
             </ol>
+            
+            <h3 className="font-semibold mt-4 mb-2">CDN 和快取優化</h3>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>設定 Cache-Control: public, max-age=31536000, immutable 使圖片快取一年</li>
+              <li>使用唯一文件名確保內容變更時不會出現快取問題</li>
+              <li>利用 Cloudflare CDN 的全球邊緣節點網絡提供最近位置的圖片</li>
+              <li>按需提供 WebP、AVIF 等更高效的圖片格式，減少流量和加載時間</li>
+              <li>根據設備和屏幕尺寸自動提供最合適大小的圖片</li>
+            </ul>
           </CardContent>
         </Card>
       </div>
