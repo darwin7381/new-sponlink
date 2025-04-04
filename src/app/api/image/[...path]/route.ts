@@ -14,13 +14,20 @@ const s3Client = new S3Client({
 
 const bucketName = process.env.R2_BUCKET_NAME || '';
 
+// 使用字串URL直接處理而非動態路由參數
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { path: string[] } }
+  request: NextRequest
 ) {
   try {
-    // 獲取圖片路徑
-    const fullPath = params.path.join('/');
+    // 直接從 URL 路徑獲取圖片路徑
+    const fullUrl = new URL(request.url);
+    const pathParts = fullUrl.pathname.split('/');
+    // 移除 /api/image/ 部分 (前3個元素)
+    const imagePath = pathParts.slice(3).join('/');
+    
+    if (!imagePath) {
+      return NextResponse.json({ error: '無效的圖片路徑' }, { status: 400 });
+    }
     
     // 獲取查詢參數
     const searchParams = request.nextUrl.searchParams;
@@ -29,11 +36,13 @@ export async function GET(
     const quality = searchParams.get('quality') ? parseInt(searchParams.get('quality')!) : 80;
     const format = searchParams.get('format') || null;
 
+    console.log('處理圖片請求:', { imagePath, width, height, quality, format });
+
     // 從 R2 獲取原始圖片
     const response = await s3Client.send(
       new GetObjectCommand({
         Bucket: bucketName,
-        Key: fullPath,
+        Key: imagePath,
       })
     );
 
