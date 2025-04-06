@@ -40,7 +40,14 @@ export function EventCard({ event }: EventCardProps) {
 
   // 直接格式化日期，不處理時區（保留原始日期）
   const formattedDate = event.start_time ? 
-    format(new Date(event.start_time), "MMM d, yyyy") : 
+    (() => {
+      const eventDate = new Date(event.start_time);
+      const currentYear = new Date().getFullYear();
+      const eventYear = eventDate.getFullYear();
+      
+      // 只有當事件不在當前年份時才顯示年份
+      return format(eventDate, eventYear === currentYear ? "EEE, MMM d" : "EEE, MMM d, yyyy");
+    })() : 
     "Date TBD";
 
   // 使用更靠近原生的方法格式化時間
@@ -49,7 +56,6 @@ export function EventCard({ event }: EventCardProps) {
     
     try {
       const startDate = new Date(event.start_time);
-      const endDate = event.end_time ? new Date(event.end_time) : null;
       
       // 使用瀏覽器的 toLocaleTimeString 而不是自己計算，以獲得更準確的時間格式化
       const options: Intl.DateTimeFormatOptions = {
@@ -59,13 +65,8 @@ export function EventCard({ event }: EventCardProps) {
         timeZone: event.timezone || undefined
       };
       
-      // 格式化開始時間
+      // 只格式化開始時間
       let result = startDate.toLocaleTimeString('en-US', options);
-      
-      // 添加結束時間（如果有）
-      if (endDate) {
-        result += ` - ${endDate.toLocaleTimeString('en-US', options)}`;
-      }
       
       // 添加時區，使用共享的時區顯示邏輯
       const timezoneDisplay = getTimezoneDisplay(event.timezone);
@@ -105,17 +106,16 @@ export function EventCard({ event }: EventCardProps) {
         
         {/* 內容區域 */}
         <div className="p-4">
-          {/* 顯示日期 */}
-          <p className="text-sm font-medium text-primary" suppressHydrationWarning>
-            <span>{formattedDate}</span>
-          </p>
-          
-          {/* 顯示時間範圍及時區 */}
-          {timeRange && (
-            <p className="text-sm text-muted-foreground mt-1" suppressHydrationWarning>
-              {timeRange}
-            </p>
-          )}
+          {/* 顯示日期和時間在同一行 */}
+          <div className="flex items-baseline gap-2" suppressHydrationWarning>
+            <span className="text-sm font-medium text-primary">{formattedDate}</span>
+            {timeRange && (
+              <>
+                <span className="text-sm text-muted-foreground">•</span>
+                <span className="text-sm text-muted-foreground">{timeRange}</span>
+              </>
+            )}
+          </div>
           
           <h3 className="mt-2 text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
             {event.title}
