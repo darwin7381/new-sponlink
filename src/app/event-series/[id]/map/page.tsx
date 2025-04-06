@@ -43,14 +43,29 @@ const mapStyles = `
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
   }
+  .marker-container.selected {
+    background-color: #f97316; /* 橙色標記表示選中狀態 */
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.3);
+  }
   .mapboxgl-popup-content {
     padding: 12px;
     border-radius: 8px;
   }
+  .mapboxgl-popup {
+    max-width: 280px !important;
+    z-index: 10;
+  }
   .map-container {
-    width: 100%;
-    height: 100%;
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-color: #f5f5f5;
+    overflow: hidden;
   }
   .dark .map-container {
     background-color: #1a1a1a;
@@ -67,6 +82,26 @@ const mapStyles = `
     justify-content: space-between;
     align-items: center;
   }
+  /* 確保地圖容器正確填充 */
+  #map {
+    position: absolute !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+  /* 修復彈出窗口導致的空白問題 */
+  .mapboxgl-canvas-container {
+    width: 100% !important;
+    height: 100% !important;
+    position: relative !important;
+  }
+  .mapboxgl-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+  }
 `;
 
 export default function EventSeriesMapPage() {
@@ -79,9 +114,50 @@ export default function EventSeriesMapPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
+  const [selectedMarkerKeys, setSelectedMarkerKeys] = useState<string[]>([]);
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Map | null>(null);
+  const markerRefs = useRef<Record<string, { marker: mapboxgl.Marker, element: HTMLElement, eventIds: string[] }>>({});
   const [mapInitialized, setMapInitialized] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState(resolvedTheme || theme);
+  const boundsInitializedRef = useRef(false);
+
+  // 監聽主題變化
+  useEffect(() => {
+    const newTheme = resolvedTheme || theme || 'light';
+    if (newTheme !== currentTheme) {
+      setCurrentTheme(newTheme);
+      console.log(`主題變更: ${currentTheme} -> ${newTheme}`);
+      
+      // 當主題變化時，重新初始化地圖
+      if (mapRef.current) {
+        const currentCenter = mapRef.current.getCenter();
+        const currentZoom = mapRef.current.getZoom();
+        console.log("由於主題變化，重新初始化地圖");
+        
+        // 保存當前視圖狀態
+        const viewState = {
+          center: currentCenter,
+          zoom: currentZoom
+        };
+        
+        // 清理地圖
+        mapRef.current.remove();
+        mapRef.current = null;
+        setMapInitialized(false);
+        
+        // 清空標記引用
+        markerRefs.current = {};
+        
+        // 重新初始化地圖時保留視圖狀態
+        setTimeout(() => {
+          if (mapContainerRef.current) {
+            initializeMap(mapContainerRef.current, viewState);
+          }
+        }, 100);
+      }
+    }
+  }, [resolvedTheme, theme]);
 
   // 獲取系列和活動數據
   useEffect(() => {
@@ -137,61 +213,26 @@ export default function EventSeriesMapPage() {
     };
   }, []);
 
-  // 初始化地圖的簡化流程
-  useEffect(() => {
-    // 如果沒有容器或正在加載，跳過初始化
-    if (!mapContainerRef.current || loading) {
-      console.log("地圖容器未準備好或正在加載數據，跳過初始化");
-      return;
-    }
-
-    // 檢查Mapbox支援
-    if (!mapboxgl.supported()) {
-      console.error("此瀏覽器不支持Mapbox GL");
-      setError("您的瀏覽器不支持Mapbox GL。請嘗試使用Chrome或Firefox。");
-      return;
-    }
-
-    // 檢查Mapbox令牌
-    if (!mapboxgl.accessToken) {
-      console.error("缺少Mapbox令牌");
-      setError("地圖加載失敗：缺少必要的訪問令牌");
-      return;
-    }
-
-    console.log("開始初始化地圖...");
-    
-    // 確保容器樣式正確
-    const container = mapContainerRef.current;
-    container.style.width = '100%';
-    container.style.height = '100%';
-    
-    // 清理現有的地圖實例
-    if (mapRef.current) {
-      console.log("清理現有地圖實例");
-      mapRef.current.remove();
-      mapRef.current = null;
-      setMapInitialized(false);
-    }
-    
+  // 單獨封裝地圖初始化函數，方便在不同地方調用
+  const initializeMap = (container: HTMLDivElement, savedViewState?: { center: mapboxgl.LngLat, zoom: number }) => {
     try {
       // 獲取當前主題
-      const currentTheme = resolvedTheme || theme || 'light';
-      const isDark = currentTheme === 'dark';
+      const isDark = (resolvedTheme || theme) === 'dark';
+      console.log(`初始化地圖 - 當前主題狀態: ${isDark ? '暗色' : '明亮'}模式`);
       
-      // 選擇地圖樣式 - 確保在暗模式下使用暗色地圖
+      // 強制使用正確的地圖樣式
       const mapStyle = isDark 
         ? 'mapbox://styles/mapbox/dark-v11' 
         : 'mapbox://styles/mapbox/streets-v12';
       
-      console.log(`使用地圖樣式: ${mapStyle} (${currentTheme}模式)`);
+      console.log(`使用地圖樣式: ${mapStyle}`);
       
       // 創建地圖
       const map = new mapboxgl.Map({
         container: container,
         style: mapStyle,
-        center: [121.5654, 25.0330], // 台北市中心
-        zoom: 11,
+        center: savedViewState?.center || [121.5654, 25.0330], // 使用保存的中心點或預設
+        zoom: savedViewState?.zoom || 11, // 使用保存的縮放級別或預設
         attributionControl: true,
         antialias: true,
         preserveDrawingBuffer: true,
@@ -244,46 +285,76 @@ export default function EventSeriesMapPage() {
             markerEl.className = 'marker-container';
             markerEl.innerText = `${groupEvents.length}`;
             
+            // 過濾該位置的所有事件ID
+            const eventIds = groupEvents.map(event => event.id);
+            
             // 創建標記
-            new mapboxgl.Marker({ element: markerEl })
+            const marker = new mapboxgl.Marker({ element: markerEl })
               .setLngLat([lng, lat])
               .setPopup(
-                new mapboxgl.Popup({ offset: 25 })
-                  .setHTML(`
-                    <div class="p-3">
-                      <h3 class="font-medium text-base mb-2">${groupEvents.length > 1 ? `${groupEvents.length} 個活動` : groupEvents[0].title}</h3>
-                      <div class="max-h-48 overflow-y-auto">
-                        ${groupEvents.map(event => `
-                          <div class="border-t border-gray-200 py-2 first:border-0 cursor-pointer" data-event-id="${event.id}">
-                            <div class="font-medium">${event.title}</div>
-                            <div class="text-xs text-gray-500 mt-1">
-                              ${event.start_time ? format(new Date(event.start_time), 'yyyy/MM/dd HH:mm') : ''}
-                            </div>
+                new mapboxgl.Popup({ 
+                  offset: 25,
+                  maxWidth: '250px',
+                  closeButton: true,
+                  closeOnClick: true,
+                  className: 'custom-popup'
+                })
+                .setHTML(`
+                  <div class="p-2">
+                    <h3 class="font-medium text-base mb-2">${groupEvents.length > 1 ? `${groupEvents.length} 個活動` : groupEvents[0].title}</h3>
+                    <div class="max-h-48 overflow-y-auto">
+                      ${groupEvents.map(event => `
+                        <div class="border-t border-gray-200 py-2 first:border-0 cursor-pointer" data-event-id="${event.id}">
+                          <div class="font-medium">${event.title}</div>
+                          <div class="text-xs text-gray-500 mt-1">
+                            ${event.start_time ? format(new Date(event.start_time), 'yyyy/MM/dd HH:mm') : ''}
                           </div>
-                        `).join('')}
-                      </div>
+                        </div>
+                      `).join('')}
                     </div>
-                  `)
-                  .on('open', function(this: mapboxgl.Popup) {
-                    setTimeout(() => {
-                      const popupEl = this.getElement();
-                      if (!popupEl) return;
-                      
-                      popupEl.addEventListener('click', (e: MouseEvent) => {
-                        const target = e.target as HTMLElement;
-                        const eventDiv = target.closest<HTMLElement>('[data-event-id]');
-                        if (eventDiv && eventDiv.dataset.eventId) {
-                          router.push(`/events/${eventDiv.dataset.eventId}`);
-                        }
-                      });
-                    }, 100);
-                  })
-              )
-              .addTo(map);
+                  </div>
+                `)
+                .on('open', function(this: mapboxgl.Popup) {
+                  // 當彈窗打開時，過濾左側列表顯示相關活動
+                  handleSelectEvents(eventIds);
+                  
+                  setTimeout(() => {
+                    const popupEl = this.getElement();
+                    if (!popupEl) return;
+                    
+                    popupEl.addEventListener('click', (e: MouseEvent) => {
+                      const target = e.target as HTMLElement;
+                      const eventDiv = target.closest<HTMLElement>('[data-event-id]');
+                      if (eventDiv && eventDiv.dataset.eventId) {
+                        router.push(`/events/${eventDiv.dataset.eventId}`);
+                      }
+                    });
+                  }, 100);
+                })
+            )
+            .addTo(map);
+            
+            // 保存標記引用和相關事件ID，用於後續更新樣式
+            markerRefs.current[key] = { 
+              marker, 
+              element: markerEl, 
+              eventIds 
+            };
+            
+            // 如果已經有選中的事件，檢查這個標記是否應該標記為選中
+            if (selectedEventIds.length > 0 && eventIds.some(id => selectedEventIds.includes(id))) {
+              markerEl.classList.add('selected');
+            }
+            
+            // 添加點擊事件 - 當直接點擊標記時也過濾左側列表
+            markerEl.addEventListener('click', () => {
+              handleSelectEvents(eventIds);
+            });
           });
           
-          // 調整視圖
-          if (!bounds.isEmpty()) {
+          // 僅在初次加載時調整視圖，避免重複縮放
+          if (!savedViewState && !boundsInitializedRef.current && !bounds.isEmpty()) {
+            boundsInitializedRef.current = true;
             map.fitBounds(bounds, {
               padding: 50,
               maxZoom: 15
@@ -298,35 +369,84 @@ export default function EventSeriesMapPage() {
         setError(`地圖載入錯誤: ${e.error?.message || '未知錯誤'}`);
       });
       
-      // 主題變更時重新初始化地圖
-      const handleThemeChange = () => {
-        console.log("主題已變更，重新初始化地圖");
-        if (mapRef.current) {
-          // 移除現有地圖
-          mapRef.current.remove();
-          mapRef.current = null;
-          // 重新初始化新地圖
-          // 這裡不需要再次調用，因為useEffect會再次觸發
-        }
-      };
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', handleThemeChange);
-
-      // 返回清理函數
-      return () => {
-        console.log("執行地圖清理");
-        window.matchMedia('(prefers-color-scheme: dark)').removeEventListener('change', handleThemeChange);
-        if (mapRef.current) {
-          mapRef.current.remove();
-          mapRef.current = null;
-          setMapInitialized(false);
-        }
-      };
+      return map;
     } catch (error) {
       console.error('地圖初始化錯誤:', error);
       setError(`地圖初始化失敗: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
     }
-  }, [events, loading, router, resolvedTheme, theme]);
+  };
 
+  // 初始化地圖的簡化流程
+  useEffect(() => {
+    // 如果沒有容器或正在加載，跳過初始化
+    if (!mapContainerRef.current || loading) {
+      console.log("地圖容器未準備好或正在加載數據，跳過初始化");
+      return;
+    }
+
+    // 檢查Mapbox支援
+    if (!mapboxgl.supported()) {
+      console.error("此瀏覽器不支持Mapbox GL");
+      setError("您的瀏覽器不支持Mapbox GL。請嘗試使用Chrome或Firefox。");
+      return;
+    }
+
+    // 檢查Mapbox令牌
+    if (!mapboxgl.accessToken) {
+      console.error("缺少Mapbox令牌");
+      setError("地圖加載失敗：缺少必要的訪問令牌");
+      return;
+    }
+
+    console.log("開始初始化地圖...");
+    
+    // 確保容器樣式正確
+    const container = mapContainerRef.current;
+    container.style.width = '100%';
+    container.style.height = '100%';
+    
+    // 清理現有的地圖實例
+    if (mapRef.current) {
+      console.log("清理現有地圖實例");
+      mapRef.current.remove();
+      mapRef.current = null;
+      setMapInitialized(false);
+      markerRefs.current = {};
+    }
+    
+    // 初始化地圖
+    initializeMap(container);
+    
+    // 返回清理函數
+    return () => {
+      console.log("執行地圖清理");
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        setMapInitialized(false);
+        markerRefs.current = {};
+      }
+    };
+  }, [events, loading, router]);
+
+  // 更新標記狀態 - 分離自地圖初始化以避免重新縮放
+  useEffect(() => {
+    if (!mapInitialized || !mapRef.current) return;
+    
+    // 只更新標記樣式，不重新創建地圖或標記
+    Object.entries(markerRefs.current).forEach(([key, { element, eventIds: markerEventIds }]) => {
+      const isSelected = selectedEventIds.length > 0 && markerEventIds.some(id => selectedEventIds.includes(id));
+      
+      if (isSelected) {
+        element.classList.add('selected');
+      } else {
+        element.classList.remove('selected');
+      }
+    });
+  }, [selectedEventIds, mapInitialized]);
+
+  // 處理選擇事件和更新標記顯示
   const handleSelectEvents = (eventIds: string[]) => {
     setSelectedEventIds(eventIds);
   };
@@ -425,7 +545,7 @@ export default function EventSeriesMapPage() {
       </div>
       
       {/* 主內容區 - 左側列表，右側地圖 */}
-      <div className="flex flex-1 h-[calc(100vh-61px)]">
+      <div className="flex flex-1 h-[calc(100vh-61px)] overflow-hidden">
         {/* 左側活動列表 - 固定區域 */}
         <div className="w-[300px] events-list bg-card">
           <div className="events-list-header">
@@ -442,7 +562,7 @@ export default function EventSeriesMapPage() {
         </div>
         
         {/* 右側地圖區域 - 固定區域 */}
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative" style={{ width: 'calc(100% - 300px)', overflow: 'hidden' }}>
           {/* 地圖本體 */}
           <div 
             id="map" 
