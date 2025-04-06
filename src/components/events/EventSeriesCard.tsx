@@ -4,9 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import { Card, CardContent } from "@/components/ui/card";
-import { EventSeries } from "@/types/event";
 import { MapPin, Calendar, Users } from "lucide-react";
+import { EventSeries } from "@/types/event";
 
 interface EventSeriesCardProps {
   series: EventSeries;
@@ -22,18 +21,15 @@ export function EventSeriesCard({ series }: EventSeriesCardProps) {
   // 只在客户端渲染后显示日期和时间
   if (!mounted) {
     return (
-      <Card className="overflow-hidden h-full flex flex-col">
-        <div className="h-48 w-full relative bg-gray-200 dark:bg-gray-800"></div>
-        <CardContent className="flex-1 p-6 flex flex-col justify-between animate-pulse">
-          <div className="flex-1">
-            <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-            <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
-            <div className="h-6 w-full bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
-            <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-            <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="overflow-hidden h-full rounded-lg border bg-card text-card-foreground shadow-sm">
+        <div className="h-40 w-full relative bg-gray-200 dark:bg-gray-800"></div>
+        <div className="p-4 animate-pulse">
+          <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+          <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="h-6 w-full bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+          <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+        </div>
+      </div>
     );
   }
 
@@ -51,8 +47,9 @@ export function EventSeriesCard({ series }: EventSeriesCardProps) {
 
   return (
     <Link href={`/event-series/${series.id}`} className="block group">
-      <Card className="overflow-hidden h-full border hover:border-primary/50 hover:shadow-md transition-all duration-200 hover:-translate-y-1">
-        <div className="h-40 w-full relative">
+      <div className="overflow-hidden h-full rounded-lg border bg-card text-card-foreground shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200 hover:-translate-y-1">
+        {/* 圖片容器 - 確保與卡片邊緣完全貼合 */}
+        <div className="relative w-full h-40 overflow-hidden">
           <Image 
             fill
             className="object-cover" 
@@ -65,7 +62,7 @@ export function EventSeriesCard({ series }: EventSeriesCardProps) {
           </div>
         </div>
         
-        <CardContent className="p-5">
+        <div className="p-4">
           <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2 min-h-[3.5rem]">
             {series.title}
           </h3>
@@ -88,8 +85,8 @@ export function EventSeriesCard({ series }: EventSeriesCardProps) {
           <div className="mt-4 text-xs text-muted-foreground line-clamp-2 h-9">
             {series.description}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
 } 

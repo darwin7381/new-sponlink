@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Event } from "@/types/event";
 import { formatLocation } from "@/utils/languageUtils";
-import { Clock } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import { getTimezoneDisplay } from "@/utils/dateUtils";
 
 interface EventCardProps {
@@ -24,21 +24,17 @@ export function EventCard({ event }: EventCardProps) {
   // 只在客戶端渲染後顯示日期和時間
   if (!mounted) {
     return (
-      <Card className="overflow-hidden h-full flex flex-col">
+      <div className="overflow-hidden h-full rounded-lg border bg-card text-card-foreground shadow-sm">
         <div className="h-48 w-full relative bg-gray-200 dark:bg-gray-800"></div>
-        <CardContent className="flex-1 p-6 flex flex-col justify-between animate-pulse">
-          <div className="flex-1">
-            <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-            <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
-            <div className="h-6 w-full bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
-            <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
-            <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-          </div>
-        </CardContent>
-        <CardFooter className="px-6 pb-6 pt-0">
+        <div className="p-4 animate-pulse">
+          <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+          <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="h-6 w-full bg-gray-200 dark:bg-gray-700 rounded mb-3"></div>
+        </div>
+        <div className="px-4 pb-3 pt-0">
           <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-        </CardFooter>
-      </Card>
+        </div>
+      </div>
     );
   }
 
@@ -95,51 +91,54 @@ export function EventCard({ event }: EventCardProps) {
     "Location TBD";
 
   return (
-    <Card className="overflow-hidden h-full flex flex-col">
-      <div className="h-48 w-full relative">
-        <Image 
-          fill
-          className="object-cover" 
-          src={event.cover_image || "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80"} 
-          alt={event.title}
-        />
-      </div>
-      <CardContent className="flex-1 p-6 flex flex-col justify-between">
-        <div className="flex-1">
-          {/* 顯示日期 - 添加 suppressHydrationWarning */}
+    <Link href={`/events/${event.id}`} className="block group">
+      <div className="overflow-hidden h-full rounded-lg border bg-card text-card-foreground shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200 hover:-translate-y-1">
+        {/* 圖片容器 - 確保與卡片邊緣完全貼合 */}
+        <div className="relative w-full h-48 overflow-hidden">
+          <Image 
+            fill
+            className="object-cover" 
+            src={event.cover_image || "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1600&q=80"} 
+            alt={event.title}
+          />
+        </div>
+        
+        {/* 內容區域 */}
+        <div className="p-4">
+          {/* 顯示日期 */}
           <p className="text-sm font-medium text-primary" suppressHydrationWarning>
             <span>{formattedDate}</span>
           </p>
           
-          {/* 顯示時間範圍及時區 - 添加 suppressHydrationWarning */}
+          {/* 顯示時間範圍及時區 */}
           {timeRange && (
             <p className="text-sm text-muted-foreground mt-1" suppressHydrationWarning>
               {timeRange}
             </p>
           )}
           
-          <Link href={`/events/${event.id}`} className="block mt-2">
-            <h3 className="text-xl font-semibold text-foreground">{event.title}</h3>
-            <p className="mt-3 text-base text-muted-foreground line-clamp-3">
-              {event.description}
-            </p>
-          </Link>
+          <h3 className="mt-2 text-xl font-semibold text-foreground group-hover:text-primary transition-colors">
+            {event.title}
+          </h3>
         </div>
-      </CardContent>
-      <CardFooter className="px-6 pb-6 pt-0">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
-              {event.location?.location_type === 'virtual' ? (
-                <>
-                  <Clock className="mr-1 h-3 w-3" />
-                  虛擬活動
-                </>
-              ) : locationDisplay}
-            </span>
-          </div>
+        
+        {/* 底部區域 */}
+        <div className="px-4 py-3">
+          <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
+            {event.location?.location_type === 'virtual' ? (
+              <>
+                <Clock className="mr-1 h-3 w-3" />
+                虛擬活動
+              </>
+            ) : (
+              <>
+                <MapPin className="mr-1 h-3 w-3" />
+                {locationDisplay}
+              </>
+            )}
+          </span>
         </div>
-      </CardFooter>
-    </Card>
+      </div>
+    </Link>
   );
 } 
