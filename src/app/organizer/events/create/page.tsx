@@ -26,6 +26,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { convertToDatetimeLocalFormat, getBrowserTimezone } from "@/utils/dateUtils";
 import { TimezoneSelect } from "@/components/ui/timezone-select";
 import ProtectedRouteWrapper from "@/components/auth/ProtectedRouteWrapper";
+import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
 
 // Sponsorship plan type definition
 interface SponsorshipPlanForm {
@@ -481,25 +482,20 @@ export default function CreateEventPage() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="cover_image" className="text-foreground">Cover Image URL</Label>
-                    <Input
-                      id="cover_image"
-                      name="cover_image"
-                      value={formData.cover_image}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1 bg-background border-border"
+                    <Label htmlFor="cover_image" className="text-foreground">Cover Image</Label>
+                    <ImageUploadDropzone
+                      onUploadComplete={(imageUrl) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          cover_image: imageUrl
+                        }));
+                      }}
+                      className="mt-1"
+                      dropzoneText="拖放圖片到此處上傳"
+                      buttonText="或點擊選擇圖片"
+                      showPreview={true}
+                      initialImage={formData.cover_image}
                     />
-                    {formData.cover_image && (
-                      <div className="mt-2 rounded-md overflow-hidden h-36">
-                        <img 
-                          src={formData.cover_image} 
-                          alt="Cover preview" 
-                          className="w-full h-full object-cover"
-                          onError={(e) => (e.target as HTMLImageElement).src = "https://via.placeholder.com/800x400?text=Preview Unavailable"}
-                        />
-                      </div>
-                    )}
                   </div>
                   
                   <div className="space-y-4">

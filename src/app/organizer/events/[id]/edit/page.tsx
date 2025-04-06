@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { getEventById, updateEvent } from "@/services/eventService";
 import { Event, Location } from "@/types/event";
 import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
 import LocationSelector from "@/components/maps/LocationSelector";
+import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
 
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -247,14 +248,19 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
                 </div>
                 
                 <div>
-                  <Label htmlFor="cover_image">Cover Image URL</Label>
-                  <Input
-                    id="cover_image"
-                    name="cover_image"
-                    value={formData.cover_image}
-                    onChange={handleInputChange}
-                    required
-                    className="bg-background"
+                  <Label htmlFor="cover_image">Cover Image</Label>
+                  <ImageUploadDropzone
+                    onUploadComplete={(imageUrl) => {
+                      setFormData(prev => ({
+                        ...prev,
+                        cover_image: imageUrl
+                      }));
+                    }}
+                    className="mt-1"
+                    dropzoneText="拖放圖片到此處上傳"
+                    buttonText="或點擊選擇圖片"
+                    showPreview={true}
+                    initialImage={formData.cover_image}
                   />
                 </div>
                 

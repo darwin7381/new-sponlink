@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -12,6 +12,7 @@ interface ImageUploadDropzoneProps {
   acceptTypes?: string;
   maxSizeMB?: number;
   showPreview?: boolean;
+  initialImage?: string;
 }
 
 export function ImageUploadDropzone({
@@ -21,13 +22,20 @@ export function ImageUploadDropzone({
   buttonText = '或點擊選擇圖片',
   acceptTypes = 'image/jpeg,image/png,image/gif,image/webp',
   maxSizeMB = 5,
-  showPreview = true
+  showPreview = true,
+  initialImage = ''
 }: ImageUploadDropzoneProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(initialImage || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialImage) {
+      setPreviewUrl(initialImage);
+    }
+  }, [initialImage]);
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -157,33 +165,38 @@ export function ImageUploadDropzone({
       />
       
       <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center ${
+        className={`border-2 border-dashed rounded-lg p-6 text-center relative h-64 flex flex-col items-center justify-center ${
           isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-        } transition-colors duration-200 cursor-pointer`}
+        } transition-colors duration-200 cursor-pointer overflow-hidden`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={handleButtonClick}
       >
-        {/* 預覽區域 */}
+        {/* 背景圖層 - 只在有圖片時顯示 */}
         {showPreview && previewUrl && !isUploading && (
-          <div className="mb-4">
-            <img
-              src={previewUrl}
-              alt="圖片預覽"
-              className="max-h-40 max-w-full mx-auto rounded"
+          <>
+            <img 
+              src={previewUrl} 
+              alt="背景預覽" 
+              className="absolute inset-0 w-full h-full object-cover z-0" 
             />
-          </div>
+            <div className="absolute inset-0 bg-black/20 z-[1]"></div>
+          </>
         )}
         
         {/* 文字提示區域 */}
-        <div className="text-gray-500">
+        <div className={`z-[2] relative ${showPreview && previewUrl && !isUploading ? 'text-white' : 'text-gray-500'}`}>
           {isUploading ? (
             <p>正在上傳...{progress}%</p>
           ) : (
             <>
               <p className="mb-2">{dropzoneText}</p>
-              <Button variant="outline" disabled={isUploading}>
+              <Button 
+                variant={showPreview && previewUrl ? "secondary" : "outline"} 
+                disabled={isUploading}
+                className={showPreview && previewUrl ? "bg-white/30 hover:bg-white/40 border-white text-white" : ""}
+              >
                 {buttonText}
               </Button>
             </>
@@ -192,7 +205,7 @@ export function ImageUploadDropzone({
         
         {/* 進度條 */}
         {isUploading && (
-          <div className="mt-4 w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div className="mt-4 w-full h-2 bg-gray-200 rounded-full overflow-hidden z-[2] relative">
             <div
               className="h-full bg-green-500"
               style={{ width: `${progress}%` }}
