@@ -12,15 +12,19 @@ import { Event, Location } from "@/types/event";
 import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
 import LocationSelector from "@/components/maps/LocationSelector";
 import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
+import EventForm, { EventFormData, SponsorshipPlanForm } from "@/components/events/EventForm";
+import { convertToDatetimeLocalFormat } from "@/utils/dateUtils";
+import { scrapeLumaEvent } from "@/services/lumaService";
 
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [event, setEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState("");
   const [eventId, setEventId] = useState<string>("");
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<EventFormData>({
     title: "",
     description: "",
     cover_image: "",
@@ -28,6 +32,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     end_time: "",
     category: "",
     tags: "",
+    timezone: "UTC",
     location: {
       id: "",
       name: "",
@@ -39,8 +44,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       longitude: undefined as number | undefined
     } as Location
   });
+  const [sponsorshipPlans, setSponsorshipPlans] = useState<SponsorshipPlanForm[]>([]);
+  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
 
-  // Check user authentication
+  // Check user authentication and get current user
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
@@ -55,6 +62,8 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           router.push('/login');
           return;
         }
+        
+        setCurrentUser(userData);
       } catch (e) {
         console.error("Error checking authentication:", e);
         router.push('/login');
@@ -84,6 +93,21 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         }
 
         setEvent(fetchedEvent);
+        
+        // 轉換贊助計劃數據為表單格式
+        const formattedSponsorshipPlans = fetchedEvent.sponsorship_plans 
+          ? fetchedEvent.sponsorship_plans.map(plan => ({
+              id: plan.id,
+              title: plan.title,
+              description: plan.description,
+              price: plan.price,
+              max_sponsors: plan.max_sponsors || 1,
+              benefits: plan.benefits
+            }))
+          : [];
+          
+        setSponsorshipPlans(formattedSponsorshipPlans);
+        
         // Initialize form data
         setFormData({
           title: fetchedEvent.title,
@@ -93,6 +117,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           end_time: new Date(fetchedEvent.end_time).toISOString().slice(0, 16),
           category: fetchedEvent.category || "",
           tags: fetchedEvent.tags?.join(", ") || "",
+          timezone: fetchedEvent.timezone || "UTC",
           location: {
             id: fetchedEvent.location.id || "",
             name: fetchedEvent.location.name,
@@ -115,31 +140,62 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     fetchEventDetails();
   }, [params]);
 
-  // Handle form input changes
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    
-    if (name.startsWith("location.")) {
-      const locationField = name.split(".")[1];
+  // Handle import from Luma
+  const handleImportFromLuma = async (lumaUrl: string) => {
+    if (!lumaUrl || !lumaUrl.includes('lu.ma') || !currentUser) {
+      throw new Error("Please provide a valid Luma event URL");
+    }
+
+    try {
+      setIsImporting(true);
+
+      // Scrape Luma event data
+      const eventData = await scrapeLumaEvent(lumaUrl, currentUser.id);
+      
+      if (!eventData) {
+        throw new Error("Unable to import event data from the provided URL");
+      }
+      
+      // Keep Luma's original timezone, use UTC if not available
+      const timezone = eventData.timezone || 'UTC';
+      
+      // Convert ISO format time to datetime-local format for form display
+      const startTime = convertToDatetimeLocalFormat(eventData.start_time, timezone);
+      const endTime = convertToDatetimeLocalFormat(eventData.end_time, timezone);
+      
+      // Update form data, but keep original ID and other event-specific data
       setFormData(prev => ({
         ...prev,
-        location: {
-          ...prev.location,
-          [locationField]: value
-        }
+        title: eventData.title,
+        description: eventData.description,
+        cover_image: eventData.cover_image || prev.cover_image,
+        start_time: startTime,
+        end_time: endTime,
+        category: eventData.category,
+        tags: eventData.tags.join(", "),
+        timezone: timezone,
+        location: eventData.location
       }));
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      
+      // 如果 Luma 活動有贊助計劃數據，也導入它
+      if (eventData.sponsorship_plans && eventData.sponsorship_plans.length > 0) {
+        const importedPlans = eventData.sponsorship_plans.map(plan => ({
+          id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          title: plan.title || 'Sponsorship Plan',
+          description: plan.description || '',
+          price: plan.price || 0,
+          max_sponsors: plan.max_sponsors || 1,
+          benefits: plan.benefits || []
+        }));
+        setSponsorshipPlans(importedPlans);
+      }
+    } finally {
+      setIsImporting(false);
     }
   };
 
   // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleUpdateEvent = async (formData: EventFormData, updatedSponsorshipPlans?: SponsorshipPlanForm[]) => {
     if (!event) return;
     
     try {
@@ -152,6 +208,25 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         .map(tag => tag.trim())
         .filter(tag => tag !== "");
       
+      // 轉換贊助計劃為 API 所需格式
+      const apiSponsorshipPlans = updatedSponsorshipPlans ? updatedSponsorshipPlans.map(plan => {
+        // 新增的贊助計劃可能沒有 event_id
+        return {
+          id: plan.id,
+          title: plan.title,
+          description: plan.description,
+          price: Number(plan.price),
+          max_sponsors: Number(plan.max_sponsors),
+          benefits: plan.benefits,
+          event_id: event.id,
+          ownerId: event.ownerId,
+          ownerType: event.ownerType,
+          // 其他必要字段
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+      }) : event.sponsorship_plans;
+      
       // Prepare update data
       const updateData = {
         title: formData.title,
@@ -160,8 +235,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         start_time: new Date(formData.start_time).toISOString(),
         end_time: new Date(formData.end_time).toISOString(),
         category: formData.category,
+        timezone: formData.timezone,
         tags,
-        location: formData.location
+        location: formData.location,
+        sponsorship_plans: apiSponsorshipPlans
       };
       
       const updatedEvent = await updateEvent(event.id, updateData);
@@ -205,152 +282,21 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   return (
     <div className="bg-background text-foreground min-h-screen pt-24 pb-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Edit Event</h1>
-          <Button variant="outline" onClick={() => router.push(`/organizer/events/${eventId}`)}>
-            Cancel
-          </Button>
-        </div>
-
-        {error && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-4 mb-6">
-            <p className="text-destructive">{error}</p>
-          </div>
-        )}
-
-        <Card className="border border-border bg-card text-card-foreground">
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Event Title</Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    required
-                    className="bg-background"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="description">Event Description</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={5}
-                    required
-                    className="bg-background"
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="cover_image">Cover Image</Label>
-                  <ImageUploadDropzone
-                    onUploadComplete={(imageUrl) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        cover_image: imageUrl
-                      }));
-                    }}
-                    className="mt-1"
-                    dropzoneText="拖放圖片到此處上傳"
-                    buttonText="或點擊選擇圖片"
-                    showPreview={true}
-                    initialImage={formData.cover_image}
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="start_time">Start Time</Label>
-                    <Input
-                      id="start_time"
-                      name="start_time"
-                      type="datetime-local"
-                      value={formData.start_time}
-                      onChange={handleInputChange}
-                      required
-                      className="bg-background"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="end_time">End Time</Label>
-                    <Input
-                      id="end_time"
-                      name="end_time"
-                      type="datetime-local"
-                      value={formData.end_time}
-                      onChange={handleInputChange}
-                      required
-                      className="bg-background"
-                    />
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <Input
-                      id="category"
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      required
-                      className="bg-background"
-                    />
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="tags">Tags (comma separated)</Label>
-                    <Input
-                      id="tags"
-                      name="tags"
-                      value={formData.tags}
-                      onChange={handleInputChange}
-                      placeholder="Technology, Innovation, AI"
-                      className="bg-background"
-                    />
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Location Information</h3>
-                  
-                  <LocationSelector 
-                    location={formData.location} 
-                    onChange={(newLocation) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        location: newLocation
-                      }));
-                    }}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex justify-end gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => router.push(`/organizer/events/${eventId}`)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSaving}
-                >
-                  {isSaving ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        <EventForm
+          initialData={formData}
+          initialSponsorshipPlans={sponsorshipPlans}
+          onSubmit={handleUpdateEvent}
+          isLoading={isSaving}
+          error={error}
+          submitButtonText="Save Changes"
+          cancelButtonText="Cancel"
+          onCancel={() => router.push(`/organizer/events/${eventId}`)}
+          showSponsorshipPlans={true}
+          title="Edit Event"
+          showImportLuma={true}
+          onImportLuma={handleImportFromLuma}
+          importLumaIsLoading={isImporting}
+        />
       </div>
     </div>
   );
