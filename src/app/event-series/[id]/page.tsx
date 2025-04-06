@@ -33,6 +33,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [filteredEventIds, setFilteredEventIds] = useState<string[]>([]);
 
   const subscribeText = "Subscribe";
   const subscribedText = "Subscribed";
@@ -102,6 +103,8 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
       return newDate;
     });
     setSelectedDate(null);
+    // 重置篩選
+    setFilteredEventIds([]);
   };
 
   const handleNextMonth = () => {
@@ -111,6 +114,8 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
       return newDate;
     });
     setSelectedDate(null);
+    // 重置篩選
+    setFilteredEventIds([]);
   };
 
   const toggleTag = (tag: string) => {
@@ -121,15 +126,40 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
         return [...prevTags, tag];
       }
     });
+    // 重置事件 ID 篩選
+    setFilteredEventIds([]);
   };
 
   // 清除日期過濾
   const clearDateFilter = () => {
     setSelectedDate(null);
+    // 重置事件 ID 篩選
+    setFilteredEventIds([]);
+  };
+
+  // 按事件 ID 篩選事件
+  const filterByEventIds = (eventIds: string[]) => {
+    setFilteredEventIds(eventIds);
+    // 清除日期和標籤篩選
+    setSelectedDate(null);
+    setSelectedTags([]);
+  };
+
+  // 清除所有篩選
+  const clearAllFilters = () => {
+    setSelectedDate(null);
+    setSelectedTags([]);
+    setFilteredEventIds([]);
+    setSearchQuery("");
   };
 
   // 過濾活動
   const filteredEvents = events.filter(event => {
+    // 如果有篩選的事件ID，則只顯示這些ID的事件
+    if (filteredEventIds.length > 0) {
+      return filteredEventIds.includes(event.id);
+    }
+    
     // 首先按照標簽過濾
     const passesTagFilter = selectedTags.length === 0 || 
       (event.tags && event.tags.some(tag => selectedTags.includes(tag)));
@@ -381,6 +411,7 @@ export default function EventSeriesPage({ params }: EventSeriesPageProps) {
             setSelectedDate={setSelectedDate}
             setShowMode={setShowMode}
             seriesId={seriesId}
+            onFilterByEventIds={filterByEventIds}
           />
         </div>
       </div>

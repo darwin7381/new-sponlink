@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Location } from '@/types/event';
 import { MapPin } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface EventLocation {
   id: string;
@@ -17,6 +18,9 @@ interface MapboxEventMapProps {
   className?: string;
   height?: string;
   width?: string;
+  onMarkerClick?: (eventIds: string[]) => void;
+  seriesId?: string;
+  stableLocations?: boolean; // 新增：標記位置數據是否應該被視為穩定（不重新計算和渲染）
 }
 
 // 设置Mapbox访问令牌
@@ -26,64 +30,244 @@ const MapboxEventMap: React.FC<MapboxEventMapProps> = ({
   locations,
   className = '',
   height = '100%',
-  width = '100%'
+  width = '100%',
+  onMarkerClick,
+  seriesId,
+  stableLocations = false // 預設為false，保持向後兼容
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const markers = useRef<mapboxgl.Marker[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const [isMapInitialized, setIsMapInitialized] = useState(false);
+  const initialLocationsRef = useRef<EventLocation[]>(locations);
 
+  // 只在組件首次渲染或非穩定模式下使用locations計算locationGroups
+  const locationGroups = useMemo(() => {
+    // 如果是穩定模式且地圖已初始化，則使用初始locations
+    const locationsToUse = (stableLocations && isMapInitialized) 
+      ? initialLocationsRef.current 
+      : locations;
+    
+    if (!locationsToUse || locationsToUse.length === 0) return {};
+    
+    // 篩選有效的地點數據
+    const validLocations = locationsToUse.filter(
+      item => item.location && item.location.latitude && item.location.longitude
+    );
+
+    if (validLocations.length === 0) return {};
+    
+    // 按經緯度分組
+    const groups: Record<string, EventLocation[]> = {};
+    
+    validLocations.forEach(item => {
+      if (!item.location.latitude || !item.location.longitude) return;
+      
+      // 使用經緯度四捨五入到3位小數作為鍵，將接近的位置分組
+      const key = `${Math.round(item.location.latitude * 1000) / 1000},${Math.round(item.location.longitude * 1000) / 1000}`;
+      
+      if (!groups[key]) {
+        groups[key] = [];
+      }
+      
+      groups[key].push(item);
+    });
+    
+    return groups;
+  }, [locations, stableLocations, isMapInitialized]);
+
+  // 處理地圖點擊，跳轉到完整地圖頁面
+  const handleMapClick = useCallback(() => {
+    if (seriesId) {
+      router.push(`/event-series/${seriesId}/map`);
+    }
+  }, [router, seriesId]);
+
+  // 初始化地圖 - 僅執行一次
   useEffect(() => {
     if (!mapboxgl.accessToken) {
       setError('Mapbox token is required');
       return;
     }
 
-    // 确保只初始化一次地图
+    // 確保只初始化一次地圖
     if (map.current || !mapContainer.current) return;
 
     try {
-      // 初始化地图
+      console.log('初始化地圖...');
+      
+      // 儲存初始位置數據
+      initialLocationsRef.current = locations;
+      
+      // 初始化地圖 - 使用靜態地圖風格
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/dark-v11', // Luma风格的深色主题
-        center: [114.1694, 22.3193], // 香港中心位置
+        style: 'mapbox://styles/mapbox/dark-v11',
+        center: [114.1694, 22.3193],
         zoom: 11,
-        attributionControl: false, // 移除Mapbox浮水印
-        logoPosition: 'bottom-right' // 如果logo未移除，移到右下角
+        attributionControl: false,
+        logoPosition: 'bottom-right',
+        renderWorldCopies: false,
+        interactive: false, // 禁用交互性（平移/縮放）
+        fadeDuration: 0 // 無過渡動畫
       });
 
-      // 地图加载完成后添加标记
+      // 添加地圖點擊事件
+      if (mapContainer.current) {
+        mapContainer.current.addEventListener('click', handleMapClick);
+      }
+
+      // 地圖加載完成後添加標記
       map.current.on('load', () => {
         if (!map.current) return;
-
-        // 筛选有效的地点数据
-        const validLocations = locations.filter(
-          item => item.location && item.location.latitude && item.location.longitude
-        );
-
-        if (validLocations.length === 0) return;
-
-        // 计算每个位置的活动数量
-        // 先按经纬度分组
-        const locationGroups: Record<string, EventLocation[]> = {};
+        console.log('地圖加載完成，添加標記...');
         
-        validLocations.forEach(item => {
-          if (!item.location.latitude || !item.location.longitude) return;
+        // 清除現有標記
+        if (markers.current.length > 0) {
+          markers.current.forEach(marker => marker.remove());
+          markers.current = [];
+        }
+        
+        // 計算邊界
+        if (Object.keys(locationGroups).length > 0) {
+          const bounds = new mapboxgl.LngLatBounds();
           
-          // 使用经纬度四舍五入到3位小数作为键，将接近的位置分组
-          const key = `${Math.round(item.location.latitude * 1000) / 1000},${Math.round(item.location.longitude * 1000) / 1000}`;
+          Object.entries(locationGroups).forEach(([key, group]) => {
+            if (group.length === 0) return;
+            
+            const firstLocation = group[0];
+            const lat = firstLocation.location.latitude || 0;
+            const lng = firstLocation.location.longitude || 0;
+            
+            bounds.extend([lng, lat]);
+            
+            // 創建自定義HTML標記
+            const markerEl = document.createElement('div');
+            markerEl.className = 'flex items-center justify-center bg-green-500 rounded-full w-6 h-6 text-white text-xs font-medium shadow-md';
+            markerEl.innerText = `${group.length}`;
+            
+            // 為標記添加點擊事件：篩選相關事件
+            markerEl.style.cursor = 'pointer';
+            markerEl.addEventListener('click', (e) => {
+              e.stopPropagation(); // 防止觸發地圖點擊
+              if (onMarkerClick) {
+                const eventIds = group.map(item => item.id);
+                onMarkerClick(eventIds);
+              }
+            });
+            
+            // 簡化標記，不添加彈出框
+            const marker = new mapboxgl.Marker({ element: markerEl })
+              .setLngLat([lng, lat])
+              .addTo(map.current as mapboxgl.Map);
+              
+            // 存儲標記引用以便之後清除
+            markers.current.push(marker);
+          });
           
-          if (!locationGroups[key]) {
-            locationGroups[key] = [];
+          if (!bounds.isEmpty()) {
+            // 立即設置地圖邊界 - 無動畫
+            map.current.fitBounds(bounds, {
+              padding: 50,
+              maxZoom: 15,
+              duration: 0 // 禁用動畫
+            });
           }
-          
-          locationGroups[key].push(item);
-        });
-
-        // 设置地图边界以显示所有标记
-        const bounds = new mapboxgl.LngLatBounds();
+        }
         
-        // 为每个位置组添加标记
+        // 設置地圖已初始化標誌
+        setIsMapInitialized(true);
+      });
+
+    } catch (err) {
+      console.error('Error initializing map:', err);
+      setError('Failed to initialize map');
+    }
+
+    // 清理函數
+    return () => {
+      if (mapContainer.current) {
+        mapContainer.current.removeEventListener('click', handleMapClick);
+      }
+      
+      // 清除所有標記
+      if (markers.current.length > 0) {
+        markers.current.forEach(marker => marker.remove());
+        markers.current = [];
+      }
+      
+      map.current?.remove();
+      map.current = null;
+      setIsMapInitialized(false);
+    };
+  // 不要依賴locationGroups和locations，避免重新初始化地圖
+  }, [handleMapClick]);
+
+  // 更新標記 - 只有在非穩定模式下才根據位置變化更新
+  useEffect(() => {
+    // 如果開啟了穩定模式且地圖已初始化，則不更新標記
+    if (stableLocations && isMapInitialized) {
+      return;
+    }
+    
+    if (!map.current || Object.keys(locationGroups).length === 0) return;
+    
+    // 確保地圖已加載
+    if (map.current.loaded()) {
+      console.log('更新地圖標記...');
+      
+      // 清除現有標記
+      if (markers.current.length > 0) {
+        markers.current.forEach(marker => marker.remove());
+        markers.current = [];
+      }
+      
+      // 添加新標記
+      Object.entries(locationGroups).forEach(([key, group]) => {
+        if (group.length === 0) return;
+        
+        const firstLocation = group[0];
+        const lat = firstLocation.location.latitude || 0;
+        const lng = firstLocation.location.longitude || 0;
+        
+        // 創建自定義HTML標記
+        const markerEl = document.createElement('div');
+        markerEl.className = 'flex items-center justify-center bg-green-500 rounded-full w-6 h-6 text-white text-xs font-medium shadow-md';
+        markerEl.innerText = `${group.length}`;
+        
+        // 為標記添加點擊事件：篩選相關事件
+        markerEl.style.cursor = 'pointer';
+        markerEl.addEventListener('click', (e) => {
+          e.stopPropagation(); // 防止觸發地圖點擊
+          if (onMarkerClick) {
+            const eventIds = group.map(item => item.id);
+            onMarkerClick(eventIds);
+          }
+        });
+        
+        // 簡化標記，不添加彈出框
+        const marker = new mapboxgl.Marker({ element: markerEl })
+          .setLngLat([lng, lat])
+          .addTo(map.current as mapboxgl.Map);
+          
+        // 存儲標記引用以便之後清除
+        markers.current.push(marker);
+      });
+    } else {
+      // 如果地圖尚未加載，等待load事件
+      map.current.once('load', () => {
+        // 在地圖加載後更新標記
+        if (!map.current) return;
+        
+        // 清除現有標記
+        if (markers.current.length > 0) {
+          markers.current.forEach(marker => marker.remove());
+          markers.current = [];
+        }
+        
+        // 添加新標記
         Object.entries(locationGroups).forEach(([key, group]) => {
           if (!map.current || group.length === 0) return;
           
@@ -91,87 +275,34 @@ const MapboxEventMap: React.FC<MapboxEventMapProps> = ({
           const lat = firstLocation.location.latitude || 0;
           const lng = firstLocation.location.longitude || 0;
           
-          // 扩展边界
-          bounds.extend([lng, lat]);
-          
-          // 创建自定义HTML标记
+          // 創建自定義HTML標記
           const markerEl = document.createElement('div');
           markerEl.className = 'flex items-center justify-center bg-green-500 rounded-full w-6 h-6 text-white text-xs font-medium shadow-md';
-          markerEl.innerText = `${group.length}`; // 显示该位置的活动数量
+          markerEl.innerText = `${group.length}`;
           
-          // 添加悬停效果
-          markerEl.style.transition = 'all 0.2s ease-in-out';
-          markerEl.addEventListener('mouseenter', () => {
-            markerEl.style.transform = 'scale(1.2)';
+          // 為標記添加點擊事件：篩選相關事件
+          markerEl.style.cursor = 'pointer';
+          markerEl.addEventListener('click', (e) => {
+            e.stopPropagation(); // 防止觸發地圖點擊
+            if (onMarkerClick) {
+              const eventIds = group.map(item => item.id);
+              onMarkerClick(eventIds);
+            }
           });
-          markerEl.addEventListener('mouseleave', () => {
-            markerEl.style.transform = 'scale(1)';
-          });
           
-          // 创建弹出信息 - 如果有多个活动，显示列表
-          let popupHTML = '';
-          
-          if (group.length === 1) {
-            // 单个活动
-            popupHTML = `
-              <div class="p-2">
-                <h3 class="font-medium text-sm">${group[0].title}</h3>
-                <p class="text-xs text-gray-600 mt-1">
-                  ${group[0].location.name || group[0].location.address || ''}
-                </p>
-              </div>
-            `;
-          } else {
-            // 多个活动
-            popupHTML = `
-              <div class="p-2">
-                <h3 class="font-medium text-sm">${group.length} 个活动</h3>
-                <ul class="mt-1">
-                  ${group.map(item => `
-                    <li class="text-xs text-gray-600 mb-1">
-                      ${item.title}
-                    </li>
-                  `).join('')}
-                </ul>
-              </div>
-            `;
-          }
-          
-          const popup = new mapboxgl.Popup({ offset: 25 })
-            .setHTML(popupHTML);
-          
-          // 添加标记到地图
-          new mapboxgl.Marker({ element: markerEl })
+          // 簡化標記，不添加彈出框
+          const marker = new mapboxgl.Marker({ element: markerEl })
             .setLngLat([lng, lat])
-            .setPopup(popup)
-            .addTo(map.current);
+            .addTo(map.current as mapboxgl.Map);
+            
+          // 存儲標記引用以便之後清除
+          markers.current.push(marker);
         });
-        
-        // 调整地图以显示所有标记
-        if (!bounds.isEmpty()) {
-          map.current.fitBounds(bounds, {
-            padding: 50,
-            maxZoom: 15
-          });
-        }
       });
-
-      // 不添加控制元素
-      // map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    } catch (err) {
-      console.error('Error initializing map:', err);
-      setError('Failed to initialize map');
     }
+  }, [locationGroups, onMarkerClick, stableLocations, isMapInitialized]);
 
-    // 清理函数
-    return () => {
-      map.current?.remove();
-      map.current = null;
-    };
-  }, [locations]);
-
-  // 错误处理
+  // 錯誤處理
   if (error) {
     return (
       <div className={`${className} flex items-center justify-center bg-neutral-900`} style={{ width, height }}>
@@ -184,7 +315,7 @@ const MapboxEventMap: React.FC<MapboxEventMapProps> = ({
     );
   }
 
-  // 加载中状态
+  // 加載中狀態
   if (!mapboxgl.accessToken) {
     return (
       <div className={`${className} flex items-center justify-center bg-neutral-900`} style={{ width, height }}>
@@ -197,7 +328,12 @@ const MapboxEventMap: React.FC<MapboxEventMapProps> = ({
   }
 
   return (
-    <div ref={mapContainer} className={className} style={{ width, height }} />
+    <div 
+      ref={mapContainer} 
+      className={`${className} cursor-pointer`} 
+      style={{ width, height }} 
+      data-testid="mapbox-container"
+    />
   );
 };
 
