@@ -27,6 +27,17 @@ interface MapboxEventMapProps {
 // 设置Mapbox访问令牌
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
 
+/**
+ * MapBox Event Map 組件
+ * 
+ * 主題切換解決方案：
+ * 1. 我們直接從 DOM 檢測當前主題狀態(dark/light)，而不是依賴 useTheme 提供的狀態
+ * 2. 初始化地圖時基於當前檢測到的主題設置對應的地圖樣式
+ * 3. 監聽主題變化並更新地圖樣式
+ * 4. 為地圖容器添加主題相關的類名，以便應用相應的 CSS 樣式
+ * 
+ * 詳細說明見 /docs/mapbox-theme-switching.md
+ */
 const MapboxEventMap: React.FC<MapboxEventMapProps> = ({
   locations,
   className = '',
@@ -45,7 +56,11 @@ const MapboxEventMap: React.FC<MapboxEventMapProps> = ({
   const initialLocationsRef = useRef<EventLocation[]>(locations);
   const { theme } = useTheme(); // 簡化主題使用
   
-  // 直接從DOM檢測當前主題
+  /**
+   * 直接從DOM檢測當前主題
+   * 這是更可靠的方法，因為它直接檢查文檔的實際狀態
+   * useTheme 提供的狀態在某些情況下可能不一致或延遲更新
+   */
   const getCurrentTheme = useCallback(() => {
     if (typeof window !== 'undefined') {
       const isDarkMode = document.documentElement.classList.contains('dark');
@@ -54,7 +69,11 @@ const MapboxEventMap: React.FC<MapboxEventMapProps> = ({
     return 'light'; // 默認主題
   }, []);
 
-  // 根據主題獲取地圖樣式
+  /**
+   * 根據主題獲取適當的地圖樣式
+   * dark 主題 -> dark-v11 樣式
+   * light 主題 -> streets-v12 樣式
+   */
   const getMapStyle = useCallback(() => {
     const currentTheme = getCurrentTheme();
     console.log(`小地圖 - 從DOM檢測主題: ${currentTheme}`);
@@ -105,7 +124,10 @@ const MapboxEventMap: React.FC<MapboxEventMapProps> = ({
     }
   }, [router, seriesId]);
 
-  // 監聽主題變化，更新地圖樣式
+  /**
+   * 監聽主題變化並更新地圖樣式
+   * 當網站主題改變時，我們需要相應地更新地圖樣式
+   */
   useEffect(() => {
     // 確保只在主題變化時更新，而不是其他狀態變化時
     if (!map.current || !isMapInitialized) return;
@@ -128,7 +150,9 @@ const MapboxEventMap: React.FC<MapboxEventMapProps> = ({
     }
   }, [theme, isMapInitialized, getMapStyle, getCurrentTheme]); // 只監聽 theme 變化
 
-  // 初始化地圖 - 僅執行一次
+  /**
+   * 初始化地圖並設置適合當前主題的樣式
+   */
   useEffect(() => {
     if (!mapboxgl.accessToken) {
       setError('Mapbox token is required');

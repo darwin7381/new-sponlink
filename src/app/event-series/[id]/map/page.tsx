@@ -182,7 +182,10 @@ export default function EventSeriesMapPage() {
     return detected;
   }, [resolvedTheme, theme, systemTheme]);
 
-  // 獲取當前主題並返回相應的地圖樣式
+  /**
+   * 獲取當前主題並返回相應的地圖樣式
+   * 直接從DOM檢測主題而不是依賴useTheme hook的狀態
+   */
   const getMapStyle = useCallback(() => {
     // 使用一個更簡單的邏輯來獲取當前主題
     // 首先檢查 document.documentElement 的 class 屬性
@@ -684,4 +687,4 @@ export default function EventSeriesMapPage() {
       </div>
     </div>
   );
-} 
+} // 地圖主題檢測與切換問題解決方案說明\n// 請參考 /docs/mapbox-theme-switching.md 了解詳情
