@@ -3,16 +3,11 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { getEventById, updateEvent } from "@/services/eventService";
 import { Event, Location } from "@/types/event";
 import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
-import LocationSelector from "@/components/maps/LocationSelector";
-import { ImageUploadDropzone } from '@/components/ui/image-upload-dropzone';
-import EventForm, { EventFormData, SponsorshipPlanForm } from "@/components/events/EventForm";
+import EventForm from "@/components/events/EventForm";
+import { EventFormData, SponsorshipPlanForm } from "@/types/forms";
 import { convertToDatetimeLocalFormat } from "@/utils/dateUtils";
 import { scrapeLumaEvent } from "@/services/lumaService";
 
@@ -77,14 +72,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
   useEffect(() => {
     async function fetchEventDetails() {
       if (!isAuthenticated()) {
-        return; // If user is not authenticated, don't fetch details
+        return;
       }
       
       try {
-        // In Next.js 15, we need to await params
         const resolvedParams = await params;
         const id = resolvedParams.id;
-        setEventId(id); // Store ID for later use
+        setEventId(id);
         
         const fetchedEvent = await getEventById(id);
         
@@ -149,33 +143,32 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     try {
       setIsImporting(true);
 
-      // Scrape Luma event data
       const eventData = await scrapeLumaEvent(lumaUrl, currentUser.id);
       
       if (!eventData) {
         throw new Error("Unable to import event data from the provided URL");
       }
       
-      // Keep Luma's original timezone, use UTC if not available
       const timezone = eventData.timezone || 'UTC';
-      
-      // Convert ISO format time to datetime-local format for form display
       const startTime = convertToDatetimeLocalFormat(eventData.start_time, timezone);
       const endTime = convertToDatetimeLocalFormat(eventData.end_time, timezone);
       
       // Update form data, but keep original ID and other event-specific data
-      setFormData(prev => ({
-        ...prev,
-        title: eventData.title,
-        description: eventData.description,
-        cover_image: eventData.cover_image || prev.cover_image,
-        start_time: startTime,
-        end_time: endTime,
-        category: eventData.category,
-        tags: eventData.tags.join(", "),
-        timezone: timezone,
-        location: eventData.location
-      }));
+      const newFormData = {
+        ...formData,
+        title: eventData.title || formData.title,
+        description: eventData.description || formData.description,
+        cover_image: eventData.cover_image || formData.cover_image,
+        start_time: startTime || formData.start_time,
+        end_time: endTime || formData.end_time,
+        category: eventData.category || formData.category,
+        tags: eventData.tags?.join(", ") || formData.tags,
+        timezone: timezone || formData.timezone,
+        location: eventData.location || formData.location
+      };
+      
+      // 確保更新狀態
+      setFormData(newFormData);
       
       // 如果 Luma 活動有贊助計劃數據，也導入它
       if (eventData.sponsorship_plans && eventData.sponsorship_plans.length > 0) {
@@ -189,6 +182,9 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         }));
         setSponsorshipPlans(importedPlans);
       }
+    } catch (error) {
+      console.error("Error during Luma import:", error);
+      throw error;
     } finally {
       setIsImporting(false);
     }
@@ -210,7 +206,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
       
       // 轉換贊助計劃為 API 所需格式
       const apiSponsorshipPlans = updatedSponsorshipPlans ? updatedSponsorshipPlans.map(plan => {
-        // 新增的贊助計劃可能沒有 event_id
         return {
           id: plan.id,
           title: plan.title,
@@ -221,7 +216,6 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           event_id: event.id,
           ownerId: event.ownerId,
           ownerType: event.ownerType,
-          // 其他必要字段
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };

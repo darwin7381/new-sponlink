@@ -8,28 +8,18 @@ import { addEventToSeries } from "@/services/eventSeriesService";
 import { EventStatus, Location, OWNER_TYPE } from "@/types/event";
 import { getCurrentUser, VIEW_TYPE } from "@/lib/services/authService";
 import { scrapeLumaEvent } from "@/services/lumaService";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription,
-  DialogFooter
-} from "@/components/ui/dialog";
-import { AlertCircle } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Input } from "@/components/ui/input";
 import { convertToDatetimeLocalFormat, getBrowserTimezone } from "@/utils/dateUtils";
 import ProtectedRouteWrapper from "@/components/auth/ProtectedRouteWrapper";
-import EventForm, { EventFormData, SponsorshipPlanForm } from "@/components/events/EventForm";
+import EventForm from "@/components/events/EventForm";
+import { EventFormData, SponsorshipPlanForm } from "@/types/forms";
 
 export default function CreateEventPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
   const [isImporting, setIsImporting] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState<EventFormData>({
     title: "",
     description: "",
@@ -38,7 +28,7 @@ export default function CreateEventPage() {
     end_time: "",
     category: "",
     tags: "",
-    timezone: getBrowserTimezone(), // Initialize with browser timezone
+    timezone: getBrowserTimezone(),
     location: {
       id: "",
       name: "",
@@ -53,7 +43,6 @@ export default function CreateEventPage() {
   
   // 初始化贊助計劃狀態
   const [sponsorshipPlans, setSponsorshipPlans] = useState<SponsorshipPlanForm[]>([]);
-  
   const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
   const [seriesId, setSeriesId] = useState<string | null>(null);
 
@@ -61,10 +50,8 @@ export default function CreateEventPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Add a short delay to ensure localStorage data is loaded
         await new Promise(resolve => setTimeout(resolve, 300));
         
-        // Get current user, no longer checking role
         const user = await getCurrentUser();
         if (user) {
           setCurrentUser(user);
@@ -97,21 +84,16 @@ export default function CreateEventPage() {
     try {
       setIsImporting(true);
 
-      // Scrape Luma event data
       const eventData = await scrapeLumaEvent(lumaUrl, currentUser.id);
       
       if (!eventData) {
         throw new Error("Unable to import event data from the provided URL");
       }
       
-      // Keep Luma's original timezone, use UTC if not available
       const timezone = eventData.timezone || 'UTC';
-      
-      // Convert ISO format time to datetime-local format for form display
       const startTime = convertToDatetimeLocalFormat(eventData.start_time, timezone);
       const endTime = convertToDatetimeLocalFormat(eventData.end_time, timezone);
       
-      // Update form data
       setFormData({
         title: eventData.title,
         description: eventData.description,
@@ -120,11 +102,10 @@ export default function CreateEventPage() {
         end_time: endTime,
         category: eventData.category,
         tags: eventData.tags.join(", "),
-        timezone: timezone, // Fully preserve Luma's original timezone
+        timezone: timezone,
         location: eventData.location
       });
       
-      // 如果 Luma 活動有贊助計劃數據，也導入它
       if (eventData.sponsorship_plans && eventData.sponsorship_plans.length > 0) {
         const importedPlans = eventData.sponsorship_plans.map(plan => ({
           id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -141,38 +122,33 @@ export default function CreateEventPage() {
     }
   };
 
-  // Handle form submission from EventForm component
+  // Handle form submission
   const handleCreateEvent = async (formData: EventFormData, updatedSponsorshipPlans?: SponsorshipPlanForm[]) => {
     try {
       setIsSubmitting(true);
       setError("");
       
-      // Convert tags string to array
       const tags = formData.tags
         .split(',')
         .map(tag => tag.trim())
         .filter(tag => tag.length > 0);
       
-      // Get current user information
       if (!currentUser) {
         setError("Not logged in or session expired");
         setIsSubmitting(false);
         return;
       }
       
-      // 将 SponsorshipPlanForm 转换为符合 API 要求的格式
       const convertedSponsorshipPlans = updatedSponsorshipPlans ? updatedSponsorshipPlans.map(plan => {
-        // 为了 TypeScript 类型安全，如果 ID 是临时 ID，则生成一个随机 ID
         const planId = plan.id.startsWith('temp_') ? `plan_${Date.now()}_${Math.random().toString(36).substring(2, 9)}` : plan.id;
         
         return {
-          id: planId, // 确保 ID 不为 undefined
+          id: planId,
           title: plan.title,
           description: plan.description,
           price: Number(plan.price),
           max_sponsors: Number(plan.max_sponsors),
           benefits: plan.benefits,
-          // 添加服务端期望的其他字段
           event_id: '',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -181,7 +157,6 @@ export default function CreateEventPage() {
         };
       }) : [];
       
-      // Prepare event data
       const eventData = {
         organizer_id: currentUser.id,
         title: formData.title,
@@ -203,10 +178,8 @@ export default function CreateEventPage() {
       const createdEvent = await createEvent(eventData);
       
       if (createdEvent) {
-        // 如果有系列ID，将事件添加到系列中
         if (seriesId) {
           await addEventToSeries(seriesId, createdEvent.id);
-          // 创建完成后跳转回系列页面
           router.push(`/event-series/${seriesId}`);
         } else {
           router.push(`/organizer/events/${createdEvent.id}`);
@@ -224,7 +197,6 @@ export default function CreateEventPage() {
 
   // Page content component
   const EventCreationContent = () => {
-    // If loading, show loading state
     if (isLoading) {
       return (
         <div className="flex justify-center items-center min-h-screen bg-background">
@@ -240,7 +212,6 @@ export default function CreateEventPage() {
     return (
       <div className="bg-background min-h-screen pt-24 pb-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Event Form Component with Import from Luma feature */}
           <EventForm
             initialData={formData}
             initialSponsorshipPlans={sponsorshipPlans}
@@ -261,7 +232,6 @@ export default function CreateEventPage() {
     );
   };
 
-  // Wrap page with ProtectedRouteWrapper
   return (
     <ProtectedRouteWrapper requiredView={VIEW_TYPE.EVENT_ORGANIZER}>
       <EventCreationContent />

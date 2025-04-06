@@ -20,28 +20,10 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { EventFormData, SponsorshipPlanForm } from "@/types/forms";
 
-// Sponsorship plan type definition
-export interface SponsorshipPlanForm {
-  id: string;
-  title: string;
-  description: string;
-  price: number;
-  max_sponsors: number;
-  benefits: string[];
-}
-
-export interface EventFormData {
-  title: string;
-  description: string;
-  cover_image: string;
-  start_time: string;
-  end_time: string;
-  category: string;
-  tags: string;
-  timezone: string;
-  location: Location;
-}
+// Export types for backward compatibility
+export type { EventFormData, SponsorshipPlanForm };
 
 interface EventFormProps {
   initialData: EventFormData;
@@ -83,7 +65,18 @@ export default function EventForm({
   const [lumaUrl, setLumaUrl] = useState("");
   const [importError, setImportError] = useState("");
 
+  // 監聽 initialData 變化，更新表單數據
   useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("initialData changed in EventForm");
+    }
+    setFormData(initialData);
+  }, [initialData]);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("initialSponsorshipPlans changed in EventForm");
+    }
     if (initialSponsorshipPlans && initialSponsorshipPlans.length > 0) {
       setSponsorshipPlans(initialSponsorshipPlans);
     }
