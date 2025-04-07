@@ -10,6 +10,7 @@ import { EventStatus, Event, EventSeries } from "@/types/event";
 import { Hero } from "@/components/layout/Hero";
 import { FeaturedEvents } from "@/components/events/FeaturedEvents";
 import { FeaturedEventSeries } from "@/components/events/FeaturedEventSeries";
+import { FeaturedHoriEvents } from "@/components/events/FeaturedHoriEvents";
 
 export default function Home() {
   const [user, setUser] = useState<User | null>(null);
@@ -52,6 +53,9 @@ export default function Home() {
 
       {/* Featured Events Section */}
       <FeaturedEvents events={featuredEvents} />
+      
+      {/* Featured Horizontal Events Section */}
+      <FeaturedHoriEvents events={featuredEvents} />
       
       {/* Featured Event Series Section */}
       <FeaturedEventSeries series={featuredSeries} />
