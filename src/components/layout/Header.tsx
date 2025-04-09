@@ -9,11 +9,15 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import migrateLegacyAuth from '@/lib/utils/migrateLegacyAuth';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
+import { getNotifications } from '@/services/userPreferenceService';
+import { Bell } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { isLoggedIn, showLoginModal, handleLogout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -36,6 +40,33 @@ export default function Header() {
   useEffect(() => {
     migrateLegacyAuth();
   }, []);
+
+  // 獲取用戶未讀通知數量
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (user && user.id) {
+        try {
+          const notifications = await getNotifications(user.id, { unreadOnly: true });
+          setUnreadCount(notifications.length);
+        } catch (error) {
+          console.error('Error fetching notifications:', error);
+        }
+      }
+    };
+    
+    fetchNotifications();
+    
+    // 監聽通知狀態變更的自定義事件
+    const handleNotificationsUpdate = () => {
+      fetchNotifications();
+    };
+    
+    window.addEventListener('notificationsUpdate', handleNotificationsUpdate);
+    
+    return () => {
+      window.removeEventListener('notificationsUpdate', handleNotificationsUpdate);
+    };
+  }, [user]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -163,65 +194,99 @@ export default function Header() {
             </Link>
             <ThemeToggle />
             {isLoggedIn ? (
-              <div className="ml-3 relative z-50">
-                <div>
-                  <button
-                    type="button"
-                    className="bg-card rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                    id="user-menu-button"
-                    aria-expanded="true"
-                    aria-haspopup="true"
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  >
-                    <span className="sr-only">Open user menu</span>
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                      {user?.email?.charAt(0).toUpperCase() || '?'}
-                    </div>
-                  </button>
-                </div>
-                {isMenuOpen && (
-                  <div
-                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-card ring-1 ring-border focus:outline-none z-50"
-                    role="menu"
-                    aria-orientation="vertical"
-                    aria-labelledby="user-menu-button"
-                    tabIndex={-1}
-                  >
-                    <Link
-                      href="/dashboard"
-                      className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
-                      role="menuitem"
-                      tabIndex={-1}
-                      id="user-menu-item-0"
-                      onClick={() => setIsMenuOpen(false)}
+              <>
+                {/* 通知圖標 */}
+                <Link href="/notifications" className="relative px-2 py-1 mx-2">
+                  <Bell className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                  {unreadCount > 0 && (
+                    <Badge 
+                      variant="destructive" 
+                      className="absolute -top-1 -right-1 min-w-[1.1rem] h-[1.1rem] flex items-center justify-center text-[0.65rem] px-[0.15rem] rounded-full"
                     >
-                      Dashboard
-                    </Link>
-                    <Link
-                      href="/profile"
-                      className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
-                      role="menuitem"
-                      tabIndex={-1}
-                      id="user-menu-item-1"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Profile
-                    </Link>
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </Badge>
+                  )}
+                </Link>
+                <div className="ml-3 relative z-50">
+                  <div>
                     <button
-                      className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent"
-                      role="menuitem"
-                      tabIndex={-1}
-                      id="user-menu-item-2"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        handleLogout();
-                      }}
+                      type="button"
+                      className="bg-card rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                      id="user-menu-button"
+                      aria-expanded="true"
+                      aria-haspopup="true"
+                      onClick={() => setIsMenuOpen(!isMenuOpen)}
                     >
-                      Sign out
+                      <span className="sr-only">Open user menu</span>
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                        {user?.email?.charAt(0).toUpperCase() || '?'}
+                      </div>
                     </button>
                   </div>
-                )}
-              </div>
+                  {isMenuOpen && (
+                    <div
+                      className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-card ring-1 ring-border focus:outline-none z-50"
+                      role="menu"
+                      aria-orientation="vertical"
+                      aria-labelledby="user-menu-button"
+                      tabIndex={-1}
+                    >
+                      <Link
+                        href="/dashboard"
+                        className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
+                        role="menuitem"
+                        tabIndex={-1}
+                        id="user-menu-item-0"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Dashboard
+                      </Link>
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
+                        role="menuitem"
+                        tabIndex={-1}
+                        id="user-menu-item-1"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        href="/notifications"
+                        className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
+                        role="menuitem"
+                        tabIndex={-1}
+                        id="user-menu-item-2"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        <span className="flex items-center justify-between w-full">
+                          <span className="flex items-center">
+                            <Bell className="h-4 w-4 mr-2" />
+                            通知中心
+                          </span>
+                          {unreadCount > 0 && (
+                            <Badge variant="destructive" className="ml-2">
+                              {unreadCount}
+                            </Badge>
+                          )}
+                        </span>
+                      </Link>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent"
+                        role="menuitem"
+                        tabIndex={-1}
+                        id="user-menu-item-3"
+                        onClick={() => {
+                          setIsMenuOpen(false);
+                          handleLogout();
+                        }}
+                      >
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
             ) : (
               <div className="flex space-x-4">
                 <Button
@@ -394,12 +459,32 @@ export default function Header() {
               >
                 Profile
               </Link>
+              <Link
+                href="/notifications"
+                className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <span className="flex items-center justify-between w-full">
+                  <span className="flex items-center">
+                    <Bell className="h-4 w-4 mr-2" />
+                    通知中心
+                  </span>
+                  {unreadCount > 0 && (
+                    <Badge variant="destructive" className="ml-2">
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </span>
+              </Link>
               <button
+                className="block w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                role="menuitem"
+                tabIndex={-1}
+                id="user-menu-item-3"
                 onClick={() => {
                   setIsMenuOpen(false);
                   handleLogout();
                 }}
-                className="block w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
               >
                 Sign out
               </button>

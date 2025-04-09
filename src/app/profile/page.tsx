@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { getCurrentUser } from '@/lib/services/authService';
 import { User, USER_ROLES, OrganizerProfile, SponsorProfile } from '@/lib/types/users';
 import { getUserProfile } from '@/lib/services/userService';
-import { Calendar, Briefcase, DollarSign, Users, PieChart, Settings, Edit, ExternalLink, Plus } from 'lucide-react';
+import { Calendar, Briefcase, DollarSign, Users, PieChart, Settings, Edit, ExternalLink, Plus, Bookmark, Bell } from 'lucide-react';
 
 interface EventItem {
   id: string;
@@ -133,6 +133,20 @@ export default function ProfilePage() {
                 }`}
               >
                 个人资料
+              </button>
+              <button 
+                onClick={() => router.push('/profile/saved')}
+                className="px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors text-muted-foreground hover:text-foreground flex items-center"
+              >
+                <Bookmark className="h-4 w-4 mr-1.5" />
+                我的收藏
+              </button>
+              <button 
+                onClick={() => router.push('/profile/follows')}
+                className="px-6 py-4 text-sm font-medium whitespace-nowrap transition-colors text-muted-foreground hover:text-foreground flex items-center"
+              >
+                <Bell className="h-4 w-4 mr-1.5" />
+                我的關注
               </button>
               {user.role === USER_ROLES.ORGANIZER && (
                 <button 
