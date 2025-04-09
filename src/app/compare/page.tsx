@@ -9,6 +9,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { addToCart } from '@/services/sponsorService';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getEventById } from '@/services/eventService';
+import { ComparisonSaveButton } from '@/components/common/ComparisonSaveButton';
 
 export default function ComparePage() {
   const [plansToCompare, setPlansToCompare] = useState<SponsorshipPlan[]>([]);
@@ -104,9 +105,26 @@ export default function ComparePage() {
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">贊助方案比較</h1>
-        {plansToCompare.length > 0 && (
-          <Button variant="outline" onClick={handleClearAll}>清空比較清單</Button>
-        )}
+        <div className="flex gap-3">
+          {plansToCompare.length > 0 && (
+            <>
+              <ComparisonSaveButton 
+                comparisonItems={plansToCompare.map(plan => ({
+                  type: 'sponsorship_plan',
+                  id: plan.id,
+                  metadata: {
+                    title: plan.title,
+                    price: plan.price,
+                    event_id: plan.event_id,
+                    event_name: eventNames[plan.event_id] || '未知活動'
+                  }
+                }))}
+                comparisonCriteria={['price', 'benefits', 'max_sponsors']}
+              />
+              <Button variant="outline" onClick={handleClearAll}>清空比較清單</Button>
+            </>
+          )}
+        </div>
       </div>
       
       {isLoading ? (

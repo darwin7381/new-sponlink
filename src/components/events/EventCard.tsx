@@ -6,9 +6,11 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Event } from "@/types/event";
+import { SavedItemType } from "@/types/userPreferences";
 import { formatLocation } from "@/utils/languageUtils";
 import { Clock, MapPin } from "lucide-react";
 import { getTimezoneDisplay } from "@/utils/dateUtils";
+import { SaveButton } from "@/components/common/SaveButton";
 
 interface EventCardProps {
   event: Event;
@@ -92,8 +94,23 @@ export function EventCard({ event }: EventCardProps) {
     "Location TBD";
 
   return (
-    <Link href={`/events/${event.id}`} className="block group">
-      <div className="overflow-hidden h-full rounded-lg border bg-card text-card-foreground shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200 hover:-translate-y-1">
+    <div className="overflow-hidden h-full rounded-lg border bg-card text-card-foreground shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200 hover:-translate-y-1 relative">
+      {/* 收藏按鈕 - 絕對定位在右上角 */}
+      <div className="absolute top-2 right-2 z-10">
+        <SaveButton 
+          itemId={event.id}
+          itemType={SavedItemType.EVENT}
+          metadata={{
+            title: event.title,
+            thumbnail: event.cover_image,
+            date: event.start_time
+          }}
+          iconOnly
+          size="sm"
+        />
+      </div>
+      
+      <Link href={`/events/${event.id}`} className="block group">
         {/* 圖片容器 - 確保與卡片邊緣完全貼合 */}
         <div className="relative w-full h-48 overflow-hidden">
           <Image 
@@ -138,7 +155,7 @@ export function EventCard({ event }: EventCardProps) {
             )}
           </span>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 } 

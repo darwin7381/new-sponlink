@@ -18,6 +18,9 @@ import { formatLocation } from "@/utils/languageUtils";
 import { Clock, Calendar, MapPin, Link as LinkIcon } from "lucide-react";
 import { getBrowserTimezone, getTimezoneDisplay } from "@/utils/dateUtils";
 import LocationDisplay from "@/components/maps/LocationDisplay";
+import { SaveButton } from "@/components/common/SaveButton";
+import { FollowButton } from "@/components/common/FollowButton";
+import { SavedItemType, CollectionType } from "@/types/userPreferences";
 
 /**
  * 將時間從源時區轉換為目標時區
@@ -398,23 +401,45 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 to-black/70 flex items-end">
           <div className="container mx-auto px-4 pb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{event.title}</h1>
-            <div className="flex flex-wrap gap-4 text-white">
-              <div className="flex items-center">
-                <Calendar className="h-5 w-5 mr-2" />
-                <span>{dateTimeDisplay}</span>
+            <div className="flex justify-between items-start">
+              <div>
+                <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">{event.title}</h1>
+                <div className="flex flex-wrap gap-4 text-white">
+                  <div className="flex items-center">
+                    <Calendar className="h-5 w-5 mr-2" />
+                    <span>{dateTimeDisplay}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Clock className="h-5 w-5 mr-2" />
+                    <span>{timezoneText}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <MapPin className="h-5 w-5 mr-2" />
+                    <span>
+                      {event.location.location_type === 'virtual' 
+                        ? '虛擬活動' 
+                        : formatLocation(event.location.city, event.location.country)}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center">
-                <Clock className="h-5 w-5 mr-2" />
-                <span>{timezoneText}</span>
-              </div>
-              <div className="flex items-center">
-                <MapPin className="h-5 w-5 mr-2" />
-                <span>
-                  {event.location.location_type === 'virtual' 
-                    ? '虛擬活動' 
-                    : formatLocation(event.location.city, event.location.country)}
-                </span>
+              <div className="flex gap-3">
+                <SaveButton 
+                  itemId={event.id}
+                  itemType={SavedItemType.EVENT}
+                  metadata={{
+                    title: event.title,
+                    thumbnail: event.cover_image,
+                    date: event.start_time
+                  }}
+                  variant="outline"
+                />
+                <FollowButton 
+                  collectionId={event.id}
+                  collectionType={CollectionType.EVENT}
+                  collectionName={event.title}
+                  variant="outline"
+                />
               </div>
             </div>
           </div>
