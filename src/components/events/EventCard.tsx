@@ -95,8 +95,8 @@ export function EventCard({ event }: EventCardProps) {
 
   return (
     <div className="overflow-hidden h-full rounded-lg border bg-card text-card-foreground shadow-sm hover:border-primary/50 hover:shadow-md transition-all duration-200 hover:-translate-y-1 relative">
-      {/* 收藏按鈕 - 絕對定位在右上角 */}
-      <div className="absolute top-2 right-2 z-10">
+      {/* 收藏按鈕 - 絕對定位在右上角，稍微向内移动 */}
+      <div className="absolute top-3 right-3 z-10">
         <SaveButton 
           itemId={event.id}
           itemType={SavedItemType.EVENT}
@@ -106,7 +106,7 @@ export function EventCard({ event }: EventCardProps) {
             date: event.start_time
           }}
           iconOnly
-          size="sm"
+          size="md"
         />
       </div>
       

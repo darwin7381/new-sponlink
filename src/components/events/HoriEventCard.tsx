@@ -8,6 +8,8 @@ import { Event } from "@/types/event";
 import { formatLocation } from "@/utils/languageUtils";
 import { Clock, MapPin } from "lucide-react";
 import { getTimezoneDisplay } from "@/utils/dateUtils";
+import { SaveButton } from "@/components/common/SaveButton";
+import { SavedItemType } from "@/types/userPreferences";
 
 interface HoriEventCardProps {
   event: Event;
@@ -121,8 +123,8 @@ export function HoriEventCard({ event }: HoriEventCardProps) {
             </h3>
           </div>
           
-          {/* 底部地點標籤 */}
-          <div className="mt-auto">
+          {/* 底部地點標籤和收藏按鈕 */}
+          <div className="mt-auto flex justify-between items-center">
             <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
               {event.location?.location_type === 'virtual' ? (
                 <>
@@ -136,6 +138,24 @@ export function HoriEventCard({ event }: HoriEventCardProps) {
                 </>
               )}
             </span>
+            
+            {/* 收藏按鈕 */}
+            <div 
+              onClick={(e) => e.preventDefault()} 
+              className="z-10"
+            >
+              <SaveButton 
+                itemId={event.id}
+                itemType={SavedItemType.EVENT}
+                metadata={{
+                  title: event.title,
+                  thumbnail: event.cover_image,
+                  date: event.start_time
+                }}
+                iconOnly
+                size="sm"
+              />
+            </div>
           </div>
         </div>
       </div>
