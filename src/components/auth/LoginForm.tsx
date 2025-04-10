@@ -6,73 +6,74 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 interface LoginFormProps {
-  onSubmit: (email: string, password: string) => Promise<void>
+  onSubmit: (email: string, password: string) => void
   loading?: boolean
-  error?: string | null
 }
 
-export function LoginForm({ onSubmit, loading = false, error }: LoginFormProps) {
+export function LoginForm({ onSubmit, loading = false }: LoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    await onSubmit(email, password)
+    console.log("提交登录表单:", email, password)
+    onSubmit(email, password)
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
+      <div>
         <Label htmlFor="email">電子郵件</Label>
         <Input
           id="email"
+          name="email"
           type="email"
-          value={email}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+          autoComplete="email"
           required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mt-1"
           placeholder="請輸入您的電子郵件"
-          className="w-full"
+          disabled={loading}
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="password">密碼</Label>
+      <div>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="password">密碼</Label>
+          <a href="#" className="text-sm text-primary hover:underline">
+            忘記密碼?
+          </a>
+        </div>
         <Input
           id="password"
+          name="password"
           type="password"
-          value={password}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+          autoComplete="current-password"
           required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="mt-1"
           placeholder="請輸入您的密碼"
-          className="w-full"
+          disabled={loading}
         />
       </div>
 
-      {error && (
-        <div className="text-sm text-destructive">
-          {error}
-        </div>
-      )}
-
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={loading}
-      >
+      <Button type="submit" className="w-full" disabled={loading}>
         {loading ? (
-          <div className="flex items-center">
-            <div className="mr-2">登入中</div>
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
-          </div>
+          <>
+            <span className="mr-2">登入中...</span>
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></div>
+          </>
         ) : (
-          '登入'
+          "登入"
         )}
       </Button>
-
-      <div className="text-xs text-center text-muted-foreground border-t border-border pt-3">
-        <p className="mb-2">測試帳號：</p>
-        <p>贊助商：sponsor@example.com / sponsor123</p>
-        <p>主辦方：organizer@example.com / organizer123</p>
+      
+      <div className="text-center mt-4">
+        <p className="text-sm text-muted-foreground">
+          還沒有帳號? <a href="/register" className="text-primary hover:underline">立即註冊</a>
+        </p>
       </div>
     </form>
   )

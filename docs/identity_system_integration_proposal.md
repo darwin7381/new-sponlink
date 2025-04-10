@@ -455,7 +455,7 @@ const OrganizationRolePermissions = {
 ### 11.1 已解決的問題
 
 1. **修復登出功能**
-   - 修復了 Header 和 Navbar 組件中的登出功能
+   - 修復了 Header 組件中的登出功能
    - 確保登出時清除所有用戶狀態和身份信息
    - 添加事件通知機制，確保所有組件及時響應登出操作
 

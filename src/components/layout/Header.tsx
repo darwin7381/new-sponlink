@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { getCurrentUser, logout } from '@/lib/services/authService';
+import { getCurrentUser } from '@/lib/services/authService';
 import { User } from '@/lib/types/users';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import migrateLegacyAuth from '@/lib/utils/migrateLegacyAuth';
@@ -72,7 +72,10 @@ export default function Header() {
     const fetchUser = async () => {
       try {
         const currentUser = await getCurrentUser();
-        setUser(currentUser);
+        // 只在用戶數據發生變化時才更新狀態
+        if (JSON.stringify(currentUser) !== JSON.stringify(user)) {
+          setUser(currentUser);
+        }
       } catch (error) {
         console.error('Error fetching user:', error);
       }
@@ -90,7 +93,7 @@ export default function Header() {
     return () => {
       window.removeEventListener('authChange', handleAuthChange);
     };
-  }, [pathname, router]); // 添加pathname和router作為依賴項，確保路由變更時重新獲取用戶資訊
+  }, [user]);
 
   return (
     <header className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-background shadow-md' : 'bg-background/90'}`}>

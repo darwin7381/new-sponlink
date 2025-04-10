@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import ProtectedRouteWrapper from '@/components/auth/ProtectedRouteWrapper';
 import { VIEW_TYPE } from '@/lib/services/authService';
 import { MOCK_SPONSORSHIP_PLANS, SponsorshipPlan } from '@/lib/mocks/sponsorships';
 import { Event } from '@/types/event';
@@ -346,8 +345,6 @@ export default function SponsorshipDetailPage({ params }: SponsorshipDetailPageP
   };
 
   return (
-    <ProtectedRouteWrapper requiredView={VIEW_TYPE.SPONSORSHIP_MANAGER}>
-      <SponsorshipDetailContent />
-    </ProtectedRouteWrapper>
+    <SponsorshipDetailContent />
   );
 } 

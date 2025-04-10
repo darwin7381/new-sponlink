@@ -10,24 +10,33 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getCurrentUser, VIEW_TYPE } from '@/lib/services/authService';
 import ProtectedRouteWrapper from '@/components/auth/ProtectedRouteWrapper';
+import { useSession } from 'next-auth/react';
 
 export default function SponsorshipsPage() {
   const [sponsorships, setSponsorships] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const { status } = useSession();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get user data, no need to check role
-        const user = await getCurrentUser();
-        if (!user) {
-          return;
-        }
+        // 只有在用戶已登入的情況下獲取數據
+        if (status === 'authenticated') {
+          // Get user data, no need to check role
+          const user = await getCurrentUser();
+          if (!user) {
+            setLoading(false);
+            return;
+          }
 
-        const sponsorshipsData = await getSponsorships(user.id);
-        setSponsorships(sponsorshipsData);
+          const sponsorshipsData = await getSponsorships(user.id);
+          setSponsorships(sponsorshipsData);
+        } else if (status === 'unauthenticated') {
+          // 未登入用戶，設置空數據
+          setSponsorships([]);
+        }
       } catch (error) {
         console.error('Error fetching sponsorships:', error);
         setError('Unable to load sponsorship data. Please try again later.');
@@ -36,12 +45,14 @@ export default function SponsorshipsPage() {
       }
     };
 
-    fetchData();
-  }, [router]);
+    if (status !== 'loading') {
+      fetchData();
+    }
+  }, [router, status]);
 
   // Page content component
   const SponsorshipsContent = () => {
-    if (loading) {
+    if (loading || status === 'loading') {
       return (
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="flex items-center justify-center min-h-[60vh]">
@@ -107,9 +118,29 @@ export default function SponsorshipsPage() {
               {sponsorships.filter(s => s.status === CART_ITEM_STATUS.CONFIRMED).map(sponsorship => (
                 <SponsorshipCard key={sponsorship.id} sponsorship={sponsorship} />
               ))}
-              {sponsorships.filter(s => s.status === CART_ITEM_STATUS.CONFIRMED).length === 0 && (
+              {(sponsorships.filter(s => s.status === CART_ITEM_STATUS.CONFIRMED).length === 0 || status === 'unauthenticated') && (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">No active sponsorships currently</p>
+                  <p className="text-muted-foreground">
+                    {status === 'authenticated' 
+                      ? "No active sponsorships currently" 
+                      : "Sign in to view your sponsorships"}
+                  </p>
+                  <div className="mt-6">
+                    {status === 'authenticated' ? (
+                      <Link href="/sponsor">
+                        <Button>Back to Sponsor Center</Button>
+                      </Link>
+                    ) : (
+                      <div className="flex justify-center gap-4">
+                        <Link href="/login?redirect=/sponsor/sponsorships">
+                          <Button>Sign In</Button>
+                        </Link>
+                        <Link href="/sponsor">
+                          <Button variant="outline">Sponsor Center</Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -120,9 +151,29 @@ export default function SponsorshipsPage() {
               {sponsorships.filter(s => s.status === CART_ITEM_STATUS.CONFIRMED).map(sponsorship => (
                 <SponsorshipCard key={sponsorship.id} sponsorship={sponsorship} />
               ))}
-              {sponsorships.filter(s => s.status === CART_ITEM_STATUS.CONFIRMED).length === 0 && (
+              {(sponsorships.filter(s => s.status === CART_ITEM_STATUS.CONFIRMED).length === 0 || status === 'unauthenticated') && (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">No completed sponsorships currently</p>
+                  <p className="text-muted-foreground">
+                    {status === 'authenticated' 
+                      ? "No completed sponsorships currently" 
+                      : "Sign in to view your sponsorships"}
+                  </p>
+                  <div className="mt-6">
+                    {status === 'authenticated' ? (
+                      <Link href="/sponsor">
+                        <Button>Back to Sponsor Center</Button>
+                      </Link>
+                    ) : (
+                      <div className="flex justify-center gap-4">
+                        <Link href="/login?redirect=/sponsor/sponsorships">
+                          <Button>Sign In</Button>
+                        </Link>
+                        <Link href="/sponsor">
+                          <Button variant="outline">Sponsor Center</Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -133,15 +184,29 @@ export default function SponsorshipsPage() {
               {sponsorships.map(sponsorship => (
                 <SponsorshipCard key={sponsorship.id} sponsorship={sponsorship} />
               ))}
-              {sponsorships.length === 0 && (
+              {(sponsorships.length === 0 || status === 'unauthenticated') && (
                 <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">No sponsorship records currently</p>
-                  <Button 
-                    onClick={() => router.push('/sponsor')} 
-                    className="mt-4"
-                  >
-                    Back to Sponsor Center
-                  </Button>
+                  <p className="text-muted-foreground">
+                    {status === 'authenticated' 
+                      ? "No sponsorship records currently" 
+                      : "Sign in to view your sponsorships"}
+                  </p>
+                  <div className="mt-6">
+                    {status === 'authenticated' ? (
+                      <Link href="/sponsor">
+                        <Button>Back to Sponsor Center</Button>
+                      </Link>
+                    ) : (
+                      <div className="flex justify-center gap-4">
+                        <Link href="/login?redirect=/sponsor/sponsorships">
+                          <Button>Sign In</Button>
+                        </Link>
+                        <Link href="/sponsor">
+                          <Button variant="outline">Sponsor Center</Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -153,9 +218,7 @@ export default function SponsorshipsPage() {
 
   // Wrap page with ProtectedRouteWrapper
   return (
-    <ProtectedRouteWrapper requiredView={VIEW_TYPE.SPONSORSHIP_MANAGER}>
-      <SponsorshipsContent />
-    </ProtectedRouteWrapper>
+    <SponsorshipsContent />
   );
 }
 

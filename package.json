@@ -18,7 +18,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:generate": "drizzle-kit generate:pg",
-    "db:seed": "npx tsx -r tsconfig-paths/register src/db/seed.ts"
+    "db:seed": "npx tsx -r tsconfig-paths/register src/db/seed.ts",
+    "test:auth": "npx tsx -r tsconfig-paths/register src/scripts/testAuth.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.782.0",
@@ -57,6 +58,7 @@
     "lucide-react": "^0.482.0",
     "mapbox-gl": "^3.10.0",
     "next": "^15.2.3",
+    "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.4.6",
     "postgres": "^3.4.5",
     "react": "^19.0.0",

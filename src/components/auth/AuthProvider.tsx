@@ -1,10 +1,9 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
-import { getCurrentUser, isAuthenticated, logout } from '@/lib/services/authService'
-import { User } from '@/lib/types/users'
-import LoginModal from './LoginModal'
+import { User, USER_ROLES } from '@/lib/types/users'
 import { useRouter } from 'next/navigation'
+import { useSession, signOut } from 'next-auth/react'
 
 // 定義 AuthContext 的類型
 type AuthContextType = {
@@ -13,6 +12,7 @@ type AuthContextType = {
   loading: boolean
   user: User | null
   handleLogout: () => void
+  getResourceOwnerId: (resourceId: string) => string
 }
 
 // 創建 AuthContext
@@ -21,67 +21,97 @@ const AuthContext = createContext<AuthContextType>({
   showLoginModal: () => {},
   loading: true,
   user: null,
-  handleLogout: () => {}
+  handleLogout: () => {},
+  getResourceOwnerId: (resourceId) => resourceId
 })
 
 // 創建 useAuth hook
 export const useAuth = () => useContext(AuthContext)
+
+// 清除所有本地存儲的認證相關數據
+const clearLocalAuth = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('activeView');
+      
+      // 移除可能存在的其他認證相關數據
+      sessionStorage.removeItem('afterLoginCallback');
+    } catch (e) {
+      console.error('清除本地存儲時出錯:', e);
+    }
+  }
+};
 
 // AuthProvider 組件
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loading, setLoading] = useState(true)
   const [user, setUser] = useState<User | null>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [afterLoginCallback, setAfterLoginCallback] = useState<(() => void) | undefined>(undefined)
   const router = useRouter()
+  const { data: session, status } = useSession()
+
+  // 处理资源所有者ID映射 - 現在直接返回原始ID
+  const getResourceOwnerId = useCallback((resourceId: string) => {
+    return resourceId;
+  }, []);
 
   // 處理登出
   const handleLogout = useCallback(() => {
     console.log("AuthProvider: 開始登出處理");
     
-    // 調用登出服務
+    // 使用 next-auth 的 signOut 方法
     try {
-      // 先執行登出服務，清除存儲的登錄數據
-      logout();
+      // 不清除本地存儲，只使用 next-auth 處理登出
+      signOut({ redirect: false });
       
-      // 然後更新組件狀態
+      // 更新組件狀態
       setUser(null);
       setIsLoggedIn(false);
       
-      // 最後導航到登錄頁面
-      // 使用 setTimeout 確保狀態更新完成後再導航，避免循環更新
-      setTimeout(() => {
-        router.push('/login');
-      }, 0);
+      console.log("AuthProvider: 登出完成，保留瀏覽狀態");
     } catch (error) {
       console.error('登出錯誤:', error);
     }
-  }, [router]);
+  }, []);
 
-  // 初始化時檢查登入狀態
+  // 完全使用Auth.js的認證狀態
   useEffect(() => {
     let isMounted = true;
     
     const checkAuth = async () => {
       try {
-        const authenticated = isAuthenticated();
-        
-        if (!isMounted) return;
-        
-        setIsLoggedIn(authenticated);
-        
-        if (authenticated) {
-          const userData = await getCurrentUser();
+        if (status === 'authenticated' && session?.user) {
           if (!isMounted) return;
-          setUser(userData);
-        } else {
-          // 如果未登入，確保用戶數據為空
+          
+          setIsLoggedIn(true);
+          
+          // 基於會話創建用戶對象
+          const sessionUser: User = {
+            id: session.user.id,
+            email: session.user.email || '',
+            role: (session.user.role as USER_ROLES) || USER_ROLES.SPONSOR,
+            preferred_language: 'zh',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          setUser(sessionUser);
+        } else if (status === 'unauthenticated') {
+          // 只更新狀態，不清除本地存儲
           if (!isMounted) return;
+          setIsLoggedIn(false);
           setUser(null);
         }
       } catch (error) {
-        console.error('Error checking authentication:', error);
+        console.error('檢查認證時出錯:', error);
+        
+        // 發生錯誤時，假設未認證
+        if (isMounted) {
+          setIsLoggedIn(false);
+          setUser(null);
+        }
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -89,49 +119,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
     
-    checkAuth();
-    
-    // 監聽登入狀態變更的自定義事件，使用防抖處理
-    let timeoutId: NodeJS.Timeout | null = null;
-    let lastAuthChangeTime = 0;
-    const MIN_AUTH_CHANGE_INTERVAL = 100; // 兩次事件之間的最小間隔（毫秒）
-    
-    const handleAuthChange = () => {
-      // 檢查事件觸發間隔，避免過於頻繁的調用
-      const now = Date.now();
-      if (now - lastAuthChangeTime < MIN_AUTH_CHANGE_INTERVAL) {
-        console.log('Auth change event throttled');
-        return;
-      }
-      lastAuthChangeTime = now;
-      
-      // 清除可能存在的計時器，防止多次快速調用
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      
-      // 延遲執行，減少快速連續事件帶來的問題
-      timeoutId = setTimeout(() => {
-        if (isMounted) {
-          checkAuth();
-        }
-      }, 150); // 增加延遲時間
-    };
-    
-    window.addEventListener('authChange', handleAuthChange);
+    if (status !== 'loading') {
+      checkAuth();
+    }
     
     return () => {
       isMounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      window.removeEventListener('authChange', handleAuthChange);
     };
-  }, []);
+  }, [session, status]);
 
   // 顯示登入彈窗的方法
   const showLoginModal = (afterLoginCallback?: () => void) => {
-    // 臨時解決方案：不顯示彈窗，直接導航到登入頁面
     if (afterLoginCallback) {
       // 保存回調以便登入後使用
       sessionStorage.setItem('afterLoginCallback', 'true');
@@ -139,18 +137,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   }
 
-  // 登入後執行回調（現在暫時沒使用）
-  const handleAfterLogin = () => {
-    if (afterLoginCallback) {
-      afterLoginCallback();
-      setAfterLoginCallback(undefined);
-    }
-  }
-
   return (
-    <AuthContext.Provider value={{ isLoggedIn, showLoginModal, loading, user, handleLogout }}>
+    <AuthContext.Provider value={{ 
+      isLoggedIn, 
+      showLoginModal, 
+      loading, 
+      user, 
+      handleLogout,
+      getResourceOwnerId 
+    }}>
       {children}
-      {/* 暫時移除 LoginModal 組件 */}
     </AuthContext.Provider>
   )
 } 

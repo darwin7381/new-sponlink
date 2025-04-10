@@ -233,8 +233,6 @@ export default function CreateEventPage() {
   };
 
   return (
-    <ProtectedRouteWrapper requiredView={VIEW_TYPE.EVENT_ORGANIZER}>
-      <EventCreationContent />
-    </ProtectedRouteWrapper>
+    <EventCreationContent />
   );
 } 

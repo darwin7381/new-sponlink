@@ -5,37 +5,37 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { LoginForm } from '@/components/auth/LoginForm'
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 import { SocialProvider } from '@/types/auth'
-import { getCurrentUser, login as authLogin, isAuthenticated } from '@/lib/services/authService'
+import { signIn, useSession } from 'next-auth/react'
+import { clearLocalAuth, getRedirectUrl } from '@/lib/auth/authUtils'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { data: session, status } = useSession()
 
   // 檢查是否已登入
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      if (isAuthenticated()) {
-        try {
-          await getCurrentUser();
-          console.log('Already logged in');
-          // 直接重定向到統一儀表板而不考慮角色
-          router.push('/dashboard');
-        } catch (e) {
-          console.error('Error checking login status:', e);
-        }
-      }
-    };
-    
-    checkLoginStatus();
-  }, [router]);
+    if (status === 'authenticated' && session) {
+      console.log('已通過 Auth.js 認證');
+      
+      // 獲取重定向URL並導航
+      const redirectUrl = getRedirectUrl('/dashboard');
+      router.push(redirectUrl);
+    } else if (status === 'unauthenticated') {
+      // 確保清除所有舊的認證數據
+      clearLocalAuth();
+    }
+  }, [router, session, status]);
 
   // 檢查是否有錯誤參數
   useEffect(() => {
     const errorParam = searchParams.get('error')
     if (errorParam === 'auth_failed' && !error) {
-      setError('社交登入失敗，請稍後再試')
+      setError('登入失敗，請檢查您的帳號和密碼')
+    } else if (errorParam === 'OAuthAccountNotLinked') {
+      setError('此電子郵件已使用其他登入方式註冊，請使用原始登入方式')
     }
   }, [searchParams, error]);
 
@@ -44,74 +44,56 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      console.log('Attempting login with:', email, password);
+      console.log('嘗試登入:', email);
       
-      // 使用 authService 進行登入
-      try {
-        const user = await authLogin(email, password);
-        console.log('Login successful:', user);
-
-        // 不再根據角色重定向，而是直接跳轉到儀表板
-        router.push('/dashboard');
-      } catch (authError) {
-        console.error('AuthService login failed, trying API:', authError);
+      // 確保清除舊的認證數據
+      clearLocalAuth();
+      
+      // 獲取登入成功後的重定向URL
+      const redirectUrl = getRedirectUrl('/dashboard');
+      
+      // 使用 Auth.js 進行登入
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+      
+      if (result?.error) {
+        console.error('登入失敗:', result.error);
+        throw new Error('帳號或密碼錯誤');
+      } else {
+        console.log('登入成功');
         
-        // 如果 authService 登入失敗，嘗試API登入
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API login error:', errorText);
-          throw new Error('帳號或密碼錯誤');
-        }
-
-        const user = await response.json();
-        console.log('API Login successful:', user);
-
-        // 儲存用戶資料到 localStorage
-        try {
-          localStorage.setItem('user', JSON.stringify(user));
-          localStorage.setItem('authToken', `mock-token-${Date.now()}`);
-        } catch (e) {
-          console.error('Error storing user data:', e);
-        }
-
-        // 不再根據角色重定向，而是直接跳轉到儀表板
-        router.push('/dashboard');
+        // 登入成功後重定向到目標頁面
+        router.push(redirectUrl);
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('登入錯誤:', error);
       setError(error instanceof Error ? error.message : '登入失敗，請稍後再試')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleSocialLogin = (provider: SocialProvider) => {
+  const handleSocialLogin = async (provider: SocialProvider) => {
     setLoading(true)
     setError(null)
     
-    // 模擬社交登入流程
-    setTimeout(() => {
-      // 實際項目中，這裡會重定向到OAuth提供商
-      console.log(`Redirecting to ${provider} login...`)
+    try {
+      // 確保清除舊的認證數據
+      clearLocalAuth();
       
-      // 模擬失敗，以便測試錯誤處理
-      if (provider === 'github' as SocialProvider) {
-        router.push('/login?error=auth_failed')
-      } else {
-        // 成功登入後直接重定向到儀表板
-        router.push('/dashboard')
-      }
+      // 獲取登入成功後的重定向URL
+      const redirectUrl = getRedirectUrl('/dashboard');
       
-      setLoading(false)
-    }, 1000)
+      // 使用 Auth.js 社交登入
+      await signIn(provider, { callbackUrl: redirectUrl });
+    } catch (error) {
+      console.error(`${provider} 登入錯誤:`, error);
+      setError(`${provider}登入失敗，請稍後再試`);
+      setLoading(false);
+    }
   }
 
   return (
@@ -141,6 +123,25 @@ export default function LoginPage() {
         )}
         
         <LoginForm onSubmit={handleLogin} loading={loading} />
+        
+        {/* Demo賬號區域 */}
+        <div className="mt-8 border-t border-border pt-6">
+          <h3 className="text-center text-sm font-medium text-muted-foreground mb-4">
+            示範帳號
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 border border-border rounded-lg bg-card/50">
+              <h4 className="font-semibold">贊助商:</h4>
+              <p className="text-sm text-muted-foreground">sponsor@example.com</p>
+              <p className="text-sm text-muted-foreground">sponsor123</p>
+            </div>
+            <div className="p-3 border border-border rounded-lg bg-card/50">
+              <h4 className="font-semibold">組織者:</h4>
+              <p className="text-sm text-muted-foreground">organizer@example.com</p>
+              <p className="text-sm text-muted-foreground">organizer123</p>
+            </div>
+          </div>
+        </div>
         
         <div className="mt-6">
           <div className="relative">

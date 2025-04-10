@@ -1,10 +1,10 @@
+import "./globals.css";
+import { Providers } from "@/components/Providers";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { AuthProvider } from "@/components/auth/AuthProvider";
 import ComparePanel from "@/components/comparison/ComparePanel";
 import { Toaster } from "sonner";
 
@@ -17,23 +17,23 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en" suppressHydrationWarning={true}>
-      <body className={`${inter.className} pt-16`} suppressHydrationWarning={true}>
-        <ThemeProvider defaultTheme="system" storageKey="sponlink-theme">
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.className} pt-16`}>
+        <Providers>
           <AuthProvider>
             <Header />
-            <main className="min-h-screen">
+            <main className="min-h-[calc(100vh-theme(spacing.16)-theme(spacing.24))]">
               {children}
             </main>
             <Footer />
             <ComparePanel />
             <Toaster />
           </AuthProvider>
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );

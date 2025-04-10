@@ -2,18 +2,18 @@ import { User, USER_ROLES } from '../types/users';
 
 export const MOCK_USERS: User[] = [
   {
-    id: "1",
+    id: "user_124",
     email: "sponsor@example.com",
     role: USER_ROLES.SPONSOR,
-    preferred_language: "en",
+    preferred_language: "zh",
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z"
   },
   {
-    id: "2",
+    id: "user_123",
     email: "organizer@example.com",
     role: USER_ROLES.ORGANIZER,
-    preferred_language: "en",
+    preferred_language: "zh",
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z"
   }
@@ -22,7 +22,7 @@ export const MOCK_USERS: User[] = [
 // Mock profile data
 export const mockProfiles = {
   sponsor: {
-    userId: '1',
+    userId: 'user_124',
     bio: '全球科技公司，支持創新活動',
     contactInfo: 'sponsor@example.com',
     avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
@@ -42,7 +42,7 @@ export const mockProfiles = {
     }
   },
   organizer: {
-    userId: '2',
+    userId: 'user_123',
     bio: '擁有超過10年經驗的活動組織者',
     contactInfo: 'organizer@example.com',
     avatar: 'https://randomuser.me/api/portraits/men/32.jpg',

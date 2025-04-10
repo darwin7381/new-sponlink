@@ -9,30 +9,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getOrganizerEvents } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
 import { getCurrentUser, VIEW_TYPE } from "@/lib/services/authService";
-import ProtectedRouteWrapper from "@/components/auth/ProtectedRouteWrapper";
+import { useSession } from "next-auth/react";
 
 export default function ManageEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const { status } = useSession();
 
   // Get event data
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        // Get current user
-        const user = await getCurrentUser();
-        if (!user) {
-          return;
-        }
+        if (status === 'authenticated') {
+          const user = await getCurrentUser();
+          if (!user) {
+            setIsLoading(false);
+            return;
+          }
           
-        // Get event data
-        try {
-          const eventsData = await getOrganizerEvents(user.id);
-          setEvents(eventsData);
-        } catch (error) {
-          console.error("Error fetching events:", error);
-          setError("Unable to load your events. Please try again later.");
+          try {
+            const eventsData = await getOrganizerEvents(user.id);
+            setEvents(eventsData);
+          } catch (error) {
+            console.error("Error fetching events:", error);
+            setError("Unable to load your events. Please try again later.");
+          }
+        } else if (status === 'unauthenticated') {
+          setEvents([]);
         }
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -42,8 +46,10 @@ export default function ManageEventsPage() {
       }
     };
     
-    fetchEvents();
-  }, []);
+    if (status !== 'loading') {
+      fetchEvents();
+    }
+  }, [status]);
 
   // Get event status badge
   const getStatusBadge = (status: EventStatus) => {
@@ -70,7 +76,7 @@ export default function ManageEventsPage() {
 
   // Page content component
   const EventsPageContent = () => {
-    if (isLoading) {
+    if (isLoading || status === 'loading') {
       return (
         <div className="flex justify-center items-center min-h-screen bg-background">
           <div className="text-center">
@@ -82,12 +88,13 @@ export default function ManageEventsPage() {
       );
     }
 
+    // 不管用戶是否登入，都顯示相同的界面佈局
     return (
       <div className="bg-background min-h-screen pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-foreground">Manage Events</h1>
-            <Link href="/organizer/events/create">
+            <Link href={status === 'authenticated' ? "/organizer/events/create" : "/login?redirect=/organizer/events/create"}>
               <Button variant="default">
                 Create New Event
               </Button>
@@ -100,7 +107,7 @@ export default function ManageEventsPage() {
                 <p className="text-red-600 dark:text-red-400">{error}</p>
               </CardContent>
             </Card>
-          ) : events.length === 0 ? (
+          ) : (events.length === 0 || status === 'unauthenticated') ? (
             <Card className="border border-border">
               <CardContent className="p-8 text-center">
                 <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -108,11 +115,15 @@ export default function ManageEventsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 </div>
-                <h2 className="text-xl font-medium text-foreground">You haven&apos;t created any events yet</h2>
+                <h2 className="text-xl font-medium text-foreground">
+                  {status === 'authenticated' ? "You haven't created any events yet" : "No events to display"}
+                </h2>
                 <p className="mt-2 text-muted-foreground">
-                  Click the &quot;Create New Event&quot; button above to create your first event.
+                  {status === 'authenticated' 
+                    ? "Click the \"Create New Event\" button above to create your first event."
+                    : "Create your first event to get started with organizing."}
                 </p>
-                <Link href="/organizer/events/create" className="mt-6 inline-block">
+                <Link href={status === 'authenticated' ? "/organizer/events/create" : "/login?redirect=/organizer/events/create"} className="mt-6 inline-block">
                   <Button>Start Creating Event</Button>
                 </Link>
               </CardContent>
@@ -150,9 +161,7 @@ export default function ManageEventsPage() {
 
   // Wrap page with ProtectedRouteWrapper
   return (
-    <ProtectedRouteWrapper requiredView={VIEW_TYPE.EVENT_ORGANIZER}>
-      <EventsPageContent />
-    </ProtectedRouteWrapper>
+    <EventsPageContent />
   );
 }
 
