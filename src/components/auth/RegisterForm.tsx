@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { UserRole } from '@/types/auth';
 
 interface RegisterFormProps {
-  onSubmit: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  onSubmit: (name: string, email: string, password: string) => Promise<void>;
   loading?: boolean;
   error?: string | null;
 }
@@ -18,7 +16,6 @@ export function RegisterForm({ onSubmit, loading = false, error }: RegisterFormP
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<UserRole>(UserRole.SPONSOR);
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -41,7 +38,7 @@ export function RegisterForm({ onSubmit, loading = false, error }: RegisterFormP
       return;
     }
 
-    await onSubmit(name, email, password, role);
+    await onSubmit(name, email, password);
   };
 
   return (
@@ -91,24 +88,6 @@ export function RegisterForm({ onSubmit, loading = false, error }: RegisterFormP
           required
           placeholder="再次輸入您的密碼"
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label>帳戶類型</Label>
-        <RadioGroup
-          value={role}
-          onValueChange={(value) => setRole(value as UserRole)}
-          className="flex flex-col space-y-1"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value={UserRole.SPONSOR} id="sponsor" />
-            <Label htmlFor="sponsor" className="cursor-pointer">贊助商</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value={UserRole.ORGANIZER} id="organizer" />
-            <Label htmlFor="organizer" className="cursor-pointer">活動組織者</Label>
-          </div>
-        </RadioGroup>
       </div>
 
       {(formError || error) && (

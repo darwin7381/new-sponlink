@@ -1,3 +1,7 @@
+/**
+ * 用戶管理會議頁面
+ */
+
 'use client';
 
 import React, { useState, useEffect } from "react";
@@ -5,13 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { isAuthenticated, getCurrentUser, hasRole } from "@/lib/services/authService";
-import { USER_ROLES } from "@/lib/types/users";
+import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
+import { Meeting, MEETING_STATUS } from "@/lib/types/users";
 import { getSponsorMeetings, getOrganizerMeetings, scheduleMeeting } from "@/lib/services/sponsorService";
 import { getEvents, getEventById } from "@/services/eventService";
 import { format } from "date-fns";
 import { useSearchParams } from "next/navigation";
-import { Meeting, MEETING_STATUS } from "@/lib/types/users";
 import { Event } from "@/types/event";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -26,6 +29,7 @@ const MeetingsPage = () => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
   const [isSponsor, setIsSponsor] = useState(false);
   const [isOrganizer, setIsOrganizer] = useState(false);
   
@@ -55,18 +59,19 @@ const MeetingsPage = () => {
       setIsLoggedIn(authenticated);
       
       if (authenticated) {
-        const sponsor = hasRole(USER_ROLES.SPONSOR);
-        const organizer = hasRole(USER_ROLES.ORGANIZER);
-        setIsSponsor(sponsor);
-        setIsOrganizer(organizer);
+        // 根據身份系統整合方案，不區分角色
+        // 所有已登入用戶都能訪問所有功能
+        setIsSponsor(true);
+        setIsOrganizer(true);
         
         try {
           const userData = await getCurrentUser();
           if (userData) {
             setUserId(userData.id);
+            setEffectiveUserId(userData.id);
           }
         } catch (error) {
-          console.error("Error getting user data:", error);
+          console.error("獲取用戶數據時出錯:", error);
         }
       }
     };
@@ -120,15 +125,23 @@ const MeetingsPage = () => {
           setIsLoadingMeetings(true);
           let userMeetings: Meeting[] = [];
           
+          // 根據用戶視角執行不同的查詢
           if (isSponsor) {
             userMeetings = await getSponsorMeetings(userId);
-          } else if (isOrganizer) {
-            userMeetings = await getOrganizerMeetings(userId);
+          } 
+          
+          if (isOrganizer) {
+            const organizerMeetings = await getOrganizerMeetings(userId);
+            
+            // 合併會議數據並去重
+            const allMeetings = [...userMeetings, ...organizerMeetings];
+            userMeetings = Array.from(new Map(allMeetings.map(m => [m.id, m])).values());
           }
           
           setMeetings(userMeetings);
         } catch (error) {
-          console.error("Error fetching meetings:", error);
+          console.error("獲取會議數據時出錯:", error);
+          toast.error("無法載入會議數據，請稍後重試");
         } finally {
           setIsLoadingMeetings(false);
         }
@@ -181,7 +194,7 @@ const MeetingsPage = () => {
     setProposedDates(newDates);
   };
   
-  // Convert date and time to ISO string
+  // Format date and time to ISO string
   const formatDateTime = (date: string, time: string): string => {
     try {
       // Parse date and time
@@ -218,17 +231,17 @@ const MeetingsPage = () => {
     }
     
     if (!selectedEvent || !userId || !currentEvent?.organizer_id) {
-      toast.error("Please select an event");
+      toast.error("請選擇一個活動");
       return;
     }
     
     if (!meetingTitle.trim()) {
-      toast.error("Please enter a meeting title");
+      toast.error("請輸入會議標題");
       return;
     }
     
     if (proposedDates.some(d => !d.date || !d.time)) {
-      toast.error("Please fill in all date and time fields");
+      toast.error("請填寫所有日期和時間欄位");
       return;
     }
     
@@ -238,7 +251,7 @@ const MeetingsPage = () => {
       .filter(date => date !== ''); // Remove invalid dates
     
     if (formattedDates.length === 0) {
-      toast.error("Please provide valid date and time formats (MM/DD/YYYY and HH:MM AM/PM)");
+      toast.error("請提供有效的日期和時間格式 (MM/DD/YYYY 和 HH:MM AM/PM)");
       return;
     }
     
@@ -251,10 +264,13 @@ const MeetingsPage = () => {
         proposed_times: formattedDates
       };
       
+      // 使用活動的組織者ID
+      const targetOrganizerId = currentEvent.organizer_id;
+      
       // Schedule meeting
       await scheduleMeeting(
         userId, 
-        currentEvent.organizer_id, 
+        targetOrganizerId, 
         selectedEvent, 
         meetingData
       );
@@ -271,10 +287,10 @@ const MeetingsPage = () => {
         {date: "", time: ""}
       ]);
       
-      toast.success("Meeting request submitted successfully");
+      toast.success("會議請求已成功提交");
     } catch (error) {
-      console.error("Error scheduling meeting:", error);
-      toast.error("Failed to schedule meeting. Please try again.");
+      console.error("排程會議時出錯:", error);
+      toast.error("無法排程會議，請稍後重試");
     } finally {
       setIsSubmitting(false);
     }

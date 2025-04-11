@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button"
 import { LoginForm } from './LoginForm'
 import SocialLoginButtons from './SocialLoginButtons'
 import { SocialProvider } from '@/types/auth'
-import { login as authLogin } from '@/lib/services/authService'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -37,62 +36,74 @@ export default function LoginModal({
     setError(null)
 
     try {
-      console.log('Attempting login with:', email, password)
+      console.log('開始登入:', email);
       
-      // 使用 authService 進行登入
+      // 使用API登入流程
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('API登入錯誤:', errorText)
+        throw new Error('帳號或密碼錯誤')
+      }
+
+      const user = await response.json()
+      console.log('API登入成功，原始用戶數據:', user)
+
+      // 儲存用戶資料到 localStorage
       try {
-        const user = await authLogin(email, password)
-        console.log('Login successful:', user)
-
-        // 關閉彈窗
-        onOpenChange(false)
+        // 確保用戶ID有效
+        if (!user.id) {
+          console.error('用戶ID缺失!');
+          throw new Error('用戶ID缺失');
+        }
         
-        // 呼叫登入後的回調函數
-        if (afterLogin) {
-          afterLogin()
+        // 確保ID是字符串而非數字 - 這很關鍵！
+        if (typeof user.id === 'number') {
+          console.log(`將數字ID轉換為字符串: ${user.id} → "user_${user.id}"`);
+          user.id = `user_${user.id}`;
         }
-      } catch (authError) {
-        console.error('AuthService login failed, trying API:', authError)
         
-        // 如果 authService 登入失敗，嘗試API登入
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, password }),
-        })
-
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('API login error:', errorText)
-          throw new Error('帳號或密碼錯誤')
-        }
-
-        const user = await response.json()
-        console.log('API Login successful:', user)
-
-        // 儲存用戶資料到 localStorage
-        try {
-          localStorage.setItem('user', JSON.stringify(user))
-          localStorage.setItem('authToken', `mock-token-${Date.now()}`)
-          
-          // 分發登入事件
-          window.dispatchEvent(new Event('authChange'))
-        } catch (e) {
-          console.error('Error storing user data:', e)
-        }
-
-        // 關閉彈窗
-        onOpenChange(false)
+        // 確保ID是字符串類型
+        user.id = String(user.id);
         
-        // 呼叫登入後的回調函數
-        if (afterLogin) {
-          afterLogin()
+        // 輸出詳細ID信息幫助調試
+        console.log(`用戶ID: "${user.id}", 類型: ${typeof user.id}`);
+        
+        localStorage.setItem('user', JSON.stringify(user))
+        localStorage.setItem('authToken', `mock-token-${Date.now()}`)
+        
+        // 驗證存儲是否成功
+        const storedUser = localStorage.getItem('user');
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+        console.log('驗證存儲結果:', parsedUser);
+        
+        // 再次檢查ID
+        if (parsedUser) {
+          console.log(`存儲後的用戶ID: "${parsedUser.id}", 類型: ${typeof parsedUser.id}`);
         }
+        
+        // 分發登入事件
+        window.dispatchEvent(new Event('authChange'))
+      } catch (e) {
+        console.error('存儲用戶資料錯誤:', e)
+      }
+
+      // 關閉彈窗
+      onOpenChange(false)
+      
+      // 呼叫登入後的回調函數
+      if (afterLogin) {
+        afterLogin()
       }
     } catch (error) {
-      console.error('Login error:', error)
+      console.error('登入錯誤:', error)
       setError(error instanceof Error ? error.message : '登入失敗，請稍後再試')
     } finally {
       setLoading(false)

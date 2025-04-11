@@ -9,6 +9,7 @@ import { eq } from 'drizzle-orm';
 import { USER_ROLES } from '@/lib/types/users';
 import { createPasswordHash, verifyPassword } from './passwordUtils';
 import { v4 as uuidv4 } from 'uuid';
+import { SystemRole } from '@/lib/types/users';
 
 /**
  * 使用電子郵件查詢用戶
@@ -17,14 +18,33 @@ import { v4 as uuidv4 } from 'uuid';
  */
 export async function findUserByEmail(email: string) {
   try {
+    console.log(`[authService] 開始查詢用戶，郵箱: ${email}`);
+    
     const result = await db.select()
       .from(users)
       .where(eq(users.email, email))
       .limit(1);
     
+    console.log(`[authService] 查詢結果: ${result.length ? '找到用戶' : '未找到用戶'}`);
+    
+    if (result.length > 0) {
+      const user = result[0];
+      console.log(`[authService] 用戶詳情: ID=${user.id}, 郵箱=${user.email}`);
+      
+      // 支持測試帳號
+      if (email === 'organizer@example.com' || email === 'sponsor@example.com') {
+        console.log(`[authService] 檢測到測試帳號: ${email}`);
+        // 確保ID格式正確
+        if (user.id && !String(user.id).startsWith('user_')) {
+          const correctId = email === 'organizer@example.com' ? 'user_123' : 'user_124';
+          console.log(`[authService] 測試帳號ID格式不正確，應為 ${correctId}，當前為 ${user.id}`);
+        }
+      }
+    }
+    
     return result[0] || null;
   } catch (error) {
-    console.error('查詢用戶失敗:', error);
+    console.error('[authService] 查詢用戶失敗:', error);
     return null;
   }
 }
@@ -56,20 +76,44 @@ export async function findUserById(userId: string) {
  */
 export async function verifyCredentials(email: string, password: string) {
   try {
+    console.log(`[authService] 開始驗證用戶憑證: ${email}`);
+    
     // 查找用戶
     const user = await findUserByEmail(email);
     
     // 用戶不存在或未設置密碼
-    if (!user || !user.password) {
+    if (!user) {
+      console.log(`[authService] 用戶不存在: ${email}`);
       return null;
     }
     
+    if (!user.password) {
+      console.log(`[authService] 用戶未設置密碼: ${email}`);
+      return null;
+    }
+    
+    console.log(`[authService] 找到用戶: ID=${user.id}, 郵箱=${user.email}`);
+    
     // 驗證密碼
     const isPasswordValid = verifyPassword(password, user.password);
+    console.log(`[authService] 密碼驗證結果: ${isPasswordValid ? '成功' : '失敗'}`);
+    
+    // 如果是測試帳號且密碼正確，強制修正ID格式
+    if (isPasswordValid) {
+      // 確保ID是字符串格式
+      if (typeof user.id === 'number') {
+        console.log(`[authService] 發現數字ID (${user.id})，轉換為字符串格式`);
+        user.id = `user_${user.id}`;
+      } else {
+        // 確保現有ID是字符串
+        user.id = String(user.id);
+      }
+      console.log(`[authService] 最終使用的用戶ID: ${user.id}`);
+    }
     
     return isPasswordValid ? user : null;
   } catch (error) {
-    console.error('憑證驗證失敗:', error);
+    console.error('[authService] 憑證驗證失敗:', error);
     return null;
   }
 }
@@ -83,13 +127,11 @@ export async function createUser({
   email,
   password,
   name,
-  role = USER_ROLES.SPONSOR,
   preferred_language = 'en'
 }: {
   email: string;
   password: string;
   name?: string;
-  role?: USER_ROLES;
   preferred_language?: string;
 }) {
   try {
@@ -102,14 +144,15 @@ export async function createUser({
     // 哈希密碼
     const passwordHash = createPasswordHash(password);
     
-    // 創建用戶
+    // 創建用戶 - 不再設置角色屬性，符合身份系統整合方案
     const [user] = await db.insert(users)
       .values({
         id: uuidv4(),
         email,
         name,
         password: passwordHash,
-        role,
+        // 不再設置角色屬性
+        systemRole: SystemRole.USER, // 默認系統角色為普通用戶
         preferred_language,
         created_at: new Date(),
         updated_at: new Date()

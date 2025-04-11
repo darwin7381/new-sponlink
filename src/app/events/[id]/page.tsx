@@ -198,7 +198,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       
       try {
         setIsLoading(true);
-        const eventData = await getEventById(eventId);
+        const eventData = await getEventById(eventId, userId || undefined);
         
         if (!eventData) {
           setError("Event not found");
@@ -227,7 +227,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     }
     
     fetchEvent();
-  }, [eventId]);
+  }, [eventId, userId]);
   
   // 獲取購物車項目
   useEffect(() => {

@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { createEvent } from "@/services/eventService";
 import { addEventToSeries } from "@/services/eventSeriesService";
 import { EventStatus, Location, OWNER_TYPE } from "@/types/event";
-import { getCurrentUser, VIEW_TYPE } from "@/lib/services/authService";
+import { getCurrentUser } from "@/lib/services/authService";
 import { scrapeLumaEvent } from "@/services/lumaService";
 import { convertToDatetimeLocalFormat, getBrowserTimezone } from "@/utils/dateUtils";
-import ProtectedRouteWrapper from "@/components/auth/ProtectedRouteWrapper";
 import EventForm from "@/components/events/EventForm";
 import { EventFormData, SponsorshipPlanForm } from "@/types/forms";
+import { User } from "@/lib/types/users";
 
 export default function CreateEventPage() {
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function CreateEventPage() {
   
   // 初始化贊助計劃狀態
   const [sponsorshipPlans, setSponsorshipPlans] = useState<SponsorshipPlanForm[]>([]);
-  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [seriesId, setSeriesId] = useState<string | null>(null);
 
   // Check user identity

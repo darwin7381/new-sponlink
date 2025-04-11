@@ -4,9 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/services/authService';
-import { USER_ROLES, User } from '@/lib/types/users';
+import { User } from '@/lib/types/users';
 import { Button } from '@/components/ui/button';
-import SwitchRoleToggle from '@/components/layout/SwitchRoleToggle';
 
 export default function OrganizerPage() {
   const router = useRouter();

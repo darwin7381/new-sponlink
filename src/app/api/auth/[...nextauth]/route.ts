@@ -2,7 +2,33 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { verifyCredentials } from "@/lib/auth/authService";
-import { USER_ROLES } from "@/lib/types/users";
+import { SystemRole } from "@/lib/types/users";
+
+// JWT回調函數：添加自定義數據到JWT
+const jwtCallback = async ({ token, user }: any) => {
+  // 當用戶登入時，將用戶數據添加到token中
+  if (user) {
+    token.id = user.id;
+    token.email = user.email;
+    token.name = user.name;
+    token.systemRole = user.systemRole;
+  }
+  return token;
+};
+
+// Session回調函數：從JWT添加數據到Session
+const sessionCallback = async ({ session, token }: any) => {
+  if (token) {
+    session.user = {
+      ...session.user,
+      id: token.id,
+      email: token.email,
+      name: token.name,
+      systemRole: token.systemRole
+    };
+  }
+  return session;
+};
 
 // 認證配置
 export const { handlers: { GET, POST }, auth } = NextAuth({
@@ -38,12 +64,12 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
             return null;
           }
           
-          // 返回用戶資訊
+          // 返回用戶資訊，設置系統角色
           return {
             id: user.id,
             email: user.email,
             name: user.name || user.email,
-            role: user.role,
+            systemRole: user.systemRole || SystemRole.USER // 設置默認系統角色
           };
         } catch (error) {
           console.error("登入驗證錯誤:", error);
@@ -65,22 +91,10 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
   
   callbacks: {
     // 添加自定義數據到 JWT
-    jwt({ token, user }) {
-      if (user) {
-        token.userId = user.id;
-        token.role = user.role;
-      }
-      return token;
-    },
+    jwt: jwtCallback,
     
     // 添加自定義數據到 Session
-    session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.userId || token.sub || "";
-        session.user.role = token.role || USER_ROLES.SPONSOR;
-      }
-      return session;
-    },
+    session: sessionCallback,
   },
   
   // 自定義頁面

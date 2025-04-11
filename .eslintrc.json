@@ -1,0 +1,18 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-restricted-properties": [
+      "warn",
+      {
+        "object": "user",
+        "property": "role",
+        "message": "user.role 已棄用，請使用 user.systemRole 替代。"
+      },
+      {
+        "object": "User",
+        "property": "role",
+        "message": "User.role 已棄用，請使用 User.systemRole 替代。"
+      }
+    ]
+  }
+} 

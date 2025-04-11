@@ -21,9 +21,9 @@ export const events = pgTable('events', {
   status: varchar('status', { length: 50 }).default('draft'),
   is_public: boolean('is_public').default(true),
   
-  // 關聯
-  organizer_id: varchar('organizer_id', { length: 255 })
-    .references(() => users.id),
+  // 所有權模型
+  owner_id: varchar('owner_id', { length: 255 }).notNull(),
+  owner_type: varchar('owner_type', { length: 50 }).notNull().default('USER'), // USER 或 ORGANIZATION
   
   // 多租戶支持
   activity_id: varchar('activity_id', { length: 255 }).notNull(),

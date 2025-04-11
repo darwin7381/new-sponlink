@@ -3,16 +3,16 @@
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-interface SwitchRoleToggleProps {
-  currentRole: 'organizer' | 'sponsor';
+interface SwitchViewToggleProps {
+  currentView: 'organizer' | 'sponsor';
 }
 
-export default function SwitchRoleToggle({ currentRole }: SwitchRoleToggleProps) {
+export default function SwitchViewToggle({ currentView }: SwitchViewToggleProps) {
   const router = useRouter();
   const pathname = usePathname();
 
   const handleSwitch = () => {
-    if (currentRole === 'organizer') {
+    if (currentView === 'organizer') {
       router.push('/sponsor');
     } else {
       router.push('/organizer');
@@ -23,7 +23,7 @@ export default function SwitchRoleToggle({ currentRole }: SwitchRoleToggleProps)
   return (
     <div className="flex items-center">
       <Link 
-        href={currentRole === 'organizer' ? '/sponsor' : '/organizer'}
+        href={currentView === 'organizer' ? '/sponsor' : '/organizer'}
         className="flex items-center text-white hover:text-white/90 transition-colors px-4 py-2"
       >
         <svg 
@@ -40,7 +40,7 @@ export default function SwitchRoleToggle({ currentRole }: SwitchRoleToggleProps)
             d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
           />
         </svg>
-        {currentRole === 'organizer' ? '切換到贊助商' : '切換到主辦方'}
+        {currentView === 'organizer' ? '切換到贊助商視角' : '切換到主辦方視角'}
       </Link>
     </div>
   );

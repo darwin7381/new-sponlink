@@ -4,21 +4,41 @@
 import { db } from '@/db';
 import { users, userProfiles, userSettings } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { USER_ROLES } from '@/lib/types/users';
+import { SystemRole } from '@/lib/types/users';
 
 /**
  * 根據ID獲取用戶
  */
 export async function getUserById(userId: string) {
   try {
+    console.log(`[dbUserService] 嘗試查詢用戶，ID=${userId}，類型=${typeof userId}`);
+    
+    // 確保 ID 是字符串類型
+    const idToUse = String(userId).trim();
+    console.log(`[dbUserService] 格式化後的 ID=${idToUse}，長度=${idToUse.length}`);
+    
+    // 執行查詢
     const result = await db.select()
       .from(users)
-      .where(eq(users.id, userId))
+      .where(eq(users.id, idToUse))
       .limit(1);
+    
+    console.log(`[dbUserService] 查詢結果: ${result.length ? '找到用戶' : '未找到用戶'}`);
+    if (result.length) {
+      console.log(`[dbUserService] 用戶ID=${result[0].id}, 郵箱=${result[0].email}`);
+    } else {
+      // 如果找不到用戶，嘗試輸出所有用戶的 ID 列表以進行調試
+      const allUsers = await db.select({ id: users.id, email: users.email })
+        .from(users)
+        .limit(10);
+      
+      console.log(`[dbUserService] 系統中的用戶列表 (最多10個):`);
+      allUsers.forEach(u => console.log(`- ID: ${u.id}, 郵箱: ${u.email}`));
+    }
     
     return result[0] || null;
   } catch (error) {
-    console.error('獲取用戶錯誤:', error);
+    console.error('[dbUserService] 獲取用戶錯誤:', error);
     throw error;
   }
 }
@@ -47,7 +67,7 @@ export async function createUser(userData: {
   id: string;
   email: string;
   name?: string;
-  role: USER_ROLES;
+  systemRole?: SystemRole;
   preferred_language?: string;
   image?: string;
   activity_id?: string;

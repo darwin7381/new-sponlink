@@ -46,7 +46,18 @@ export default function EventsPage() {
     async function fetchEvents() {
       try {
         setIsLoading(true);
-        const eventsData = await getAllEvents({ status: EventStatus.PUBLISHED });
+        
+        // 从会话中获取当前用户ID
+        let userId = undefined;
+        try {
+          const user = await import('@/lib/services/authService').then(m => m.getCurrentUser());
+          userId = user?.id;
+        } catch (error) {
+          console.error("Error getting current user:", error);
+        }
+        
+        // 使用用户ID调用getAllEvents
+        const eventsData = await getAllEvents({ status: EventStatus.PUBLISHED }, userId);
         setEvents(eventsData);
         setFilteredEvents(eventsData);
       } catch (error) {

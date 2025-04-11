@@ -1,10 +1,9 @@
-import { User, USER_ROLES } from '../types/users';
+import { User } from '../types/users';
 
 export const MOCK_USERS: User[] = [
   {
     id: "user_124",
     email: "sponsor@example.com",
-    role: USER_ROLES.SPONSOR,
     preferred_language: "zh",
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z"
@@ -12,7 +11,6 @@ export const MOCK_USERS: User[] = [
   {
     id: "user_123",
     email: "organizer@example.com",
-    role: USER_ROLES.ORGANIZER,
     preferred_language: "zh",
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z"

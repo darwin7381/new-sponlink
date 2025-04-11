@@ -10,6 +10,7 @@ import { getOrganizerEvents } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
 import { getCurrentUser, VIEW_TYPE } from "@/lib/services/authService";
 import { useSession } from "next-auth/react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ManageEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
@@ -21,34 +22,56 @@ export default function ManageEventsPage() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
+        console.log("组织者活动页面状态:", status);
+        
         if (status === 'authenticated') {
+          setIsLoading(true);
+          console.log("开始获取用户信息...");
+          
           const user = await getCurrentUser();
+          console.log("获取到的用户:", user);
+          
           if (!user) {
+            console.error("未能获取用户信息");
             setIsLoading(false);
             return;
           }
           
+          console.log("正在获取活动，用户ID:", user.id, "类型:", typeof user.id);
+          
           try {
+            // 获取该用户的活动数据
+            console.log("调用getOrganizerEvents...");
             const eventsData = await getOrganizerEvents(user.id);
+            
+            console.log("获取到的活动总数:", eventsData.length);
+            if (eventsData.length > 0) {
+              console.log("活动示例:", {
+                id: eventsData[0].id,
+                title: eventsData[0].title,
+                organizer_id: eventsData[0].organizer_id
+              });
+            }
+            
+            // 直接使用返回的活动数据，不再进行客户端过滤
             setEvents(eventsData);
           } catch (error) {
-            console.error("Error fetching events:", error);
-            setError("Unable to load your events. Please try again later.");
+            console.error("獲取活動時出錯:", error);
+            setError("無法載入您的活動。請稍後重試。");
           }
         } else if (status === 'unauthenticated') {
+          console.log("用户未登录");
           setEvents([]);
         }
       } catch (error) {
-        console.error("Error fetching user:", error);
-        setError("Error occurred while retrieving user data");
+        console.error("獲取用戶時出錯:", error);
+        setError("獲取用戶資料時發生錯誤");
       } finally {
         setIsLoading(false);
       }
     };
-    
-    if (status !== 'loading') {
-      fetchEvents();
-    }
+
+    fetchEvents();
   }, [status]);
 
   // Get event status badge
@@ -129,30 +152,32 @@ export default function ManageEventsPage() {
               </CardContent>
             </Card>
           ) : (
-            <Tabs defaultValue="all" className="w-full">
-              <TabsList className="mb-6 bg-card border border-border rounded-lg p-1">
-                <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All Events ({events.length})</TabsTrigger>
-                <TabsTrigger value="draft" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Drafts ({draftEvents.length})</TabsTrigger>
-                <TabsTrigger value="published" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Published ({publishedEvents.length})</TabsTrigger>
-                <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Completed ({completedEvents.length})</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="all">
-                <EventList events={events} getStatusBadge={getStatusBadge} />
-              </TabsContent>
-              
-              <TabsContent value="draft">
-                <EventList events={draftEvents} getStatusBadge={getStatusBadge} />
-              </TabsContent>
-              
-              <TabsContent value="published">
-                <EventList events={publishedEvents} getStatusBadge={getStatusBadge} />
-              </TabsContent>
-              
-              <TabsContent value="completed">
-                <EventList events={completedEvents} getStatusBadge={getStatusBadge} />
-              </TabsContent>
-            </Tabs>
+            <>
+              <Tabs defaultValue="all" className="w-full">
+                <TabsList className="mb-6 bg-card border border-border rounded-lg p-1">
+                  <TabsTrigger value="all" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">All Events ({events.length})</TabsTrigger>
+                  <TabsTrigger value="draft" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Drafts ({draftEvents.length})</TabsTrigger>
+                  <TabsTrigger value="published" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Published ({publishedEvents.length})</TabsTrigger>
+                  <TabsTrigger value="completed" className="rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Completed ({completedEvents.length})</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="all">
+                  <EventList events={events} getStatusBadge={getStatusBadge} />
+                </TabsContent>
+                
+                <TabsContent value="draft">
+                  <EventList events={draftEvents} getStatusBadge={getStatusBadge} />
+                </TabsContent>
+                
+                <TabsContent value="published">
+                  <EventList events={publishedEvents} getStatusBadge={getStatusBadge} />
+                </TabsContent>
+                
+                <TabsContent value="completed">
+                  <EventList events={completedEvents} getStatusBadge={getStatusBadge} />
+                </TabsContent>
+              </Tabs>
+            </>
           )}
         </div>
       </div>

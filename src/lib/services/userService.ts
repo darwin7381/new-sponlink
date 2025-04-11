@@ -1,70 +1,85 @@
-import { OrganizerProfile, SponsorProfile } from '../types/users';
+import { OrganizerProfile, SponsorProfile, VIEW_TYPE } from '../types/users';
 
 // 模拟网络延迟
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-// 从真实数据库获取用户资料
-export const getUserProfile = async (userId: string, role: string): Promise<OrganizerProfile | SponsorProfile> => {
-  // 这里应该调用API获取用户资料
-  await delay(300);
-  
-  if (role === 'ORGANIZER') {
-    // 组织者资料
-    return {
-      userId,
-      bio: '擁有超過10年經驗的活動組織者',
-      contactInfo: 'organizer@example.com',
-      avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      updatedAt: new Date().toISOString(),
-      events: [
-        { id: '101', name: '科技大會 2023', status: 'upcoming', date: '2023-12-15' },
-        { id: '102', name: '數位行銷峰會', status: 'completed', date: '2023-04-10' }
-      ],
-      statistics: {
-        totalEvents: 15,
-        upcomingEvents: 3,
-        averageAttendees: 250,
-        totalRevenue: '$75,000'
-      }
-    };
-  } else if (role === 'SPONSOR') {
-    // 赞助商资料
-    return {
-      userId,
-      bio: '全球科技公司，支持創新活動',
-      contactInfo: 'sponsor@example.com',
-      avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-      updatedAt: new Date().toISOString(),
-      companyName: 'TechGlobal Inc.',
-      logo: 'https://via.placeholder.com/150x50?text=TechGlobal',
-      description: '為活動和會議提供技術解決方案的領先供應商',
-      sponsorships: [
-        { id: '201', eventName: '科技大會 2023', status: 'confirmed', amount: '$10,000' },
-        { id: '202', eventName: '數位創新論壇', status: 'pending', amount: '$5,000' }
-      ],
-      analytics: {
-        totalSponsored: 12,
-        activeSponsorship: 3,
-        totalInvestment: '$85,000',
-        averageRoi: '145%'
-      }
-    };
-  } else {
-    throw new Error('无效的用户角色');
+// 基本的模拟数据，不依赖userData.ts
+const basicOrganizerProfile: OrganizerProfile = {
+  userId: '',
+  bio: '组织者简介',
+  contactInfo: 'contact@example.com',
+  avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
+  updatedAt: '2023-05-15T10:30:00Z',
+  events: [],
+  statistics: {
+    totalEvents: 0,
+    upcomingEvents: 0,
+    averageAttendees: 0,
+    totalRevenue: '$0'
   }
 };
 
-// 更新用户资料
+const basicSponsorProfile: SponsorProfile = {
+  userId: '',
+  bio: '赞助商简介',
+  contactInfo: 'sponsor@example.com',
+  avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
+  updatedAt: '2023-06-20T14:45:00Z',
+  companyName: 'Example Corp',
+  logo: 'https://via.placeholder.com/150x50?text=Logo',
+  description: '公司描述',
+  sponsorships: [],
+  analytics: {
+    totalSponsored: 0,
+    activeSponsorship: 0,
+    totalInvestment: '$0',
+    averageRoi: '0%'
+  }
+};
+
+/**
+ * 获取用户资料
+ * @param userId 用户ID
+ * @param viewport 视图类型
+ * @returns 用户资料
+ */
+export const getUserProfile = async (userId: string, viewport: VIEW_TYPE): Promise<OrganizerProfile | SponsorProfile> => {
+  // 这里应该调用API获取用户资料
+  await delay(300);
+  
+  // 根据视图类型返回不同资料
+  if (viewport === VIEW_TYPE.ORGANIZER) {
+    return {
+      ...basicOrganizerProfile,
+      userId
+    };
+  } else if (viewport === VIEW_TYPE.SPONSOR) {
+    return {
+      ...basicSponsorProfile,
+      userId
+    };
+  } else {
+    throw new Error(`不支持的视图类型: ${viewport}`);
+  }
+};
+
+/**
+ * 更新用户资料
+ * @param userId 用户ID
+ * @param profileData 要更新的资料
+ * @param viewport 视图类型
+ * @returns 更新后的用户资料
+ */
 export const updateUserProfile = async (
   userId: string, 
-  role: string, 
-  profileData: Partial<OrganizerProfile | SponsorProfile>
+  profileData: Partial<OrganizerProfile | SponsorProfile>,
+  viewport: VIEW_TYPE
 ): Promise<OrganizerProfile | SponsorProfile> => {
   // 这里应该调用API更新用户资料
   await delay(500);
   
   // 获取当前资料
-  const currentProfile = await getUserProfile(userId, role);
+  const currentProfile = await getUserProfile(userId, viewport);
   
   // 合并更新数据
   const updatedProfile = {
@@ -76,43 +91,56 @@ export const updateUserProfile = async (
   return updatedProfile;
 };
 
-// 获取组织者活动
-export const getOrganizerEvents = async (userId: string, status: string | null = null) => {
+/**
+ * 获取组织者活动
+ * @param userId 用户ID
+ * @param viewport 视图类型
+ * @returns 活动列表
+ */
+export const getOrganizerEvents = async (userId: string, viewport: VIEW_TYPE) => {
   await delay(300);
   
-  const profile = await getUserProfile(userId, 'ORGANIZER') as OrganizerProfile;
-  
-  if (status) {
-    return profile.events.filter(event => event.status === status);
+  if (viewport !== VIEW_TYPE.ORGANIZER) {
+    throw new Error('非组织者视图无法获取活动列表');
   }
   
-  return profile.events;
+  const profile = await getUserProfile(userId, viewport);
+  return (profile as OrganizerProfile).events;
 };
 
-// 获取赞助商赞助
-export const getSponsorships = async (userId: string, status: string | null = null) => {
+/**
+ * 获取赞助商赞助
+ * @param userId 用户ID
+ * @param viewport 视图类型
+ * @returns 赞助列表
+ */
+export const getSponsorships = async (userId: string, viewport: VIEW_TYPE) => {
   await delay(300);
   
-  const profile = await getUserProfile(userId, 'SPONSOR') as SponsorProfile;
-  
-  if (status) {
-    return profile.sponsorships.filter(sponsorship => sponsorship.status === status);
+  if (viewport !== VIEW_TYPE.SPONSOR) {
+    throw new Error('非赞助商视图无法获取赞助列表');
   }
   
-  return profile.sponsorships;
+  const profile = await getUserProfile(userId, viewport);
+  return (profile as SponsorProfile).sponsorships;
 };
 
-// 获取统计数据
-export const getAnalytics = async (userId: string, role: string) => {
+/**
+ * 获取分析数据
+ * @param userId 用户ID
+ * @param viewport 视图类型
+ * @returns 分析数据
+ */
+export const getAnalytics = async (userId: string, viewport: VIEW_TYPE) => {
   await delay(300);
   
-  if (role === 'ORGANIZER') {
-    const profile = await getUserProfile(userId, 'ORGANIZER') as OrganizerProfile;
-    return profile.statistics;
-  } else if (role === 'SPONSOR') {
-    const profile = await getUserProfile(userId, 'SPONSOR') as SponsorProfile;
-    return profile.analytics;
+  if (viewport === VIEW_TYPE.ORGANIZER) {
+    const profile = await getUserProfile(userId, viewport);
+    return (profile as OrganizerProfile).statistics;
+  } else if (viewport === VIEW_TYPE.SPONSOR) {
+    const profile = await getUserProfile(userId, viewport);
+    return (profile as SponsorProfile).analytics;
+  } else {
+    throw new Error(`不支持的视图类型: ${viewport}`);
   }
-  
-  throw new Error('无效的用户角色');
 }; 

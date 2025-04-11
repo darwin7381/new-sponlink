@@ -3,7 +3,16 @@
  * 處理用戶授權和訪問控制
  */
 
-import { User, USER_ROLES, RESOURCE_TYPE, PERMISSION, DYNAMIC_ROLE, UserOrganization } from '../types/users';
+import { 
+  User, 
+  USER_ROLES, 
+  RESOURCE_TYPE, 
+  PERMISSION, 
+  DYNAMIC_ROLE, 
+  UserOrganization, 
+  VIEW_TYPE,
+  SystemRole 
+} from '../types/users';
 
 // Helper function to simulate API delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -24,7 +33,11 @@ export const getStoredUser = (): User | null => {
     try {
       const userJson = localStorage.getItem(USER_KEY);
       if (!userJson) return null;
-      return JSON.parse(userJson);
+      
+      const user = JSON.parse(userJson);
+      console.log("从localStorage获取的用户数据:", user);
+      
+      return user;
     } catch (e) {
       console.error('Error getting stored user:', e);
       return null;
@@ -81,7 +94,10 @@ export const canManageResource = (resourceType: string, resourceOwnerId: string)
 // 獲取當前用戶
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    return getStoredUser();
+    console.log("getCurrentUser被调用");
+    const user = getStoredUser();
+    console.log("getStoredUser返回结果:", user);
+    return user;
   } catch (error) {
     console.error("Error getting current user:", error);
     throw error;
@@ -100,8 +116,25 @@ export const isAuthenticated = (): boolean => {
 
 // 檢查用戶是否有特定角色
 export const hasRole = (role: USER_ROLES): boolean => {
-  // 只檢查是否已登入
-  return isAuthenticated();
+  // 根據身份系統整合方案(identity_system_integration_proposal.md)
+  // 和角色系統重構文檔(role-system-refactoring.md)
+  // 徹底移除角色檢查，所有已登入用戶可以訪問所有功能
+  // 所以這個函數始終返回true
+  return true;
+};
+
+/**
+ * 檢查當前用戶是否為系統管理員
+ * 用於限制系統管理功能的訪問
+ */
+export const isSystemAdmin = (): boolean => {
+  try {
+    const user = getStoredUser();
+    return user?.systemRole === SystemRole.ADMIN;
+  } catch (error) {
+    console.error('檢查管理員權限時出錯:', error);
+    return false;
+  }
 };
 
 // 檢查用戶是否可以執行操作
@@ -180,4 +213,7 @@ export const getUserRoleInOrganization = (): DYNAMIC_ROLE | null => {
 // 检查用户是否有特定动态角色
 export const hasDynamicRole = (): boolean => {
   return false;
-}; 
+};
+
+// 重新導出 VIEW_TYPE 以供其他組件使用
+export { VIEW_TYPE }; 

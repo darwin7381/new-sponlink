@@ -8,8 +8,7 @@ import { CartItem, CART_ITEM_STATUS, User } from '@/lib/types/users';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getCurrentUser, VIEW_TYPE } from '@/lib/services/authService';
-import ProtectedRouteWrapper from '@/components/auth/ProtectedRouteWrapper';
+import { getCurrentUser } from '@/lib/services/authService';
 import { useSession } from 'next-auth/react';
 
 export default function SponsorshipsPage() {

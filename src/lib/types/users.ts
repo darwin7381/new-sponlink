@@ -1,6 +1,29 @@
+/**
+ * @deprecated 用戶角色枚舉已不再使用，請使用 SystemRole
+ * 此枚舉僅為保持向後兼容而保留，將在未來版本中完全移除
+ */
 export enum USER_ROLES {
   SPONSOR = 'SPONSOR',
   ORGANIZER = 'ORGANIZER'
+}
+
+/**
+ * 系統角色枚舉
+ * 用於區分普通用戶和系統管理員
+ */
+export enum SystemRole {
+  USER = 'USER',
+  ADMIN = 'ADMIN'
+}
+
+/**
+ * 視角類型枚舉
+ * 控制用戶界面顯示，但不影響用戶權限
+ * 用戶可以在不同視角間自由切換
+ */
+export enum VIEW_TYPE {
+  ORGANIZER = 'ORGANIZER',
+  SPONSOR = 'SPONSOR'
 }
 
 export enum RESOURCE_TYPE {
@@ -28,7 +51,17 @@ export enum DYNAMIC_ROLE {
 export interface User {
   id: string;
   email: string;
-  role: USER_ROLES;
+  /**
+   * @deprecated 此字段已棄用，將在未來版本中完全移除
+   * 符合"身份系統整合方案"中的設計，不再使用固定角色
+   * 所有已登入用戶都能訪問所有功能，基於資源所有權進行權限控制
+   */
+  role?: USER_ROLES;
+  /**
+   * 系統角色，區分普通用戶和系統管理員
+   * 默認為 USER
+   */
+  systemRole?: SystemRole;
   preferred_language: string;
   created_at: string;
   updated_at: string;

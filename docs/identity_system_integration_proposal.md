@@ -456,10 +456,15 @@ const OrganizationRolePermissions = {
 
 1. **修復登出功能**
    - 修復了 Header 組件中的登出功能
-   - 確保登出時清除所有用戶狀態和身份信息
-   - 添加事件通知機制，確保所有組件及時響應登出操作
+   - 確保登出時保留視圖狀態，不清除會影響導航顯示的數據
+   - 通過統一使用 next-auth 登出機制，確保認證狀態的一致性
 
-2. **實現資源所有權模型**
+2. **統一導航結構**
+   - 優化導航組件結構，移除冗餘的 Navbar 組件
+   - 只保留和使用 Header 組件，減少代碼重複和潛在衝突
+   - 優化狀態更新邏輯，避免不必要的重新渲染
+
+3. **實現資源所有權模型**
    - 創建了 `BaseResource` 接口，定義了所有資源的共同屬性：
      - `ownerId`: 資源所有者ID
      - `ownerType`: 所有者類型 (USER/ORGANIZATION)
@@ -467,18 +472,23 @@ const OrganizationRolePermissions = {
    - 為 Event 和 SponsorshipPlan 添加了所有權屬性
    - 定義了 `OWNER_TYPE` 枚舉，區分個人和組織資源
 
-3. **實現基於所有權的權限檢查**
+4. **實現基於所有權的權限檢查**
    - 創建了 `resourcePermissionService.ts` 服務，包含：
      - `isResourceOwner`: 檢查用戶是否為資源所有者
      - `hasResourcePermission`: 基於所有權和角色檢查權限
      - `canCreateResource`: 檢查用戶是否可創建特定資源
      - `setResourceOwnership`: 為新資源設置所有權信息
 
-4. **整合資源服務與所有權模型**
-   - 更新了 eventService 以使用資源所有權模型
-   - 創建事件時自動設置所有權信息
-   - 編輯和刪除操作前先檢查權限
-   - 添加了按所有者過濾資源的函數
+5. **視角切換系統**
+   - 定義了 `VIEW_TYPE` 枚舉，支持 ORGANIZER 和 SPONSOR 兩種視角
+   - 通過 authService 提供視角相關功能
+   - 視角切換不影響用戶權限，僅改變內容展示方式
+
+6. **移除註冊時的角色選擇**
+   - 修改註冊頁面，移除角色選擇 UI 組件
+   - 修改註冊 API，不再接受角色參數
+   - 創建用戶時使用統一的默認角色，符合"視角而非角色"的設計理念
+   - 確保所有用戶註冊後擁有完整的功能訪問權
 
 ### 11.2 當前技術挑戰
 
@@ -511,3 +521,106 @@ const OrganizationRolePermissions = {
 4. **遷移遺留代碼**
    - 逐步將 USER_ROLES 轉換為基於資源的動態角色
    - 重構路由權限控制，使用所有權取代角色檢查 
+
+## 十二、最新進展與未來規劃 (2023-09-15)
+
+### 12.1 最新系統修改
+
+最近我們對身份系統進行了重大變更，徹底解決了角色限制問題：
+
+1. **徹底移除角色限制**
+   - 移除了 USER_ROLES 對功能訪問的限制
+   - 將 User 類型中的 role 屬性改為可選，添加 deprecated 標籤
+   - 所有 hasRole 檢查始終返回 true，允許所有已登入用戶訪問全部功能
+
+2. **引入系統角色**
+   - 添加了 SystemRole 枚舉，區分普通用戶(USER)和系統管理員(ADMIN)
+   - 在用戶表中添加 systemRole 字段，默認為 USER
+   - 添加 isSystemAdmin 函數，用於限制系統管理功能
+
+3. **為多租戶做準備**
+   - 數據庫模式中保留 activity_id 字段，支持未來多租戶功能
+   - 資源所有權模型為組織/團隊結構做好準備
+
+### 12.2 未來發展路線
+
+根據我們的討論，未來身份系統將向企業級B2B SaaS方向發展：
+
+1. **階段一：完善基礎身份系統** (當前)
+   - 徹底移除角色限制，統一用戶體驗
+   - 實現基於資源所有權的權限控制
+   - 添加基本系統管理員功能
+
+2. **階段二：實現組織結構** (未來)
+   ```typescript
+   // 組織模型
+   interface Organization {
+     id: string;
+     name: string;
+     ownerId: string;
+     settings: OrganizationSettings;
+     subscriptionTier: string;
+   }
+   
+   // 組織成員關係
+   interface OrganizationMember {
+     userId: string;
+     organizationId: string;
+     role: OrganizationRole;  // OWNER, ADMIN, MEMBER, GUEST
+     permissions?: string[];
+     joinedAt: string;
+   }
+   ```
+
+3. **階段三：團隊與細粒度權限** (遠期)
+   ```typescript
+   // 團隊模型
+   interface Team {
+     id: string;
+     name: string;
+     organizationId: string;
+     leaderId: string;
+   }
+   
+   // 團隊成員關係
+   interface TeamMember {
+     userId: string;
+     teamId: string;
+     role: TeamRole;  // LEADER, MEMBER, VIEWER
+     joinedAt: string;
+   }
+   
+   // 細粒度權限
+   interface ResourcePermission {
+     resourceId: string;
+     resourceType: string;
+     subjectId: string;
+     subjectType: 'user' | 'organization' | 'team';
+     actions: string[];  // 'read', 'create', 'update', 'delete'
+   }
+   ```
+
+### 12.3 設計原則與最佳實踐
+
+在實施過程中，我們將遵循以下設計原則：
+
+1. **簡單優先**
+   - 從簡單模型開始，根據需求逐步擴展
+   - 避免過早引入複雜性，優先解決當前問題
+
+2. **關注點分離**
+   - 系統角色負責全局權限控制
+   - 資源所有權負責具體內容的訪問控制
+   - 視角切換僅影響UI顯示，不影響權限
+
+3. **漸進式採用**
+   - 允許新舊系統並存過渡
+   - 為舊組件提供兼容層
+   - 為未來擴展預留擴展點
+
+4. **靈活性與擴展性**
+   - 考慮多租戶場景下的數據隔離
+   - 資源模型支持多種所有權類型
+   - 權限系統支持未來更複雜的需求
+
+通過這些修改和規劃，我們的身份系統將能夠支持從單一用戶到企業級團隊的各種使用場景，為SponLink平台提供堅實的身份與權限基礎。 

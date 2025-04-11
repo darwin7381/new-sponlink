@@ -20,6 +20,19 @@ export default function LoginPage() {
     if (status === 'authenticated' && session) {
       console.log('已通過 Auth.js 認證');
       
+      // 檢查是否有保存的回調函數
+      if (window.afterLoginCallbackFn) {
+        try {
+          // 執行回調函數
+          window.afterLoginCallbackFn();
+          // 執行完後清除
+          window.afterLoginCallbackFn = undefined;
+          return; // 不執行後續的默認重定向
+        } catch (error) {
+          console.error('執行回調函數錯誤:', error);
+        }
+      }
+      
       // 獲取重定向URL並導航
       const redirectUrl = getRedirectUrl('/dashboard');
       router.push(redirectUrl);
@@ -64,6 +77,19 @@ export default function LoginPage() {
         throw new Error('帳號或密碼錯誤');
       } else {
         console.log('登入成功');
+        
+        // 檢查是否有保存的回調函數
+        if (window.afterLoginCallbackFn) {
+          try {
+            // 執行回調函數
+            window.afterLoginCallbackFn();
+            // 執行完後清除
+            window.afterLoginCallbackFn = undefined;
+            return; // 不執行後續的默認重定向
+          } catch (error) {
+            console.error('執行回調函數錯誤:', error);
+          }
+        }
         
         // 登入成功後重定向到目標頁面
         router.push(redirectUrl);

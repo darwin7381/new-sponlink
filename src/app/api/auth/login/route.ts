@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { mockUsers } from '@/mocks/userData';
-import { USER_ROLES } from '@/lib/types/users';
+import { verifyCredentials } from '@/lib/auth/authService';
+import { SystemRole } from '@/lib/types/users';
 
 export async function POST(request: Request) {
   try {
@@ -8,44 +8,33 @@ export async function POST(request: Request) {
     const { email, password } = body;
 
     console.log(`嘗試登入: ${email}`);
-
-    // 定義有效的登入憑證
-    const validCredentials = [
-      { email: 'sponsor@example.com', password: 'sponsor123', role: USER_ROLES.SPONSOR },
-      { email: 'organizer@example.com', password: 'organizer123', role: USER_ROLES.ORGANIZER }
-    ];
     
-    // 檢查是否有匹配的憑證
-    const credential = validCredentials.find(
-      cred => cred.email === email && cred.password === password
-    );
+    // 尝试使用authService验证用户凭证
+    const user = await verifyCredentials(email, password);
     
-    if (!credential) {
-      console.error(`無效的登入嘗試: ${email}`);
+    if (!user) {
+      console.error(`無效的登入嘗試或用戶不存在: ${email}`);
       return new NextResponse(JSON.stringify({ error: 'Invalid credentials' }), { 
         status: 401,
         headers: { 'Content-Type': 'application/json' }
       });
     }
     
-    // 找到對應的用戶
-    const user = mockUsers.find(u => u.email === email);
-    
-    if (!user) {
-      console.error(`找不到用戶: ${email}`);
-      return new NextResponse(JSON.stringify({ error: 'User not found' }), { 
-        status: 404,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    // 確保用戶ID正確格式化 - 這是關鍵！
+    if (typeof user.id === 'number') {
+      user.id = `user_${user.id}`;
+    } else {
+      // 確保ID是字符串 
+      user.id = String(user.id);
     }
     
-    console.log(`登入成功: ${email}, 角色: ${user.role}`);
+    console.log(`登入成功: ${email}, 用户ID: ${user.id}, 類型: ${typeof user.id}`);
     
     // 返回用戶資料
     return NextResponse.json(user);
   } catch (error) {
-    console.error('登入錯誤:', error);
-    return new NextResponse(JSON.stringify({ error: 'Internal server error' }), { 
+    console.error('登入處理錯誤:', error);
+    return new NextResponse(JSON.stringify({ error: 'Login failed' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });

@@ -1,5 +1,5 @@
 import { pgTable, text, varchar, timestamp, boolean } from 'drizzle-orm/pg-core';
-import { USER_ROLES } from '@/lib/types/users';
+import { SystemRole } from '@/lib/types/users';
 
 /**
  * 用戶表：核心用戶資訊
@@ -16,7 +16,7 @@ export const users = pgTable('users', {
   password: text('password_hash'),
   
   // 用戶設置
-  role: varchar('role', { length: 50 }).$type<USER_ROLES>(),
+  systemRole: varchar('system_role', { length: 20 }).$type<SystemRole>().default(SystemRole.USER),
   preferred_language: varchar('preferred_language', { length: 10 }).default('en'),
   
   // 多租戶支持

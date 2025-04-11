@@ -5,20 +5,35 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RegisterForm } from "@/components/auth/RegisterForm";
-import { UserRole } from "@/types/auth";
+import SocialLoginButtons from "@/components/auth/SocialLoginButtons";
+import { signIn } from "next-auth/react";
+import { SocialProvider } from "@/types/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleRegister = async (name: string, email: string, password: string, role: UserRole) => {
+  // 處理社交登入
+  const handleSocialLogin = async (provider: SocialProvider) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      await signIn(provider, { callbackUrl: '/dashboard' });
+    } catch (error) {
+      console.error(`${provider} 登入錯誤:`, error);
+      setError(`${provider}登入失敗，請稍後再試`);
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegister = async (name: string, email: string, password: string) => {
     setError(null);
     setIsLoading(true);
 
     try {
-      // 在實際應用中，這裡會調用 API 進行註冊
-      // 目前使用模擬數據
+      // 調用 API 進行註冊
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
@@ -28,17 +43,29 @@ export default function RegisterPage() {
           name,
           email,
           password,
-          role,
         }),
       });
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || "註冊失敗");
+        throw new Error(data.error || "註冊失敗");
       }
 
-      // 註冊成功，重定向到登錄頁面
-      router.push("/login?registered=true");
+      // 註冊成功後，自動登入用戶
+      const signInResult = await signIn('credentials', {
+        redirect: false,
+        email,
+        password
+      });
+
+      if (signInResult?.error) {
+        console.error('自動登入失敗:', signInResult.error);
+        // 如果自動登入失敗，還是導向登入頁
+        router.push("/login?registered=true");
+      } else {
+        // 自動登入成功，導向儀表板
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error("註冊錯誤:", error);
       setError(error instanceof Error ? error.message : "註冊過程中發生錯誤");
@@ -63,6 +90,26 @@ export default function RegisterPage() {
               loading={isLoading}
               error={error}
             />
+            
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-border"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-card text-muted-foreground">
+                    或使用社交帳號註冊
+                  </span>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <SocialLoginButtons 
+                  onSocialLogin={handleSocialLogin} 
+                  isLoading={isLoading}
+                />
+              </div>
+            </div>
           </CardContent>
           <CardFooter className="flex justify-center">
             <p className="text-sm text-muted-foreground">

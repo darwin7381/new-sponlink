@@ -1,4 +1,7 @@
-export type UserRole = 'organizer' | 'sponsor';
+/**
+ * 用户视图类型，控制界面显示内容，但不影响权限
+ */
+export type ViewportType = 'organizer' | 'sponsor';
 
 export interface OrganizerEvent {
   id: string;

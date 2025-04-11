@@ -299,12 +299,13 @@ export default function Header() {
                 >
                   Sign in
                 </Button>
-                <Button
-                  onClick={() => showLoginModal(() => router.push('/register'))}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  Sign up
-                </Button>
+                <Link href="/register">
+                  <Button
+                    className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    Sign up
+                  </Button>
+                </Link>
               </div>
             )}
           </div>
@@ -505,15 +506,14 @@ export default function Header() {
             >
               Sign in
             </Button>
-            <Button
-              onClick={() => {
-                setIsMenuOpen(false);
-                showLoginModal(() => router.push('/register'));
-              }}
-              className="w-full justify-center"
-            >
-              Sign up
-            </Button>
+            <Link href="/register">
+              <Button
+                onClick={() => setIsMenuOpen(false)}
+                className="w-full justify-center"
+              >
+                Sign up
+              </Button>
+            </Link>
           </div>
         )}
       </div>
