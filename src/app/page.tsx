@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/services/authService";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { User } from "@/lib/types/users";
 import { getAllEvents } from "@/services/eventService";
 import { getFeaturedEventSeries } from "@/services/eventSeriesService";
@@ -13,7 +13,7 @@ import { FeaturedEventSeries } from "@/components/events/FeaturedEventSeries";
 import { FeaturedHoriEvents } from "@/components/events/FeaturedHoriEvents";
 
 export default function Home() {
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
   const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
   const [featuredSeries, setFeaturedSeries] = useState<EventSeries[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -22,15 +22,11 @@ export default function Home() {
     setMounted(true);
     const fetchData = async () => {
       try {
-        // Get current user
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-
         // Get events
         const events = await getAllEvents({ status: EventStatus.PUBLISHED });
         setFeaturedEvents(events);
         
-        // 获取推荐的活动系列
+        // Get featured event series
         const series = await getFeaturedEventSeries();
         setFeaturedSeries(series);
       } catch (error) {
@@ -41,7 +37,7 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // 避免水合錯誤
+  // Avoid hydration errors
   if (!mounted) {
     return null;
   }

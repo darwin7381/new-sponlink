@@ -12,49 +12,49 @@ import { getOrganizerEvents } from "@/services/eventService";
 import { Meeting, MEETING_STATUS } from "@/lib/types/users";
 import { Event } from "@/lib/types/events";
 import { adaptNewEventsToOld } from "@/lib/types-adapter";
-import { getCurrentUser, isAuthenticated } from "@/lib/services/authService";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { format } from "date-fns";
 
 export default function OrganizerDashboardPage() {
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { user, isLoggedIn, showLoginModal } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   
-  // 格式化時區的函數
+  // Function to format timezone
   const formatTimezone = (timezone?: string) => {
     if (!timezone) return '';
     
-    // 嘗試獲取時區縮寫
+    // Try to get timezone abbreviation
     try {
       const now = new Date();
       const options: Intl.DateTimeFormatOptions = {
         timeZone: timezone,
         timeZoneName: 'short'
       };
-      // 使用en-US來獲取標準化的時區縮寫（如EDT、PDT等）
+      // Use en-US to get standardized timezone abbreviations (like EDT, PDT etc.)
       const timeString = new Intl.DateTimeFormat('en-US', options).format(now);
       
-      // 提取時區縮寫，例如從 "5/24/2023, 8:00 AM EDT" 提取 "EDT"
+      // Extract timezone abbreviation, e.g. from "5/24/2023, 8:00 AM EDT" extract "EDT"
       const tzMatch = timeString.match(/[A-Z]{3,4}$/);
       if (tzMatch) {
-        return tzMatch[0]; // 返回時區縮寫，如 "EDT"
+        return tzMatch[0]; // Return timezone abbreviation, e.g. "EDT"
       }
       
-      // 如果沒有找到標準縮寫，嘗試獲取GMT偏移
+      // If standard abbreviation not found, try to get GMT offset
       const gmtMatch = timeString.match(/GMT[+-]\d+/);
       return gmtMatch ? gmtMatch[0] : timezone.split('/').pop()?.replace('_', ' ') || timezone;
     } catch (_) { // eslint-disable-line @typescript-eslint/no-unused-vars
-      // 發生錯誤時返回簡化的時區名稱
+      // Return simplified timezone name on error
       return timezone.includes('/') 
         ? timezone.split('/').pop()?.replace('_', ' ')
         : timezone;
     }
   };
 
-  // 顯示日期時間及時區
+  // Display date, time and timezone
   const formatDateTime = (dateTimeStr: string, timezone?: string) => {
     const date = new Date(dateTimeStr);
     const formattedDate = format(date, "yyyy/MM/dd HH:mm");
@@ -62,58 +62,46 @@ export default function OrganizerDashboardPage() {
     return `${formattedDate}${timezoneStr}`;
   };
 
-  // 檢查用戶身份
+  // Check user identity
   useEffect(() => {
-    const checkAuth = async () => {
-      if (!isAuthenticated()) {
-        router.push('/login');
-        return;
-      }
-      
-      try {
-        const userData = await getCurrentUser();
-        if (!userData) {
-          router.push('/login');
-          return;
-        }
-        
-        setUserId(userData.id);
-      } catch (e) {
-        console.error("獲取用戶數據錯誤:", e);
-        router.push('/login');
-      }
-    };
+    if (!isLoggedIn) {
+      showLoginModal();
+      return;
+    }
     
-    checkAuth();
-  }, [router]);
+    if (!user) {
+      showLoginModal();
+      return;
+    }
+  }, [router, isLoggedIn, user, showLoginModal]);
   
-  // 獲取活動和會議數據
+  // Fetch events and meetings data
   useEffect(() => {
     async function fetchData() {
-      if (!userId) return;
+      if (!user?.id) return;
       
       try {
         setIsLoading(true);
         
-        // 獲取活動
-        const eventsData = await getOrganizerEvents(userId);
+        // Get events
+        const eventsData = await getOrganizerEvents(user.id);
         setEvents(adaptNewEventsToOld(eventsData));
         
-        // 獲取會議
-        const meetingsData = await getOrganizerMeetings(userId);
+        // Get meetings
+        const meetingsData = await getOrganizerMeetings(user.id);
         setMeetings(meetingsData);
       } catch (error) {
-        console.error("獲取數據錯誤:", error);
-        setError("無法加載主辦方數據。請稍後再試。");
+        console.error("Error fetching data:", error);
+        setError("Unable to load organizer data. Please try again later.");
       } finally {
         setIsLoading(false);
       }
     }
     
     fetchData();
-  }, [userId]);
+  }, [user]);
   
-  // 計算統計數據
+  // Calculate statistics
   const totalEvents = events.length;
   const upcomingMeetings = meetings.filter(meeting => 
     meeting.status === MEETING_STATUS.CONFIRMED && 
@@ -141,7 +129,7 @@ export default function OrganizerDashboardPage() {
           </div>
         )}
         
-        {/* 統計卡片 */}
+        {/* Statistics cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

@@ -1,23 +1,18 @@
-import { getCurrentUser } from "@/lib/services/authService";
 import { Location } from "@/types/event";
 
-// 城市和國家的本地化映射
-interface CountryMap {
+// Language type
+export type SupportedLanguage = 'en' | 'zh';
+
+// City and country localization mappings
+interface LocalizationMap {
   [key: string]: {
     en: string;
     zh: string;
   };
 }
 
-interface CityMap {
-  [key: string]: {
-    en: string;
-    zh: string;
-  };
-}
-
-// 國家名稱本地化映射
-const countryLocalization: CountryMap = {
+// Country name localization mapping
+const countryLocalization: LocalizationMap = {
   "USA": { en: "USA", zh: "美國" },
   "United States": { en: "USA", zh: "美國" },
   "China": { en: "China", zh: "中國" },
@@ -34,8 +29,8 @@ const countryLocalization: CountryMap = {
   "中國香港": { en: "Hong Kong", zh: "中國香港" },
 };
 
-// 城市名稱本地化映射
-const cityLocalization: CityMap = {
+// City name localization mapping
+const cityLocalization: LocalizationMap = {
   "San Francisco": { en: "San Francisco", zh: "舊金山" },
   "New York": { en: "New York", zh: "紐約" },
   "Seattle": { en: "Seattle", zh: "西雅圖" },
@@ -51,43 +46,32 @@ const cityLocalization: CityMap = {
   "Singapore": { en: "Singapore", zh: "新加坡" },
 };
 
+// Store language preference in localStorage with a dedicated key
+const LANGUAGE_STORAGE_KEY = 'app_language_preference';
+
 /**
- * 獲取用戶當前語言設置
- * 如果用戶未登入或未設置語言，將返回默認語言(en)
+ * Get the current language setting
+ * Returns 'en' (English) as the default and only supported language
+ * Note: This application standardizes on English for all text
  */
-export const getUserLanguage = async (): Promise<string> => {
-  try {
-    const user = await getCurrentUser();
-    return user?.preferred_language || "en";
-  } catch (error) {
-    console.error("Error getting user language:", error);
-    return "en"; // 出錯時使用默認語言
-  }
+export const getUserLanguage = (): SupportedLanguage => {
+  // Always return English as the standard language
+  return "en";
 };
 
 /**
- * 同步版本的獲取語言函數，從localStorage直接讀取
- * 適用於不能使用async函數的場景
+ * Synchronous version of getUserLanguage
+ * Standardized to always return 'en'
  */
-export const getUserLanguageSync = (): string => {
-  try {
-    if (typeof window !== 'undefined') {
-      const userJson = localStorage.getItem('user');
-      if (!userJson) return "en";
-      const user = JSON.parse(userJson);
-      return user?.preferred_language || "en";
-    }
-    return "en";
-  } catch (error) {
-    console.error("Error getting user language:", error);
-    return "en";
-  }
+export const getUserLanguageSync = (): SupportedLanguage => {
+  // Application standardized to English, no need to check user preferences
+  return "en";
 };
 
 /**
- * 根據用戶語言格式化國家名稱
+ * Format country name based on language
  */
-export const formatCountry = (country: string, language: string = "en"): string => {
+export const formatCountry = (country: string, language: SupportedLanguage = "en"): string => {
   if (!country) return "";
   
   const countryData = countryLocalization[country];
@@ -95,14 +79,14 @@ export const formatCountry = (country: string, language: string = "en"): string 
     return language === "zh" ? countryData.zh : countryData.en;
   }
   
-  // 如果找不到映射關係，返回原始值
+  // Return original value if no mapping found
   return country;
 };
 
 /**
- * 根據用戶語言格式化城市名稱
+ * Format city name based on language
  */
-export const formatCity = (city: string, language: string = "en"): string => {
+export const formatCity = (city: string, language: SupportedLanguage = "en"): string => {
   if (!city) return "";
   
   const cityData = cityLocalization[city];
@@ -110,17 +94,13 @@ export const formatCity = (city: string, language: string = "en"): string => {
     return language === "zh" ? cityData.zh : cityData.en;
   }
   
-  // 如果找不到映射關係，返回原始值
+  // Return original value if no mapping found
   return city;
 };
 
 /**
- * 格式化地點顯示的工具函數
- */
-
-/**
- * 簡單地將城市和國家標準化顯示為 "城市, 國家" 格式
- * 直接使用數據庫中存儲的值，不進行本地化翻譯
+ * Format location as "city, country"
+ * Uses the values stored in the database without localization
  */
 export const formatLocation = (city?: string, country?: string): string => {
   if (!city && !country) return "";
@@ -129,7 +109,7 @@ export const formatLocation = (city?: string, country?: string): string => {
 };
 
 /**
- * 格式化地址，用於顯示完整地址信息
+ * Format full address from Location object
  */
 export const formatAddress = (location: Location | null | undefined): string => {
   if (!location) return "";
@@ -148,9 +128,8 @@ export const formatAddress = (location: Location | null | undefined): string => 
 };
 
 /**
- * 格式化地址顯示為"城市, 國家"的格式，並根據用戶語言本地化
+ * Synchronous version of formatLocation
  */
 export const formatLocationSync = (city: string, country: string): string => {
-  // 由於formatLocation不接受第三個參數，我們在這裡使用它的基本功能
   return formatLocation(city, country);
 }; 

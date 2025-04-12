@@ -4,24 +4,14 @@
  */
 
 /**
- * 清除所有本地存儲的認證相關數據
+ * 清除本地存儲的用戶數據
  * 在登出或認證失敗時使用
  */
 export const clearLocalAuth = (): void => {
   if (typeof window !== 'undefined') {
     try {
-      // 清除傳統認證相關數據
+      // 清除用戶數據
       localStorage.removeItem('user');
-      localStorage.removeItem('authToken');
-      // 不要清除視角設置，避免導航項消失
-      // localStorage.removeItem('activeView');
-      
-      // 不要清除 user_id_mapping，因為它在登入時會重新設置
-      // 如果需要完全重置，則取消下面的注釋
-      // localStorage.removeItem('user_id_mapping');
-      
-      // 清除會話存儲中的認證相關數據
-      sessionStorage.removeItem('afterLoginCallback');
     } catch (e) {
       console.error('清除本地存儲時出錯:', e);
     }

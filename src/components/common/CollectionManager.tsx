@@ -23,7 +23,7 @@ import {
   addItemToCollection,
   removeItemFromCollection 
 } from '@/services/userPreferenceService';
-import { isAuthenticated, getCurrentUser } from '@/lib/services/authService';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -73,26 +73,17 @@ export function CollectionManager({
   const [newCollectionName, setNewCollectionName] = useState('');
   const [newCollectionDescription, setNewCollectionDescription] = useState('');
   const [selectedCollection, setSelectedCollection] = useState<CustomCollection | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   
   const router = useRouter();
+  const { isLoggedIn, user, showLoginModal } = useAuth();
 
   // 檢查用戶身份和載入集合
   useEffect(() => {
     const checkAuthAndLoadCollections = async () => {
       try {
-        // 檢查用戶是否已登入
-        const authenticated = isAuthenticated();
-        
-        if (authenticated) {
-          // 獲取用戶信息
-          const userData = await getCurrentUser();
-          if (userData) {
-            setUserId(userData.id);
-            
-            // 獲取用戶的集合
-            loadUserCollections(userData.id);
-          }
+        if (isLoggedIn && user) {
+          // 獲取用戶的集合
+          loadUserCollections(user.id);
         } else {
           // 未登入狀態，清空集合列表
           setCollections([]);
@@ -110,7 +101,7 @@ export function CollectionManager({
     return () => {
       window.removeEventListener('authChange', checkAuthAndLoadCollections);
     };
-  }, []);
+  }, [isLoggedIn, user]);
 
   // 載入用戶集合
   const loadUserCollections = async (userId: string) => {
@@ -128,11 +119,11 @@ export function CollectionManager({
 
   // 處理創建新集合
   const handleCreateCollection = async () => {
-    if (!userId) {
+    if (!isLoggedIn || !user) {
       toast.error('請先登入', {
         description: '創建集合需要登入'
       });
-      router.push('/login');
+      showLoginModal();
       return;
     }
     
@@ -151,7 +142,7 @@ export function CollectionManager({
         : [];
       
       const newCollection = await createCustomCollection(
-        userId,
+        user.id,
         newCollectionName,
         newCollectionDescription,
         initialItems
@@ -249,18 +240,20 @@ export function CollectionManager({
       
       if (success) {
         // 重新獲取更新後的集合
-        const updatedCollections = await getUserCollections(userId!);
-        setCollections(updatedCollections);
-        
-        // 提示移除成功
-        toast.success('已從集合移除', {
-          description: `項目已從「${collection.name}」移除`
-        });
-        
-        // 回調
-        const updatedCollection = updatedCollections.find(c => c.id === collection.id);
-        if (updatedCollection && onCollectionChange) {
-          onCollectionChange(updatedCollection);
+        if (user) {
+          const updatedCollections = await getUserCollections(user.id);
+          setCollections(updatedCollections);
+          
+          // 提示移除成功
+          toast.success('已從集合移除', {
+            description: `項目已從「${collection.name}」移除`
+          });
+          
+          // 回調
+          const updatedCollection = updatedCollections.find(c => c.id === collection.id);
+          if (updatedCollection && onCollectionChange) {
+            onCollectionChange(updatedCollection);
+          }
         }
       } else {
         toast.error('移除失敗');
@@ -275,11 +268,11 @@ export function CollectionManager({
 
   // 開啟創建新集合對話框
   const openCreateCollectionDialog = () => {
-    if (!isAuthenticated()) {
+    if (!isLoggedIn) {
       toast.error('請先登入', {
         description: '創建集合需要登入'
       });
-      router.push('/login');
+      showLoginModal();
       return;
     }
     
@@ -290,11 +283,11 @@ export function CollectionManager({
 
   // 開啟添加到集合對話框
   const openAddToCollectionDialog = () => {
-    if (!isAuthenticated()) {
+    if (!isLoggedIn) {
       toast.error('請先登入', {
         description: '添加到集合需要登入'
       });
-      router.push('/login');
+      showLoginModal();
       return;
     }
     

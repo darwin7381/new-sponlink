@@ -6,11 +6,16 @@ import { Bookmark } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { SavedItemType } from '@/types/userPreferences';
 import { saveItem, removeSavedItem, isItemSaved } from '@/services/userPreferenceService';
-import { isAuthenticated, getCurrentUser } from '@/lib/services/authService';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'sonner';
 
+// 擴展 SVG 屬性接口以包含 size 屬性
+interface CustomSVGProps extends React.SVGProps<SVGSVGElement> {
+  size?: number;
+}
+
 // Custom filled bookmark icon
-const BookmarkFilled = (props: any) => {
+const BookmarkFilled = (props: CustomSVGProps) => {
   return (
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
@@ -60,8 +65,8 @@ export function SaveButton({
 }: SaveButtonProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
+  const { isLoggedIn, user, showLoginModal } = useAuth();
 
   // Set icon size based on button size
   const getIconSize = () => {
@@ -72,40 +77,26 @@ export function SaveButton({
     }
   };
 
-  // Check user authentication and saved status
+  // Listen for saved items update events
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check if user is logged in
-        const authenticated = isAuthenticated();
-        
-        if (authenticated) {
-          // Get user info
-          const userData = await getCurrentUser();
-          if (userData) {
-            setUserId(userData.id);
-            
-            // Check if item is saved
-            const saved = await isItemSaved(userData.id, itemId, itemType);
-            setIsSaved(saved);
-            
-            // Notify parent component of status change
-            if (onSaveChange) {
-              onSaveChange(saved);
-            }
+    const handleSavedItemsUpdate = async () => {
+      if (isLoggedIn && user) {
+        try {
+          const saved = await isItemSaved(user.id, itemId, itemType);
+          setIsSaved(saved);
+          if (onSaveChange) {
+            onSaveChange(saved);
           }
+        } catch (error) {
+          console.error("Error checking saved status:", error);
         }
-      } catch (error) {
-        console.error("Authentication check error:", error);
       }
     };
     
-    checkAuth();
-    
-    // Listen for saved items update events
-    const handleSavedItemsUpdate = () => {
-      checkAuth();
-    };
+    // Check status when component mounts if user is already authenticated
+    if (isLoggedIn && user) {
+      handleSavedItemsUpdate();
+    }
     
     window.addEventListener('savedItemsUpdate', handleSavedItemsUpdate);
     window.addEventListener('authChange', handleSavedItemsUpdate);
@@ -114,46 +105,50 @@ export function SaveButton({
       window.removeEventListener('savedItemsUpdate', handleSavedItemsUpdate);
       window.removeEventListener('authChange', handleSavedItemsUpdate);
     };
-  }, [itemId, itemType, onSaveChange]);
+  }, [itemId, itemType, onSaveChange, isLoggedIn, user]);
 
   // Handle save/unsave toggle
   const handleSaveToggle = async () => {
     // Must be logged in to save
-    if (!isAuthenticated()) {
-      toast.error('Please sign in', {
-        description: 'You need to be signed in to save items'
+    if (!isLoggedIn) {
+      toast.error('Please login', {
+        description: 'You need to be logged in to save items'
       });
-      router.push('/login');
-      return;
-    }
-    
-    if (!userId) {
-      toast.error('Unable to get user info', {
-        description: 'Please sign in and try again'
-      });
+      showLoginModal();
       return;
     }
     
     try {
       setIsLoading(true);
       
-      if (isSaved) {
+      if (!user) {
+        toast.error('Unable to get user information', {
+          description: 'Please try again after logging in'
+        });
+        showLoginModal();
+        return;
+      }
+      
+      // Check current saved status
+      const savedStatus = await isItemSaved(user.id, itemId, itemType);
+      
+      if (savedStatus) {
         // Remove from saved items
-        await removeSavedItem(userId, itemId, itemType);
+        await removeSavedItem(user.id, itemId, itemType);
         setIsSaved(false);
         toast.success('Removed', {
-          description: 'Item removed from your saved items'
+          description: 'Item has been removed from your collection'
         });
         
         if (onSaveChange) {
           onSaveChange(false);
         }
       } else {
-        // this function requires metadata as an argument
-        await saveItem(userId, itemId, itemType, metadata);
+        // Save item
+        await saveItem(user.id, itemId, itemType, metadata);
         setIsSaved(true);
         toast.success('Saved', {
-          description: 'Item added to your saved items'
+          description: 'Item has been added to your collection'
         });
         
         if (onSaveChange) {
@@ -179,7 +174,7 @@ export function SaveButton({
         onClick={handleSaveToggle}
         disabled={isLoading}
         className={className}
-        aria-label={isSaved ? "Unsave" : "Save"}
+        aria-label={isSaved ? "取消保存" : "保存"}
       >
         {isSaved ? (
           <BookmarkFilled size={getIconSize()} className="text-primary" />
@@ -202,12 +197,12 @@ export function SaveButton({
       {isSaved ? (
         <>
           <BookmarkFilled size={getIconSize()} className="mr-2" />
-          Saved
+          已保存
         </>
       ) : (
         <>
           <Bookmark size={getIconSize()} className="mr-2" />
-          Save
+          保存
         </>
       )}
     </Button>

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Meeting, MEETING_STATUS } from "@/lib/types/users";
 import { getSponsorMeetings, getOrganizerMeetings, scheduleMeeting } from "@/lib/services/sponsorService";
 import { getEvents, getEventById } from "@/services/eventService";
@@ -25,9 +25,7 @@ const MeetingsPage = () => {
   const organizerIdFromUrl = searchParams.get('organizer');
   const titleFromUrl = searchParams.get('title');
   
-  // State for login modal
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { isLoggedIn, user, showLoginModal } = useAuth();
   const [userId, setUserId] = useState<string | null>(null);
   const [effectiveUserId, setEffectiveUserId] = useState<string | null>(null);
   const [isSponsor, setIsSponsor] = useState(false);
@@ -52,32 +50,17 @@ const MeetingsPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentEvent, setCurrentEvent] = useState<Event | null>(null);
   
-  // Check if user is logged in
+  // Set user information based on Auth data
   useEffect(() => {
-    const checkAuth = async () => {
-      const authenticated = isAuthenticated();
-      setIsLoggedIn(authenticated);
-      
-      if (authenticated) {
-        // 根據身份系統整合方案，不區分角色
-        // 所有已登入用戶都能訪問所有功能
-        setIsSponsor(true);
-        setIsOrganizer(true);
-        
-        try {
-          const userData = await getCurrentUser();
-          if (userData) {
-            setUserId(userData.id);
-            setEffectiveUserId(userData.id);
-          }
-        } catch (error) {
-          console.error("獲取用戶數據時出錯:", error);
-        }
-      }
-    };
-    
-    checkAuth();
-  }, []);
+    if (isLoggedIn && user) {
+      // 根據身份系統整合方案，不區分角色
+      // 所有已登入用戶都能訪問所有功能
+      setIsSponsor(true);
+      setIsOrganizer(true);
+      setUserId(user.id);
+      setEffectiveUserId(user.id);
+    }
+  }, [isLoggedIn, user]);
   
   // Load events
   useEffect(() => {
@@ -226,7 +209,7 @@ const MeetingsPage = () => {
     e.preventDefault();
     
     if (!isLoggedIn) {
-      setShowLoginModal(true);
+      showLoginModal();
       return;
     }
     
@@ -477,32 +460,6 @@ const MeetingsPage = () => {
           )}
         </div>
       </div>
-      
-      {/* Login modal */}
-      <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Login Required</DialogTitle>
-            <DialogDescription>
-              You need to be logged in to request a meeting.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-4 py-4">
-            <p className="text-sm text-gray-500">
-              Please log in to your account to continue with your meeting request.
-              All your information will be saved.
-            </p>
-          </div>
-          <DialogFooter className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-            <Button variant="outline" onClick={() => setShowLoginModal(false)}>
-              Cancel
-            </Button>
-            <Button asChild>
-              <Link href="/login">Login Now</Link>
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

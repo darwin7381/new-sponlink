@@ -1,21 +1,21 @@
 /**
- * Luma 活動爬蟲服務
- * 用於從 Luma 活動頁面提取數據，並將其轉換為應用程序的事件格式
+ * Luma Event Scraper Service
+ * Used to extract data from Luma event pages and convert it to the application's event format
  */
 
-import { Event, EventStatus, Location, LocationType } from '@/types/event';
+import { Event, EventStatus, Location, LocationType, OWNER_TYPE } from '@/types/event';
 import { v4 as uuidv4 } from 'uuid';
 import { convertToDatetimeLocalFormat, getBrowserTimezone } from '@/utils/dateUtils';
 
 /**
- * Luma 活動數據結構（從抓取內容中提取）
+ * Scraped Luma Event data structure (extracted from scraped content)
  */
 interface ScrapedLumaEvent {
   title: string;
   description: string;
   coverImage: string;
-  startAt: string; // ISO 時間戳
-  endAt: string;   // ISO 時間戳
+  startAt: string; // ISO timestamp
+  endAt: string;   // ISO timestamp
   timezone?: string;
   location: {
     place_id?: string; 
@@ -36,29 +36,29 @@ interface ScrapedLumaEvent {
 }
 
 /**
- * 創建位置對象
- * 直接使用原始 Google Places 數據
+ * Create location object
+ * Directly use raw Google Places data
  */
 const createLocation = (locationData: ScrapedLumaEvent['location']): Location => {
   try {
-    // 確定位置類型 - 優先使用API返回的location_type，否則自動判斷
+    // Determine location type - prioritize location_type returned by API, otherwise auto-detect
     let locationType;
     
     if (locationData.location_type !== undefined) {
-      // 優先使用API返回的location_type值
+      // Prioritize location_type value returned by API
       locationType = locationData.location_type;
-      console.log('使用API返回的location_type:', locationType);
+      console.log('Using location_type returned by API:', locationType);
     } else {
-      // 自動判斷位置類型 - 如果有Google Place ID使用Google類型
+      // Auto-detect location type - if Google Place ID exists, use Google type
       locationType = locationData.place_id 
         ? LocationType.GOOGLE 
         : (!locationData.full_address && !locationData.address 
           ? LocationType.VIRTUAL 
           : LocationType.CUSTOM);
-      console.log('自動判斷的location_type:', locationType);
+      console.log('Auto-detected location_type:', locationType);
     }
     
-    // 基本位置對象
+    // Basic location object
     const location: Location = {
       id: uuidv4(),
       name: locationData.name || '',
@@ -69,26 +69,26 @@ const createLocation = (locationData: ScrapedLumaEvent['location']): Location =>
       location_type: locationType,
     };
     
-    // Google Places 專用屬性
+    // Google Places specific properties
     if (locationData.place_id) {
       location.place_id = locationData.place_id;
     }
     
-    // 添加經緯度
+    // Add latitude and longitude
     if (typeof locationData.latitude === 'number' && typeof locationData.longitude === 'number') {
       location.latitude = locationData.latitude;
       location.longitude = locationData.longitude;
     }
     
-    console.log('創建的最終位置對象:', location);
+    console.log('Final location object created:', location);
     
     return location;
   } catch (error) {
-    console.error('創建位置對象錯誤:', error);
-    // 返回默認位置
+    console.error('Error creating location object:', error);
+    // Return default location
     return {
       id: uuidv4(),
-      name: '未知位置',
+      name: 'Unknown Location',
       address: '',
       city: '',
       country: '',
@@ -99,25 +99,25 @@ const createLocation = (locationData: ScrapedLumaEvent['location']): Location =>
 };
 
 /**
- * 從 HTML 內容中解析 Luma 活動數據
+ * Parse Luma event data from HTML content
  */
 export const parseLumaHTML = (html: string): ScrapedLumaEvent | null => {
   try {
-    // 這只是一個簡單的示例，實際應用中可能需要更複雜的解析
+    // This is just a simple example, actual implementation may require more complex parsing
     
-    // 提取標題
+    // Extract title
     const titleMatch = html.match(/<title>(.*?)<\/title>/);
-    const title = titleMatch ? titleMatch[1].replace(' | Luma', '') : '未命名活動';
+    const title = titleMatch ? titleMatch[1].replace(' | Luma', '') : 'Unnamed Event';
     
-    // 提取描述（簡化示例）
+    // Extract description (simplified example)
     const descriptionMatch = html.match(/<meta\s+name="description"\s+content="([^"]+)"/i);
     const description = descriptionMatch ? descriptionMatch[1] : '';
     
-    // 提取圖片（簡化示例）
+    // Extract image (simplified example)
     const imageMatch = html.match(/("https:\/\/images\.lumacdn\.com[^"]+?")/);
     const coverImage = imageMatch ? imageMatch[1].replace(/"/g, '') : '';
     
-    // 假設一些默認值
+    // Assume some default values
     return {
       title,
       description,
@@ -134,85 +134,88 @@ export const parseLumaHTML = (html: string): ScrapedLumaEvent | null => {
       tags: ['Conference', 'Tech']
     };
   } catch (error) {
-    console.error('解析 Luma HTML 錯誤:', error);
+    console.error('Error parsing Luma HTML:', error);
     return null;
   }
 };
 
 /**
- * 格式化爬取的 Luma 數據為 Event 對象
- * 增加對時區的處理
+ * Format scraped Luma data to Event object
+ * Added timezone handling
  */
 export const formatLumaEvent = (
   scrapedData: ScrapedLumaEvent,
   organizerId: string
 ): Omit<Event, 'id' | 'created_at' | 'updated_at'> => {
-  // 創建位置對象
+  // Create location object
   const location = createLocation(scrapedData.location);
   
-  // 處理時區 - 保留原始格式（EDT、GMT+8等）
-  // 如果 Luma 沒有提供時區，使用瀏覽器的時區作為備用
+  // Handle timezone - preserve original format (EDT, GMT+8 etc.)
+  // If Luma doesn't provide a timezone, use browser's timezone as fallback
   let timezone = getBrowserTimezone();
   
   if (scrapedData.timezone) {
     timezone = scrapedData.timezone;
-    console.log('Luma提供的原始時區:', timezone);
+    console.log('Original timezone provided by Luma:', timezone);
   }
-  // 注意：這裡無法訪問HTML內容，因為 formatLumaEvent 函數無法訪問到 htmlContent
-  // 時區的提取應該已經在 scrapeLumaEventFromHTML 函數中完成
+  // Note: Cannot access HTML content here, as formatLumaEvent function cannot access htmlContent
+  // Timezone extraction should already be done in scrapeLumaEventFromHTML function
   
-  console.log('最終使用的時區:', timezone);
+  console.log('Final timezone used:', timezone);
   
-  // 將時間轉換為表單可顯示的格式
+  // Convert time to format displayable in the form
   const startTimeLocal = convertToDatetimeLocalFormat(scrapedData.startAt, timezone);
   const endTimeLocal = convertToDatetimeLocalFormat(scrapedData.endAt, timezone);
   
-  console.log('Luma原始開始時間:', scrapedData.startAt);
-  console.log('轉換後開始時間:', startTimeLocal);
-  console.log('Luma原始結束時間:', scrapedData.endAt);
-  console.log('轉換後結束時間:', endTimeLocal);
+  console.log('Luma original start time:', scrapedData.startAt);
+  console.log('Converted start time:', startTimeLocal);
+  console.log('Luma original end time:', scrapedData.endAt);
+  console.log('Converted end time:', endTimeLocal);
   
-  // 格式化為應用程序的事件格式
+  // Format to application's event format
   return {
     organizer_id: organizerId,
     title: scrapedData.title,
     description: scrapedData.description,
     cover_image: scrapedData.coverImage,
-    start_time: scrapedData.startAt,  // 保留原始 ISO 時間戳
-    end_time: scrapedData.endAt,      // 保留原始 ISO 時間戳
+    start_time: scrapedData.startAt,  // Keep original ISO timestamp
+    end_time: scrapedData.endAt,      // Keep original ISO timestamp
     location,
     status: EventStatus.DRAFT,
     category: scrapedData.category,
     tags: scrapedData.tags,
     sponsorship_plans: [],
-    timezone: timezone  // 保存原始時區信息
+    timezone: timezone,  // Save original timezone information
+    // Add required properties to fix type error
+    ownerId: organizerId,
+    ownerType: OWNER_TYPE.USER
   };
 };
 
 /**
- * 從 Luma URL 抓取事件數據
+ * Scrape event data from Luma URL
  */
 export const scrapeLumaEvent = async (lumaUrl: string, organizerId: string): Promise<Omit<Event, 'id' | 'created_at' | 'updated_at'> | null> => {
   try {
-    // 使用我們的 API 端點來抓取 Luma 網站數據
+    // Use our API endpoint to scrape Luma website data
     const response = await fetch(`/api/scrape-luma?url=${encodeURIComponent(lumaUrl)}`);
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || `抓取失敗: ${response.status}`);
+      throw new Error(errorData.error || `Scraping failed: ${response.status}`);
     }
     
     const data = await response.json();
     
-    // 檢查API返回的數據是否有效
+    // Check if API returned data is valid
     if (!data || !data.title) {
-      throw new Error('抓取 Luma 事件數據無效');
+      throw new Error('Invalid Luma event data scraped');
     }
     
-    console.log('API返回數據:', JSON.stringify(data).substring(0, 500) + '...');
-    console.log('位置數據:', data.location);
+    console.log('API returned data:', JSON.stringify(data).substring(0, 500) + '...');
+    console.log('Location data:', data.location);
     
-    // 轉換為ScrapedLumaEvent格式
+    // Convert to ScrapedLumaEvent format
     const scrapedData: ScrapedLumaEvent = {
       title: data.title,
       description: data.description,
@@ -229,7 +232,7 @@ export const scrapeLumaEvent = async (lumaUrl: string, organizerId: string): Pro
         place_id: data.location.place_id,
         description: data.location.description,
         postal_code: data.location.postal_code,
-        location_type: data.location.location_type, // 保留API返回的location_type
+        location_type: data.location.location_type, // Keep location_type returned by API
         latitude: data.location.latitude,
         longitude: data.location.longitude
       },
@@ -237,10 +240,10 @@ export const scrapeLumaEvent = async (lumaUrl: string, organizerId: string): Pro
       tags: data.tags || []
     };
     
-    // 直接使用 API 返回的數據作為 ScrapedLumaEvent
+    // Directly use API returned data as ScrapedLumaEvent
     return formatLumaEvent(scrapedData, organizerId);
   } catch (error) {
-    console.error('抓取 Luma 事件錯誤:', error);
-    throw error; // 向上拋出錯誤，使呼叫方能夠處理
+    console.error('Error scraping Luma event:', error);
+    throw error; // Throw error up for caller to handle
   }
 }; 

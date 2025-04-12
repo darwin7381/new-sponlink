@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getEventById, publishEvent } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function EventDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -16,30 +17,8 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
   const [error, setError] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [eventId, setEventId] = useState<string>("");
-  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isOrganizer, setIsOrganizer] = useState(true);
-
-  // Check user identity
-  useEffect(() => {
-    const userJson = localStorage.getItem('user');
-    if (userJson) {
-      try {
-        const user = JSON.parse(userJson);
-        setCurrentUser(user);
-        setIsAuthenticated(true);
-      } catch (e) {
-        console.error("Error parsing user data:", e);
-      }
-    }
-  }, []);
-
-  // Redirect if not logged in or not an organizer
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/login");
-    }
-  }, [isAuthenticated, router, isLoading]);
+  // Using useAuth hook for authentication
+  const { isLoggedIn, user, showLoginModal } = useAuth();
 
   // Get event details
   useEffect(() => {
@@ -59,13 +38,6 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
           return;
         }
         
-        // Check if current user is the event organizer
-        if (currentUser && eventData.organizer_id !== currentUser.id) {
-          setError("You don&apos;t have permission to view this event");
-          router.push("/organizer/events");
-          return;
-        }
-        
         setEvent(eventData);
       } catch (error) {
         console.error("Error fetching event details:", error);
@@ -75,14 +47,24 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
       }
     }
 
-    if (currentUser && isOrganizer) {
-      fetchEventDetails();
-    }
-  }, [params, currentUser, isOrganizer, router]);
+    fetchEventDetails();
+  }, [params]);
 
   // Publish event
   const handlePublishEvent = async () => {
     if (!event) return;
+    
+    // Check if user is authenticated
+    if (!isLoggedIn || !user?.id) {
+      showLoginModal();
+      return;
+    }
+    
+    // Check if user is the organizer
+    if (event.organizer_id !== user.id) {
+      setError("You don't have permission to publish this event");
+      return;
+    }
     
     try {
       setIsPublishing(true);
@@ -146,7 +128,7 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             <CardContent className="p-6 text-center">
               <h2 className="text-lg font-medium text-gray-900">Event Not Found</h2>
               <p className="mt-2 text-gray-500">
-                This event may have been deleted or you don't have permission to view it.
+                This event may have been deleted or you don&apos;t have permission to view it.
               </p>
               <Button variant="outline" className="mt-4" onClick={() => router.push("/organizer/events")}>
                 Back to Events List
@@ -170,16 +152,21 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
             {getStatusBadge(event.status)}
           </div>
           <div className="flex gap-3">
-            <Link href={`/organizer/events/${event.id}/edit`}>
-              <Button variant="outline">Edit Event</Button>
-            </Link>
-            {event.status === EventStatus.DRAFT && (
-              <Button 
-                variant="default" 
-                onClick={handlePublishEvent}
-                disabled={isPublishing}
-              >
-                {isPublishing ? "Publishing..." : "Publish Event"}
+                <Link href={`/organizer/events/${event.id}/edit`} onClick={(e) => {
+                  if (!isLoggedIn) {
+                    e.preventDefault();
+                    showLoginModal();
+                  }
+                }}>
+                  <Button variant="outline">Edit Event</Button>
+                </Link>
+                {event.status === EventStatus.DRAFT && (
+                  <Button 
+                    variant="default" 
+                    onClick={handlePublishEvent}
+                    disabled={isPublishing}
+                  >
+                    {isPublishing ? "Publishing..." : "Publish Event"}
               </Button>
             )}
           </div>
@@ -192,13 +179,15 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 <CardTitle>Event Details</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="aspect-video w-full mb-6 overflow-hidden rounded-lg">
-                  <img 
-                    src={event.cover_image} 
-                    alt={event.title} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
+                {event.cover_image && (
+                  <div className="aspect-video w-full mb-6 overflow-hidden rounded-lg">
+                    <img 
+                      src={event.cover_image} 
+                      alt={event.title} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
                 
                 <div className="space-y-6">
                   <div>
@@ -273,11 +262,16 @@ export default function EventDetailsPage({ params }: { params: Promise<{ id: str
                 )}
                 
                 <div className="mt-6">
-                  <Link href={`/organizer/events/${event.id}/plans`}>
-                    <Button variant="outline" className="w-full">
-                      Manage Sponsorship Plans
-                    </Button>
-                  </Link>
+                    <Link href={`/organizer/events/${event.id}/plans`} onClick={(e) => {
+                      if (!isLoggedIn) {
+                        e.preventDefault();
+                        showLoginModal();
+                      }
+                    }}>
+                      <Button variant="outline" className="w-full">
+                        Manage Sponsorship Plans
+                      </Button>
+                    </Link>
                 </div>
               </CardContent>
             </Card>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getCurrentUser, isAuthenticated } from '@/lib/services/authService';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { getSavedItems, removeSavedItem } from '@/services/userPreferenceService';
 import { SavedItem, SavedItemType } from '@/types/userPreferences';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,39 +18,37 @@ import { toast } from 'sonner';
 
 export default function SavedItemsPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
+  const { user, isLoggedIn, showLoginModal } = useAuth();
 
-  // 加載用戶資料和收藏項目
+  // Load user data and saved items
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        if (!isAuthenticated()) {
-          router.push('/login');
+        if (!isLoggedIn) {
+          showLoginModal();
           return;
         }
 
-        const user = await getCurrentUser();
         if (!user) {
-          router.push('/login');
+          showLoginModal();
           return;
         }
 
-        setUserId(user.id);
         loadSavedItems(user.id);
       } catch (error) {
-        console.error('認證檢查錯誤:', error);
-        router.push('/login');
+        console.error('Authentication check error:', error);
+        showLoginModal();
       }
     };
 
     checkAuth();
-  }, [router]);
+  }, [router, isLoggedIn, user, showLoginModal]);
 
-  // 加載收藏項目
+  // Load saved items
   const loadSavedItems = async (uid: string) => {
     setIsLoading(true);
     try {
@@ -64,14 +62,14 @@ export default function SavedItemsPage() {
     }
   };
 
-  // 移除收藏項目
+  // Remove saved item
   const handleRemoveItem = async (itemId: string, itemType: SavedItemType) => {
-    if (!userId) return;
+    if (!user) return;
 
     try {
-      await removeSavedItem(userId, itemId, itemType);
+      await removeSavedItem(user.id, itemId, itemType);
       toast.success('項目已從收藏中移除');
-      // 更新列表
+      // Update list
       setSavedItems(prev => prev.filter(item => !(item.item_id === itemId && item.item_type === itemType)));
     } catch (error) {
       console.error('移除收藏項目錯誤:', error);
@@ -79,16 +77,16 @@ export default function SavedItemsPage() {
     }
   };
 
-  // 篩選活動項目
+  // Filter activity items
   const getFilteredItems = () => {
     let filtered = savedItems;
 
-    // 依據活動標籤篩選
+    // Filter by activity tag
     if (activeTab !== 'all') {
       filtered = filtered.filter(item => item.item_type === activeTab);
     }
 
-    // 依據搜尋關鍵字篩選
+    // Filter by search keyword
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(item => 
@@ -99,7 +97,7 @@ export default function SavedItemsPage() {
     return filtered;
   };
 
-  // 獲取標籤計數
+  // Get tag counts
   const getTabCounts = () => {
     const counts = {
       all: savedItems.length,
@@ -123,7 +121,7 @@ export default function SavedItemsPage() {
   const tabCounts = getTabCounts();
   const filteredItems = getFilteredItems();
 
-  // 格式化日期顯示
+  // Format date display
   const formatDate = (dateString?: string) => {
     if (!dateString) return '';
     
@@ -135,7 +133,7 @@ export default function SavedItemsPage() {
     }
   };
 
-  // 獲取項目圖標
+  // Get item icon
   const getItemIcon = (type: SavedItemType) => {
     switch (type) {
       case SavedItemType.EVENT:
@@ -151,7 +149,7 @@ export default function SavedItemsPage() {
     }
   };
 
-  // 獲取項目詳情頁面連結
+  // Get item detail page link
   const getItemLink = (item: SavedItem) => {
     switch (item.item_type) {
       case SavedItemType.EVENT:
@@ -167,7 +165,7 @@ export default function SavedItemsPage() {
     }
   };
 
-  // 獲取項目類型中文名稱
+  // Get item type Chinese name
   const getItemTypeName = (type: SavedItemType) => {
     switch (type) {
       case SavedItemType.EVENT:
@@ -187,7 +185,7 @@ export default function SavedItemsPage() {
     }
   };
 
-  // 載入中顯示
+  // Loading display
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -203,7 +201,7 @@ export default function SavedItemsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* 頁面標題 */}
+      {/* Page title */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">我的收藏</h1>
         <Button variant="outline" onClick={() => router.push('/profile')}>
@@ -211,7 +209,7 @@ export default function SavedItemsPage() {
         </Button>
       </div>
 
-      {/* 搜索欄 */}
+      {/* Search bar */}
       <div className="mb-6">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -224,7 +222,7 @@ export default function SavedItemsPage() {
         </div>
       </div>
 
-      {/* 分類標籤 */}
+      {/* Category tabs */}
       <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6 w-full sm:w-auto grid grid-cols-3 sm:flex">
           <TabsTrigger value="all">
@@ -244,27 +242,27 @@ export default function SavedItemsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* 所有分類的內容 */}
+        {/* All category content */}
         <TabsContent value="all" className="mt-0">
           {renderItemList(filteredItems)}
         </TabsContent>
         
-        {/* 活動分類 */}
+        {/* Activity category */}
         <TabsContent value={SavedItemType.EVENT} className="mt-0">
           {renderItemList(filteredItems)}
         </TabsContent>
         
-        {/* 比較結果分類 */}
+        {/* Comparison result category */}
         <TabsContent value={SavedItemType.COMPARISON_RESULT} className="mt-0">
           {renderItemList(filteredItems)}
         </TabsContent>
         
-        {/* 贊助方案分類 */}
+        {/* Sponsorship plan category */}
         <TabsContent value={SavedItemType.SPONSORSHIP_PLAN} className="mt-0">
           {renderItemList(filteredItems)}
         </TabsContent>
         
-        {/* 主辦方分類 */}
+        {/* Organizer category */}
         <TabsContent value={SavedItemType.ORGANIZER} className="mt-0">
           {renderItemList(filteredItems)}
         </TabsContent>
@@ -272,7 +270,7 @@ export default function SavedItemsPage() {
     </div>
   );
 
-  // 渲染收藏項目列表
+  // Render saved item list
   function renderItemList(items: SavedItem[]) {
     if (items.length === 0) {
       return (
@@ -290,7 +288,7 @@ export default function SavedItemsPage() {
         {items.map((item) => (
           <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
             <div className="flex flex-col h-full">
-              {/* 卡片標題 */}
+              {/* Card title */}
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
@@ -315,7 +313,7 @@ export default function SavedItemsPage() {
                 </div>
               </CardHeader>
               
-              {/* 卡片內容 */}
+              {/* Card content */}
               <CardContent className="pb-2 pt-0 flex-grow">
                 {item.metadata.date && (
                   <p className="text-sm text-muted-foreground flex items-center mb-2">
@@ -328,7 +326,7 @@ export default function SavedItemsPage() {
                 </p>
               </CardContent>
               
-              {/* 卡片操作 */}
+              {/* Card actions */}
               <CardFooter className="pt-2 pb-3 mt-auto">
                 <Link 
                   href={getItemLink(item)} 

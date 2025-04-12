@@ -16,14 +16,14 @@ export function LoginForm({ onSubmit, loading = false }: LoginFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("提交登录表单:", email, password)
+    console.log("Submitting login form:", email, password)
     onSubmit(email, password)
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <Label htmlFor="email">電子郵件</Label>
+        <Label htmlFor="email">Email</Label>
         <Input
           id="email"
           name="email"
@@ -33,16 +33,16 @@ export function LoginForm({ onSubmit, loading = false }: LoginFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="mt-1"
-          placeholder="請輸入您的電子郵件"
+          placeholder="Enter your email"
           disabled={loading}
         />
       </div>
 
       <div>
         <div className="flex items-center justify-between">
-          <Label htmlFor="password">密碼</Label>
+          <Label htmlFor="password">Password</Label>
           <a href="#" className="text-sm text-primary hover:underline">
-            忘記密碼?
+            Forgot password?
           </a>
         </div>
         <Input
@@ -54,7 +54,7 @@ export function LoginForm({ onSubmit, loading = false }: LoginFormProps) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="mt-1"
-          placeholder="請輸入您的密碼"
+          placeholder="Enter your password"
           disabled={loading}
         />
       </div>
@@ -62,17 +62,17 @@ export function LoginForm({ onSubmit, loading = false }: LoginFormProps) {
       <Button type="submit" className="w-full" disabled={loading}>
         {loading ? (
           <>
-            <span className="mr-2">登入中...</span>
+            <span className="mr-2">Logging in...</span>
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent"></div>
           </>
         ) : (
-          "登入"
+          "Login"
         )}
       </Button>
       
       <div className="text-center mt-4">
         <p className="text-sm text-muted-foreground">
-          還沒有帳號? <a href="/register" className="text-primary hover:underline">立即註冊</a>
+          Don&apos;t have an account? <a href="/register" className="text-primary hover:underline">Register now</a>
         </p>
       </div>
     </form>

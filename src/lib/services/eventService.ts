@@ -2,7 +2,6 @@
 
 import { Event, EventStatus } from '@/types/event';
 import { PERMISSION, RESOURCE_TYPE } from '@/lib/types/users';
-import { getStoredUser } from './authService';
 import { hasResourcePermission, setResourceOwnership } from './resourcePermissionService';
 import { mockEvents } from '../../mocks/eventData';
 
@@ -89,16 +88,16 @@ export const getEvent = async (id: string): Promise<Event | null> => {
 
 export const createEvent = async (eventData: Partial<Event>): Promise<Event | null> => {
   try {
-    const user = getStoredUser();
-    if (!user) throw new Error('User not authenticated');
+    // 使用傳入的用戶ID而不是從 localStorage 獲取
+    if (!eventData.ownerId) throw new Error('User ID required');
     
     // 設置資源所有權
     const eventWithOwnership = setResourceOwnership({
       ...eventData,
       resourceType: RESOURCE_TYPE.EVENT,
       status: EventStatus.DRAFT,
-      organizer_id: user.id // 保留舊字段以兼容
-    }, user.id);
+      organizer_id: eventData.ownerId // 保留舊字段以兼容
+    }, eventData.ownerId);
     
     // 模擬API調用
     await delay(800);
@@ -123,7 +122,8 @@ export const createEvent = async (eventData: Partial<Event>): Promise<Event | nu
 
 export const updateEvent = async (
   id: string, 
-  eventData: Partial<Event>
+  eventData: Partial<Event>,
+  userId?: string
 ): Promise<Event | null> => {
   try {
     // 獲取當前事件以檢查權限
@@ -137,7 +137,7 @@ export const updateEvent = async (
     };
     
     // 權限檢查
-    if (!hasResourcePermission(eventWithType, PERMISSION.EDIT)) {
+    if (userId && !hasResourcePermission(eventWithType, PERMISSION.EDIT, userId)) {
       throw new Error('Permission denied: Cannot edit this event');
     }
     
@@ -165,7 +165,7 @@ export const updateEvent = async (
   }
 };
 
-export const deleteEvent = async (id: string): Promise<boolean> => {
+export const deleteEvent = async (id: string, userId?: string): Promise<boolean> => {
   try {
     // 獲取當前事件以檢查權限
     const currentEvent = await getEvent(id);
@@ -178,7 +178,7 @@ export const deleteEvent = async (id: string): Promise<boolean> => {
     };
     
     // 權限檢查
-    if (!hasResourcePermission(eventWithType, PERMISSION.DELETE)) {
+    if (userId && !hasResourcePermission(eventWithType, PERMISSION.DELETE, userId)) {
       throw new Error('Permission denied: Cannot delete this event');
     }
     
@@ -198,18 +198,16 @@ export const deleteEvent = async (id: string): Promise<boolean> => {
   }
 };
 
-export const getUserEvents = async (userId?: string): Promise<Event[]> => {
+export const getUserEvents = async (userId: string): Promise<Event[]> => {
   try {
-    const user = getStoredUser();
-    if (!user && !userId) throw new Error('No user specified');
-    
-    const targetUserId = userId || user?.id;
+    // 必須提供用戶ID
+    if (!userId) throw new Error('No user specified');
     
     // 模擬API調用
     await delay(400);
     
     // 過濾用戶的活動
-    return mockEvents.filter(event => event.organizer_id === targetUserId);
+    return mockEvents.filter(event => event.organizer_id === userId);
   } catch (error) {
     console.error('Error fetching user events:', error);
     return [];

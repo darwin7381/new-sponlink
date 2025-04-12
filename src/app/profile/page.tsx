@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { getCurrentUser } from '@/lib/services/authService';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { User, OrganizerProfile, SponsorProfile } from '@/lib/types/users';
 import { Calendar, Briefcase, DollarSign, Users, PieChart, Settings, Edit, ExternalLink, Plus, Bookmark, Bell } from 'lucide-react';
 
@@ -22,26 +22,26 @@ interface SponsorshipItem {
 }
 
 async function fetchUserProfile(userId: string) {
-  console.log('嘗試獲取用戶資料，用戶ID:', userId, '長度:', userId.length);
+  console.log('Attempting to fetch user profile, user ID:', userId, 'length:', userId.length);
   
-  // 防止空ID導致錯誤 (如果用戶ID為空)
+  // Prevent empty ID errors
   if (!userId || userId === 'undefined') {
-    console.error('用戶ID無效，無法獲取資料');
-    throw new Error('用戶ID無效');
+    console.error('Invalid user ID, cannot fetch profile');
+    throw new Error('Invalid user ID');
   }
   
   try {
     const response = await fetch(`/api/profile?userId=${encodeURIComponent(userId)}`, {
       method: 'GET',
-      cache: 'no-cache' // 防止緩存問題
+      cache: 'no-cache' // Prevent caching issues
     });
     
-    console.log('API響應狀態:', response.status);
+    console.log('API response status:', response.status);
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('用戶資料獲取失敗，狀態碼:', response.status, '錯誤:', errorText);
-      let errorMessage = '獲取用戶資料失敗';
+      console.error('Failed to fetch user profile, status:', response.status, 'error:', errorText);
+      let errorMessage = 'Failed to fetch user profile';
       
       try {
         const errorData = JSON.parse(errorText);
@@ -49,7 +49,7 @@ async function fetchUserProfile(userId: string) {
           errorMessage = errorData.error;
         }
       } catch (e) {
-        // 解析JSON失敗，使用原始錯誤文本
+        // JSON parsing failed, use original error text
         errorMessage = errorText || errorMessage;
       }
       
@@ -57,124 +57,83 @@ async function fetchUserProfile(userId: string) {
     }
     
     const data = await response.json();
-    console.log('成功獲取用戶資料:', data);
+    console.log('Successfully fetched user profile:', data);
     return data;
   } catch (error) {
-    console.error('獲取用戶資料時發生錯誤:', error);
+    console.error('Error fetching user profile:', error);
     throw error;
   }
 }
 
 export default function ProfilePage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [profileData, setProfileData] = useState<OrganizerProfile | SponsorProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
-  const [profileData, setProfileData] = useState<OrganizerProfile | SponsorProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-
-  // 直接從本地存儲獲取用戶數據的函數
-  const getUserFromLocalStorage = () => {
-    if (typeof window !== 'undefined') {
-      try {
-        console.log('[profile] 從localStorage獲取用戶數據');
-        const userJson = localStorage.getItem('user');
-        
-        if (!userJson) {
-          console.log('[profile] localStorage中沒有用戶數據');
-          return null;
-        }
-        
-        const user = JSON.parse(userJson);
-        console.log('[profile] 解析後的用戶數據:', user);
-        
-        // 檢查用戶ID
-        if (!user.id) {
-          console.error('[profile] 用戶數據中缺少ID');
-          return null;
-        }
-        
-        // UUID格式不需要任何處理，直接返回
-        return user;
-      } catch (e) {
-        console.error('[profile] 從localStorage獲取用戶數據失敗:', e);
-        return null;
-      }
-    }
-    return null;
-  };
+  const { isLoggedIn, user, showLoginModal } = useAuth();
 
   useEffect(() => {
     let isMounted = true;
     
     const checkAuth = async () => {
       try {
-        console.log("[Profile] 開始獲取用戶數據...");
-        
-        // 直接從localStorage獲取用戶資料
-        const localUser = getUserFromLocalStorage();
-        console.log("[Profile] 從localStorage直接獲取的用戶:", localUser);
-        
-        if (!localUser) {
-          console.error("[Profile] 用戶未找到");
-          router.push('/login');
+        if (!isLoggedIn || !user) {
+          console.error("[Profile] User not logged in");
+          // Show login modal instead of redirect
+          showLoginModal();
           return;
         }
         
-        // ID格式檢查
-        if (!localUser.id) {
-          console.error("[Profile] 用戶ID無效或未找到");
-          router.push('/login');
+        // ID format check
+        if (!user.id) {
+          console.error("[Profile] Invalid or missing user ID");
+          showLoginModal();
           return;
         }
         
-        // 使用UUID
-        console.log(`[Profile] 使用用戶ID: "${localUser.id}"`);
+        console.log(`[Profile] Using user ID: "${user.id}"`);
         
-        if (isMounted) {
-          setUser(localUser);
+        // Attempt to get user profile
+        try {
+          const userId = user.id;
+          console.log(`Starting to fetch user profile, ID: "${userId}"`);
           
-          // 嘗試獲取用戶資料
-          try {
-            const userId = localUser.id;
-            console.log(`開始獲取用戶資料，ID: "${userId}"`);
+          const profile = await fetchUserProfile(userId);
+          
+          if (isMounted) {
+            console.log("Successfully retrieved user profile:", profile);
             
-            const profile = await fetchUserProfile(userId);
+            // Process received profile data
+            const formattedProfile = {
+              userId: profile.userId,
+              bio: profile.bio || '',
+              contactInfo: profile.contactInfo || '',
+              avatar: profile.avatar || '',
+              updatedAt: profile.updatedAt,
+              events: profile.events || [],
+              statistics: profile.statistics || {
+                totalEvents: 0,
+                upcomingEvents: 0,
+                averageAttendees: 0,
+                totalRevenue: '$0'
+              }
+            };
             
-            if (isMounted) {
-              console.log("成功獲取到用戶資料:", profile);
-              
-              // 處理收到的資料格式
-              const formattedProfile = {
-                userId: profile.userId,
-                bio: profile.bio || '',
-                contactInfo: profile.contactInfo || '',
-                avatar: profile.avatar || '',
-                updatedAt: profile.updatedAt,
-                events: profile.events || [],
-                statistics: profile.statistics || {
-                  totalEvents: 0,
-                  upcomingEvents: 0,
-                  averageAttendees: 0,
-                  totalRevenue: '$0'
-                }
-              };
-              
-              setProfileData(formattedProfile);
-              setError(null); // 清除錯誤
-            }
-          } catch (profileError) {
-            console.error('獲取用戶資料失敗:', profileError);
-            // 將錯誤信息存儲起來，但仍然繼續顯示頁面
-            if (isMounted) {
-              setError((profileError as Error).message || '獲取用戶資料失敗');
-            }
+            setProfileData(formattedProfile);
+            setError(null); // Clear errors
+          }
+        } catch (profileError) {
+          console.error('Failed to fetch user profile:', profileError);
+          // Store error message but still continue to show the page
+          if (isMounted) {
+            setError((profileError as Error).message || 'Failed to fetch user profile');
           }
         }
       } catch (error) {
-        console.error('認證檢查錯誤:', error);
+        console.error('Authentication check error:', error);
         if (isMounted) {
-          router.push('/login');
+          showLoginModal();
         }
       } finally {
         if (isMounted) {
@@ -185,11 +144,11 @@ export default function ProfilePage() {
 
     checkAuth();
     
-    // 清理函數，防止組件卸載後設置狀態
+    // Cleanup function to prevent setting state after unmount
     return () => {
       isMounted = false;
     };
-  }, [router]);
+  }, [isLoggedIn, user, router, showLoginModal]);
 
   if (isLoading) {
     return (
@@ -199,10 +158,10 @@ export default function ProfilePage() {
     );
   }
 
-  // 如果沒有用戶數據，重定向到登入頁面
-  if (!user) return null;
+  // If there's no user data, redirect to login page
+  if (!isLoggedIn || !user) return null;
 
-  // 如果有錯誤但沒有資料，顯示錯誤信息
+  // If there's an error but no data, show error message
   if (error && !profileData) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-background">
@@ -229,7 +188,7 @@ export default function ProfilePage() {
     );
   }
 
-  // 確保profileData存在
+  // Ensure profileData exists
   if (!profileData) return null;
 
   return (
@@ -262,7 +221,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 顶部个人信息卡片 */}
+      {/* Top personal information card */}
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-background pt-12 pb-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center md:items-end gap-6">
@@ -316,10 +275,10 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 主内容区域 */}
+      {/* Main content area */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12">
         <div className="bg-card rounded-lg shadow-sm overflow-hidden border">
-          {/* 选项卡导航 */}
+          {/* Tab navigation */}
           <div className="border-b">
             <div className="flex overflow-x-auto">
               <button 
@@ -389,7 +348,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* 选项卡内容 */}
+          {/* Tab content */}
           <div className="p-6">
             {activeTab === 'profile' && (
               <div className="space-y-8">

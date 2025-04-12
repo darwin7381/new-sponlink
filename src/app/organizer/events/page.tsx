@@ -8,28 +8,24 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getOrganizerEvents } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
-import { getCurrentUser } from "@/lib/services/authService";
-import { useSession } from "next-auth/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function ManageEventsPage() {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const { status } = useSession();
+  const { user, isLoggedIn } = useAuth();
 
   // Get event data
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        console.log("组织者活动页面状态:", status);
+        console.log("组织者活动页面状态:", isLoggedIn ? 'authenticated' : 'unauthenticated');
         
-        if (status === 'authenticated') {
+        if (isLoggedIn) {
           setIsLoading(true);
           console.log("开始获取用户信息...");
-          
-          const user = await getCurrentUser();
-          console.log("获取到的用户:", user);
           
           if (!user) {
             console.error("未能获取用户信息");
@@ -59,7 +55,7 @@ export default function ManageEventsPage() {
             console.error("獲取活動時出錯:", error);
             setError("無法載入您的活動。請稍後重試。");
           }
-        } else if (status === 'unauthenticated') {
+        } else {
           console.log("用户未登录");
           setEvents([]);
         }
@@ -72,7 +68,7 @@ export default function ManageEventsPage() {
     };
 
     fetchEvents();
-  }, [status]);
+  }, [user, isLoggedIn]);
 
   // Get event status badge
   const getStatusBadge = (status: EventStatus) => {
@@ -99,7 +95,7 @@ export default function ManageEventsPage() {
 
   // Page content component
   const EventsPageContent = () => {
-    if (isLoading || status === 'loading') {
+    if (isLoading) {
       return (
         <div className="flex justify-center items-center min-h-screen bg-background">
           <div className="text-center">
@@ -117,7 +113,7 @@ export default function ManageEventsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-3xl font-bold text-foreground">Manage Events</h1>
-            <Link href={status === 'authenticated' ? "/organizer/events/create" : "/login?redirect=/organizer/events/create"}>
+            <Link href={isLoggedIn ? "/organizer/events/create" : "/login?redirect=/organizer/events/create"}>
               <Button variant="default">
                 Create New Event
               </Button>
@@ -130,7 +126,7 @@ export default function ManageEventsPage() {
                 <p className="text-red-600 dark:text-red-400">{error}</p>
               </CardContent>
             </Card>
-          ) : (events.length === 0 || status === 'unauthenticated') ? (
+          ) : (events.length === 0 || !isLoggedIn) ? (
             <Card className="border border-border">
               <CardContent className="p-8 text-center">
                 <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -139,14 +135,14 @@ export default function ManageEventsPage() {
                   </svg>
                 </div>
                 <h2 className="text-xl font-medium text-foreground">
-                  {status === 'authenticated' ? "You haven't created any events yet" : "No events to display"}
+                  {isLoggedIn ? "You haven't created any events yet" : "No events to display"}
                 </h2>
                 <p className="mt-2 text-muted-foreground">
-                  {status === 'authenticated' 
+                  {isLoggedIn 
                     ? "Click the \"Create New Event\" button above to create your first event."
                     : "Create your first event to get started with organizing."}
                 </p>
-                <Link href={status === 'authenticated' ? "/organizer/events/create" : "/login?redirect=/organizer/events/create"} className="mt-6 inline-block">
+                <Link href={isLoggedIn ? "/organizer/events/create" : "/login?redirect=/organizer/events/create"} className="mt-6 inline-block">
                   <Button>Start Creating Event</Button>
                 </Link>
               </CardContent>

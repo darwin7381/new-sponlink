@@ -17,7 +17,7 @@ import { PlusCircle, Calendar } from 'lucide-react';
 import { Event } from '@/types/event';
 import { getOrganizerEvents } from '@/services/eventService';
 import { addEventToSeries } from '@/services/eventSeriesService';
-import { getCurrentUser } from '@/lib/services/authService';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { format } from 'date-fns';
 
 interface SubmitEventDialogProps {
@@ -32,6 +32,7 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
   seriesId
 }) => {
   const router = useRouter();
+  const { isLoggedIn, user, showLoginModal } = useAuth();
   const [organizerEvents, setOrganizerEvents] = useState<Event[]>([]);
   const [selectedEvents, setSelectedEvents] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,16 +48,14 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
         setIsLoading(true);
         setErrorMessage('');
         
-        // Get current user
-        const currentUser = await getCurrentUser();
-        if (!currentUser) {
+        if (!isLoggedIn || !user) {
           setErrorMessage('You need to be logged in to submit events');
           setIsLoading(false);
           return;
         }
         
         // Get user's organized events
-        const events = await getOrganizerEvents(currentUser.id);
+        const events = await getOrganizerEvents(user.id);
         // Filter out events already in the series
         setOrganizerEvents(events.filter(event => event.event_series_id !== seriesId));
       } catch (error) {
@@ -68,7 +67,7 @@ const SubmitEventDialog: React.FC<SubmitEventDialogProps> = ({
     };
     
     fetchOrganizerEvents();
-  }, [isOpen, seriesId]);
+  }, [isOpen, seriesId, isLoggedIn, user]);
 
   // Handle checkbox changes
   const handleCheckboxChange = (eventId: string) => {

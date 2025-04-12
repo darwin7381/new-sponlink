@@ -16,7 +16,7 @@ import {
   getSubscriptions, 
   updateSubscription 
 } from '@/services/userPreferenceService';
-import { isAuthenticated, getCurrentUser } from '@/lib/services/authService';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -62,7 +62,6 @@ export function SubscribeButton({
 }: SubscribeButtonProps) {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [frequency, setFrequency] = useState<NotificationFrequency>(NotificationFrequency.IMMEDIATELY);
@@ -72,6 +71,7 @@ export function SubscribeButton({
   const [contentLevel, setContentLevel] = useState<NotificationDetailLevel>(NotificationDetailLevel.DETAILED);
   
   const router = useRouter();
+  const { isLoggedIn, user, showLoginModal } = useAuth();
 
   // 根據尺寸設置圖標大小
   const getIconSize = () => {
@@ -86,34 +86,25 @@ export function SubscribeButton({
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // 檢查用戶是否已登入
-        const authenticated = isAuthenticated();
-        
-        if (authenticated) {
-          // 獲取用戶信息
-          const userData = await getCurrentUser();
-          if (userData) {
-            setUserId(userData.id);
+        if (isLoggedIn && user) {
+          // 檢查是否已訂閱
+          const subscribed = await isSubscribed(user.id, targetId, targetType);
+          setIsSubscribed(subscribed);
+          
+          // 如果已訂閱，獲取訂閱詳情
+          if (subscribed) {
+            const subscriptions = await getSubscriptions(user.id);
+            const subscription = subscriptions.find(
+              sub => sub.target_id === targetId && sub.target_type === targetType
+            );
             
-            // 檢查是否已訂閱
-            const subscribed = await isSubscribed(userData.id, targetId, targetType);
-            setIsSubscribed(subscribed);
-            
-            // 如果已訂閱，獲取訂閱詳情
-            if (subscribed) {
-              const subscriptions = await getSubscriptions(userData.id);
-              const subscription = subscriptions.find(
-                sub => sub.target_id === targetId && sub.target_type === targetType
-              );
-              
-              if (subscription) {
-                setSubscriptionId(subscription.id);
-                setFrequency(subscription.notification_settings.frequency);
-                setEmailEnabled(subscription.notification_settings.channels.email);
-                setBrowserEnabled(subscription.notification_settings.channels.browser);
-                setInAppEnabled(subscription.notification_settings.channels.in_app);
-                setContentLevel(subscription.notification_settings.content_level);
-              }
+            if (subscription) {
+              setSubscriptionId(subscription.id);
+              setFrequency(subscription.notification_settings.frequency);
+              setEmailEnabled(subscription.notification_settings.channels.email);
+              setBrowserEnabled(subscription.notification_settings.channels.browser);
+              setInAppEnabled(subscription.notification_settings.channels.in_app);
+              setContentLevel(subscription.notification_settings.content_level);
             }
           }
         }
@@ -136,16 +127,16 @@ export function SubscribeButton({
       window.removeEventListener('subscriptionsUpdate', handleSubscriptionsUpdate);
       window.removeEventListener('authChange', handleSubscriptionsUpdate);
     };
-  }, [targetId, targetType]);
+  }, [targetId, targetType, isLoggedIn, user]);
 
   // 處理點擊訂閱按鈕
   const handleSubscribeClick = () => {
     // 必須登入才能訂閱
-    if (!isAuthenticated()) {
+    if (!isLoggedIn) {
       toast.error('請先登入', {
         description: '您需要登入才能訂閱'
       });
-      router.push('/login');
+      showLoginModal();
       return;
     }
     
@@ -160,10 +151,11 @@ export function SubscribeButton({
 
   // 處理訂閱/更新訂閱
   const handleSubscribe = async () => {
-    if (!userId) {
+    if (!isLoggedIn || !user) {
       toast.error('無法獲取用戶信息', {
         description: '請重新登入後再試'
       });
+      showLoginModal();
       return;
     }
     
@@ -187,7 +179,7 @@ export function SubscribeButton({
         toast.success('訂閱設置已更新');
       } else {
         // 創建新訂閱
-        await createSubscription(userId, targetId, targetType, {
+        await createSubscription(user.id, targetId, targetType, {
           frequency,
           emailEnabled,
           browserEnabled,

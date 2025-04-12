@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { getEventById, updateEvent } from "@/services/eventService";
 import { Event, Location } from "@/types/event";
-import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
 import EventForm from "@/components/events/EventForm";
 import { EventFormData, SponsorshipPlanForm } from "@/types/forms";
 import { convertToDatetimeLocalFormat } from "@/utils/dateUtils";
 import { scrapeLumaEvent } from "@/services/lumaService";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function EditEventPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -40,42 +42,14 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
     } as Location
   });
   const [sponsorshipPlans, setSponsorshipPlans] = useState<SponsorshipPlanForm[]>([]);
-  const [currentUser, setCurrentUser] = useState<{ id: string; role: string } | null>(null);
-
-  // Check user authentication and get current user
-  useEffect(() => {
-    const checkAuth = async () => {
-      setIsLoading(true);
-      try {
-        if (!isAuthenticated()) {
-          router.push('/login');
-          return;
-        }
-        
-        const userData = await getCurrentUser();
-        if (!userData) {
-          router.push('/login');
-          return;
-        }
-        
-        setCurrentUser(userData);
-      } catch (e) {
-        console.error("Error checking authentication:", e);
-        router.push('/login');
-      }
-    };
-    
-    checkAuth();
-  }, [router]);
+  // Using useAuth hook for authentication
+  const { isLoggedIn, user, showLoginModal } = useAuth();
 
   // Get event details
   useEffect(() => {
     async function fetchEventDetails() {
-      if (!isAuthenticated()) {
-        return;
-      }
-      
       try {
+        setIsLoading(true);
         const resolvedParams = await params;
         const id = resolvedParams.id;
         setEventId(id);
@@ -88,7 +62,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
         setEvent(fetchedEvent);
         
-        // 轉換贊助計劃數據為表單格式
+        // Convert sponsorship plans to form format
         const formattedSponsorshipPlans = fetchedEvent.sponsorship_plans 
           ? fetchedEvent.sponsorship_plans.map(plan => ({
               id: plan.id,
@@ -124,7 +98,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
           }
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load event");
+        setError(err instanceof Error ? err.message : "Failed to fetch event details");
         console.error("Error fetching event:", err);
       } finally {
         setIsLoading(false);
@@ -136,14 +110,19 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
   // Handle import from Luma
   const handleImportFromLuma = async (lumaUrl: string) => {
-    if (!lumaUrl || !lumaUrl.includes('lu.ma') || !currentUser) {
+    if (!isLoggedIn || !user?.id) {
+      showLoginModal();
+      return;
+    }
+    
+    if (!lumaUrl || !lumaUrl.includes('lu.ma')) {
       throw new Error("Please provide a valid Luma event URL");
     }
 
     try {
       setIsImporting(true);
 
-      const eventData = await scrapeLumaEvent(lumaUrl, currentUser.id);
+      const eventData = await scrapeLumaEvent(lumaUrl, user.id);
       
       if (!eventData) {
         throw new Error("Unable to import event data from the provided URL");
@@ -167,10 +146,10 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         location: eventData.location || formData.location
       };
       
-      // 確保更新狀態
+      // Update state
       setFormData(newFormData);
       
-      // 如果 Luma 活動有贊助計劃數據，也導入它
+      // Import Luma sponsorship plans if available
       if (eventData.sponsorship_plans && eventData.sponsorship_plans.length > 0) {
         const importedPlans = eventData.sponsorship_plans.map(plan => ({
           id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -192,6 +171,12 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
 
   // Handle form submission
   const handleUpdateEvent = async (formData: EventFormData, updatedSponsorshipPlans?: SponsorshipPlanForm[]) => {
+    // Check login status, show login modal if not logged in
+    if (!isLoggedIn || !user?.id) {
+      showLoginModal();
+      return;
+    }
+    
     if (!event) return;
     
     try {
@@ -204,7 +189,7 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
         .map(tag => tag.trim())
         .filter(tag => tag !== "");
       
-      // 轉換贊助計劃為 API 所需格式
+      // Convert sponsorship plans to API format
       const apiSponsorshipPlans = updatedSponsorshipPlans ? updatedSponsorshipPlans.map(plan => {
         return {
           id: plan.id,
@@ -266,13 +251,13 @@ export default function EditEventPage({ params }: { params: Promise<{ id: string
             <p className="text-destructive">{error}</p>
           </div>
           <Button variant="outline" onClick={() => router.push("/organizer/events")}>
-            Back to Events
+            Back to Events List
           </Button>
         </div>
       </div>
     );
   }
-
+  
   return (
     <div className="bg-background text-foreground min-h-screen pt-24 pb-12">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

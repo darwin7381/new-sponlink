@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getCurrentUser, isAuthenticated } from '@/lib/services/authService';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { 
   getSubscriptions, 
   cancelSubscription, 
@@ -45,38 +45,31 @@ import { toast } from 'sonner';
 
 export default function FollowsPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedSettings, setExpandedSettings] = useState<string | null>(null);
   const router = useRouter();
+  const { isLoggedIn, user, showLoginModal } = useAuth();
   
-  // 加載用戶資料和關注項目
+  // Load user data and followed items
   useEffect(() => {
-    const checkAuth = async () => {
+    const loadUserData = async () => {
       try {
-        if (!isAuthenticated()) {
-          router.push('/login');
+        if (!isLoggedIn || !user) {
+          showLoginModal();
           return;
         }
 
-        const user = await getCurrentUser();
-        if (!user) {
-          router.push('/login');
-          return;
-        }
-
-        setUserId(user.id);
         loadSubscriptions(user.id);
       } catch (error) {
-        console.error('認證檢查錯誤:', error);
-        router.push('/login');
+        console.error('Error loading data:', error);
+        showLoginModal();
       }
     };
 
-    checkAuth();
-  }, [router]);
+    loadUserData();
+  }, [isLoggedIn, user, router, showLoginModal]);
 
   // 加載關注項目
   const loadSubscriptions = async (uid: string) => {
@@ -94,7 +87,7 @@ export default function FollowsPage() {
 
   // 取消關注
   const handleUnfollow = async (subscriptionId: string) => {
-    if (!userId) return;
+    if (!user) return;
 
     try {
       await cancelSubscription(subscriptionId);

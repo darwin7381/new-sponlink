@@ -5,42 +5,30 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { LoginForm } from '@/components/auth/LoginForm'
 import SocialLoginButtons from '@/components/auth/SocialLoginButtons'
 import { SocialProvider } from '@/types/auth'
-import { signIn, useSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { clearLocalAuth, getRedirectUrl } from '@/lib/auth/authUtils'
+import { useAuth } from '@/components/auth/AuthProvider'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session, status } = useSession()
+  const { user, isLoggedIn, loading: authLoading } = useAuth()
 
   // 檢查是否已登入
   useEffect(() => {
-    if (status === 'authenticated' && session) {
-      console.log('已通過 Auth.js 認證');
-      
-      // 檢查是否有保存的回調函數
-      if (window.afterLoginCallbackFn) {
-        try {
-          // 執行回調函數
-          window.afterLoginCallbackFn();
-          // 執行完後清除
-          window.afterLoginCallbackFn = undefined;
-          return; // 不執行後續的默認重定向
-        } catch (error) {
-          console.error('執行回調函數錯誤:', error);
-        }
-      }
+    if (isLoggedIn && user) {
+      console.log('已通過認證');
       
       // 獲取重定向URL並導航
       const redirectUrl = getRedirectUrl('/dashboard');
       router.push(redirectUrl);
-    } else if (status === 'unauthenticated') {
+    } else if (!isLoggedIn && !authLoading) {
       // 確保清除所有舊的認證數據
       clearLocalAuth();
     }
-  }, [router, session, status]);
+  }, [router, user, isLoggedIn, authLoading]);
 
   // 檢查是否有錯誤參數
   useEffect(() => {
@@ -77,19 +65,6 @@ export default function LoginPage() {
         throw new Error('帳號或密碼錯誤');
       } else {
         console.log('登入成功');
-        
-        // 檢查是否有保存的回調函數
-        if (window.afterLoginCallbackFn) {
-          try {
-            // 執行回調函數
-            window.afterLoginCallbackFn();
-            // 執行完後清除
-            window.afterLoginCallbackFn = undefined;
-            return; // 不執行後續的默認重定向
-          } catch (error) {
-            console.error('執行回調函數錯誤:', error);
-          }
-        }
         
         // 登入成功後重定向到目標頁面
         router.push(redirectUrl);

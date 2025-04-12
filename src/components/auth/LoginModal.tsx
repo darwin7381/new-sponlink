@@ -14,68 +14,54 @@ import { LoginForm } from './LoginForm'
 import SocialLoginButtons from './SocialLoginButtons'
 import { SocialProvider } from '@/types/auth'
 import { RegisterForm } from './RegisterForm'
+import { signIn } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 
 interface LoginModalProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  afterLogin?: () => void
   defaultTab?: 'login' | 'register'
 }
 
 export default function LoginModal({ 
   isOpen, 
   onOpenChange, 
-  afterLogin,
   defaultTab = 'login'
 }: LoginModalProps) {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(defaultTab)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
   const handleLogin = async (email: string, password: string) => {
     setLoading(true)
     setError(null)
     
     try {
-      // 使用API登入流程
-      console.log('[LoginModal] 開始登入:', email)
+      console.log('[LoginModal] Starting login with NextAuth:', email)
       
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      // Use NextAuth signIn method
+      const result = await signIn('credentials', {
+        redirect: false,
+        email,
+        password
       })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        console.error('[LoginModal] API登入錯誤:', errorData)
-        throw new Error(errorData.error || '登入失敗')
-      }
-
-      const data = await response.json()
-      console.log('[LoginModal] 登入成功，獲取的原始用戶數據:', data)
       
-      // 將用戶數據存儲到 localStorage，用於客戶端檢查登入狀態
-      // UUID格式不需要轉換，直接使用原始ID
-      if (data.user && data.user.id) {
-        localStorage.setItem('user', JSON.stringify(data.user))
-        console.log('[LoginModal] 用戶數據已存儲到localStorage，ID:', data.user.id)
-      } else {
-        console.warn('[LoginModal] 警告：沒有有效的用戶ID')
+      if (result?.error) {
+        console.error('[LoginModal] Login error:', result.error)
+        throw new Error('Invalid email or password')
       }
       
-      // 關閉登入模態框
+      console.log('[LoginModal] Login successful')
+      
+      // Close login modal
       onOpenChange(false)
       
-      // 呼叫登入後的回調函數
-      if (afterLogin) {
-        afterLogin()
-      }
+      // Refresh the page to update state (optional)
+      router.refresh()
     } catch (error) {
-      console.error('登入錯誤:', error)
-      setError(error instanceof Error ? error.message : '登入失敗，請稍後再試')
+      console.error('Login error:', error)
+      setError(error instanceof Error ? error.message : 'Login failed, please try again later')
     } finally {
       setLoading(false)
     }
@@ -85,21 +71,18 @@ export default function LoginModal({
     setLoading(true)
     setError(null)
     
-    // 模擬社交登入流程
-    setTimeout(() => {
-      // 實際項目中，這裡會重定向到OAuth提供商
-      console.log(`Redirecting to ${provider} login...`)
+    try {
+      console.log(`[LoginModal] Starting social login: ${provider}`)
       
-      // 模擬成功登入
-      onOpenChange(false)
+      // Use NextAuth signIn method for social login
+      signIn(provider, { callbackUrl: window.location.href })
       
-      // 呼叫登入後的回調函數
-      if (afterLogin) {
-        afterLogin()
-      }
-      
+      // Note: Social login will redirect to provider page, so we don't need to close the modal
+    } catch (error) {
+      console.error(`${provider} login error:`, error)
+      setError(`${provider} login failed, please try again later`)
       setLoading(false)
-    }, 1000)
+    }
   }
 
   const handleRegister = async (name: string, email: string, password: string) => {
@@ -107,9 +90,9 @@ export default function LoginModal({
     setError(null)
     
     try {
-      console.log('[LoginModal] 開始註冊:', email);
+      console.log('[LoginModal] Starting registration:', email);
       
-      // 使用API註冊流程
+      // Use API registration flow
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -120,19 +103,19 @@ export default function LoginModal({
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.error('[LoginModal] API註冊錯誤:', errorData)
-        throw new Error(errorData.error || '註冊失敗')
+        console.error('[LoginModal] API registration error:', errorData)
+        throw new Error(errorData.error || 'Registration failed')
       }
 
       const data = await response.json()
-      console.log('[LoginModal] 註冊成功:', data.success)
+      console.log('[LoginModal] Registration successful:', data.success)
       
-      // 成功註冊後切換到登入頁面
+      // Switch to login tab after successful registration
       setActiveTab('login')
-      setError('註冊成功！請使用您的新帳號登入。')
+      setError('Registration successful! Please login with your new account.')
     } catch (error) {
-      console.error('註冊錯誤:', error)
-      setError(error instanceof Error ? error.message : '註冊失敗，請稍後再試')
+      console.error('Registration error:', error)
+      setError(error instanceof Error ? error.message : 'Registration failed, please try again later')
     } finally {
       setLoading(false)
     }
@@ -143,17 +126,17 @@ export default function LoginModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl text-center font-bold text-foreground">
-            {activeTab === 'login' ? '登入您的帳號' : '創建新帳號'}
+            {activeTab === 'login' ? 'Login to Your Account' : 'Create New Account'}
           </DialogTitle>
           <DialogDescription className="text-center text-muted-foreground">
-            {activeTab === 'login' ? '請登入繼續操作' : '填寫以下資訊創建您的帳號'}
+            {activeTab === 'login' ? 'Please login to continue' : 'Fill in the information below to create your account'}
           </DialogDescription>
         </DialogHeader>
         
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'login' | 'register')} className="w-full mt-4">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">登入</TabsTrigger>
-            <TabsTrigger value="register">註冊</TabsTrigger>
+            <TabsTrigger value="login">Login</TabsTrigger>
+            <TabsTrigger value="register">Register</TabsTrigger>
           </TabsList>
           
           <TabsContent value="login" className="mt-4">

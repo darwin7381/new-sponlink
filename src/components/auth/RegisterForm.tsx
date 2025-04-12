@@ -22,19 +22,19 @@ export function RegisterForm({ onSubmit, loading = false, error }: RegisterFormP
     e.preventDefault();
     setFormError(null);
 
-    // 基本驗證
+    // Basic validation
     if (!name || !email || !password || !confirmPassword) {
-      setFormError('所有欄位都是必填的');
+      setFormError('All fields are required');
       return;
     }
 
     if (password !== confirmPassword) {
-      setFormError('密碼不匹配');
+      setFormError('Passwords do not match');
       return;
     }
 
     if (password.length < 8) {
-      setFormError('密碼必須至少8個字符');
+      setFormError('Password must be at least 8 characters');
       return;
     }
 
@@ -44,49 +44,49 @@ export function RegisterForm({ onSubmit, loading = false, error }: RegisterFormP
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">姓名</Label>
+        <Label htmlFor="name">Name</Label>
         <Input
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          placeholder="請輸入您的姓名"
+          placeholder="Enter your name"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="email">電子郵件</Label>
+        <Label htmlFor="email">Email</Label>
         <Input
           id="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          placeholder="請輸入您的電子郵件"
+          placeholder="Enter your email"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="password">密碼</Label>
+        <Label htmlFor="password">Password</Label>
         <Input
           id="password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          placeholder="請輸入您的密碼"
+          placeholder="Enter your password"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="confirmPassword">確認密碼</Label>
+        <Label htmlFor="confirmPassword">Confirm Password</Label>
         <Input
           id="confirmPassword"
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
-          placeholder="再次輸入您的密碼"
+          placeholder="Re-enter your password"
         />
       </div>
 
@@ -103,11 +103,11 @@ export function RegisterForm({ onSubmit, loading = false, error }: RegisterFormP
       >
         {loading ? (
           <div className="flex items-center">
-            <div className="mr-2">註冊中</div>
+            <div className="mr-2">Registering</div>
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
           </div>
         ) : (
-          '註冊'
+          'Register'
         )}
       </Button>
     </form>

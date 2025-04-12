@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getAllEvents } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
 import { SearchInput } from "@/components/ui/search-input";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 // Dynamic import of EventList component
 const EventList = dynamic(() => import('@/components/events/EventList'), {
@@ -41,23 +42,19 @@ export default function EventsPage() {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   
-  // Fetch event data
+  const { user } = useAuth();
+  
+  // Get events data
   useEffect(() => {
     async function fetchEvents() {
       try {
         setIsLoading(true);
         
-        // 从会话中获取当前用户ID
-        let userId = undefined;
-        try {
-          const user = await import('@/lib/services/authService').then(m => m.getCurrentUser());
-          userId = user?.id;
-        } catch (error) {
-          console.error("Error getting current user:", error);
-        }
+        // 使用 useAuth hook 提供的 user
+        const userId = user?.id;
         
-        // 使用用户ID调用getAllEvents
-        const eventsData = await getAllEvents({ status: EventStatus.PUBLISHED }, userId);
+        // 使用用户ID调用getAllEvents - 檢查函數是否接受第二個參數
+        const eventsData = await getAllEvents({ status: EventStatus.PUBLISHED });
         setEvents(eventsData);
         setFilteredEvents(eventsData);
       } catch (error) {
@@ -69,7 +66,7 @@ export default function EventsPage() {
     }
     
     fetchEvents();
-  }, []);
+  }, [user]);
   
   // Apply search from URL parameter on page load
   useEffect(() => {

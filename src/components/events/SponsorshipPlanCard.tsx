@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { SponsorshipPlan as SPType } from "@/types/sponsorshipPlan";
 import { SponsorshipPlan as EventSPType } from "@/types/event";
-import { isAuthenticated } from "@/lib/services/authService";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface SponsorshipPlanCardProps {
   plan: SPType | EventSPType;
@@ -21,17 +21,12 @@ export function SponsorshipPlanCard({
   isInCart = false,
   isLoading = false
 }: SponsorshipPlanCardProps) {
-  const [isUserAuthenticated, setIsUserAuthenticated] = React.useState(false);
+  const { isLoggedIn } = useAuth();
   const [isButtonLoading, setIsButtonLoading] = React.useState(false);
   const [isInCompare, setIsInCompare] = React.useState(false);
 
-  // Check user authentication
+  // Check user authentication & compare status
   React.useEffect(() => {
-    const checkAuth = () => {
-      const authenticated = isAuthenticated();
-      setIsUserAuthenticated(authenticated);
-    };
-    
     // 檢查該計劃是否已在比較列表中
     const checkIfInCompare = () => {
       try {
@@ -45,16 +40,13 @@ export function SponsorshipPlanCard({
       }
     };
     
-    checkAuth();
     checkIfInCompare();
     
-    // 添加身份驗證變更事件的監聽器
-    window.addEventListener('authChange', checkAuth);
+    // 添加比較列表變更事件的監聽器
     window.addEventListener('storage', checkIfInCompare);
     window.addEventListener('compareUpdate', checkIfInCompare);
     
     return () => {
-      window.removeEventListener('authChange', checkAuth);
       window.removeEventListener('storage', checkIfInCompare);
       window.removeEventListener('compareUpdate', checkIfInCompare);
     };
@@ -140,7 +132,7 @@ export function SponsorshipPlanCard({
       </CardContent>
       
       <CardFooter className="p-6 pt-0 flex flex-col gap-2">
-        {isUserAuthenticated ? (
+        {isLoggedIn ? (
           <Button
             variant={isInCart ? "outline" : "default"}
             className="w-full"

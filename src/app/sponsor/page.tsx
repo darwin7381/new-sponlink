@@ -3,46 +3,25 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/services/authService';
-import { User } from '@/lib/types/users';
 import { Button } from '@/components/ui/button';
 import { mockEvents } from '@/mocks/eventData';
-import { Event, EventStatus } from '@/types/event';
+import { Event } from '@/types/event';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 export default function SponsorPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<'sponsors' | 'meetings' | 'collection'>('meetings');
   const [events, setEvents] = useState<Event[]>([]);
   
-  useEffect(() => {
-    // Get mock event data - without filtering to ensure data display
-    // Directly use mockEvents data without status and sponsorship plans filtering
-    setEvents(mockEvents);
-  }, []);
+  // Using useAuth hook for authentication
+  const { isLoggedIn, user, showLoginModal } = useAuth();
   
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        setIsLoading(true);
-        const currentUser = await getCurrentUser();
-        
-        if (!currentUser) {
-          router.push('/login');
-          return;
-        }
-        
-        setUser(currentUser);
-      } catch (error) {
-        console.error('Error checking user:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkUser();
-  }, [router]);
+    // Get mock event data - without filtering to ensure data display
+    setEvents(mockEvents);
+    setIsLoading(false);
+  }, []);
 
   if (isLoading) {
     return (
@@ -92,6 +71,14 @@ export default function SponsorPage() {
   
   // Event card component
   const EventCard = ({ event }: { event: Event }) => {
+    const handleViewPlans = () => {
+      if (!isLoggedIn) {
+        showLoginModal();
+        return;
+      }
+      router.push(`/sponsor/event/${event.id}`);
+    };
+    
     return (
       <div className="border border-border rounded-lg overflow-hidden bg-card shadow-sm">
         <div className="p-6">

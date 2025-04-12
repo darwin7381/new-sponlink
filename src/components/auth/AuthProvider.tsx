@@ -4,178 +4,135 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { User, SystemRole } from '@/lib/types/users'
 import { useRouter } from 'next/navigation'
 import { useSession, signOut } from 'next-auth/react'
+import LoginModal from '@/components/auth/LoginModal'
 
-// 定義 AuthContext 的類型
+// Define the AuthContext type
 type AuthContextType = {
   isLoggedIn: boolean
-  showLoginModal: (afterLoginCallback?: () => void) => void
+  showLoginModal: () => void
   loading: boolean
   user: User | null
   handleLogout: () => void
-  getResourceOwnerId: (resourceId: string) => string
+  error: string | null
+  checkAuth: () => Promise<void>
 }
 
-// 為 Window 添加 afterLoginCallbackFn 屬性
+// Add global type for Window
 declare global {
   interface Window {
     _isLoggingOut?: boolean;
-    afterLoginCallbackFn?: () => void;
   }
 }
 
-// 創建 AuthContext
+// Create AuthContext
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
   showLoginModal: () => {},
   loading: true,
   user: null,
   handleLogout: () => {},
-  getResourceOwnerId: (resourceId) => resourceId
+  error: null,
+  checkAuth: async () => {},
 })
 
-// 創建 useAuth hook
+// Create useAuth hook
 export const useAuth = () => useContext(AuthContext)
 
-// 清除所有本地存儲的認證相關數據
-const clearLocalAuth = () => {
-  if (typeof window !== 'undefined') {
-    try {
-      localStorage.removeItem('user');
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('activeView');
-      
-      // 移除可能存在的其他認證相關數據
-      sessionStorage.removeItem('afterLoginCallback');
-    } catch (e) {
-      console.error('清除本地存儲時出錯:', e);
-    }
-  }
-};
-
-// AuthProvider 組件
+// AuthProvider component
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<User | null>(null)
-  const router = useRouter()
-  const { data: session, status } = useSession()
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
-  // 处理资源所有者ID映射 - 現在直接返回原始ID
-  const getResourceOwnerId = useCallback((resourceId: string) => {
-    return resourceId;
-  }, []);
+  // Add login modal state
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [loginModalTab, setLoginModalTab] = useState<'login' | 'register'>('login');
 
-  // 處理登出
-  const handleLogout = useCallback(() => {
-    console.log("AuthProvider: 開始登出處理");
-    
-    // 使用 next-auth 的 signOut 方法
-    try {
-      // 不清除本地存儲，只使用 next-auth 處理登出
-      signOut({ redirect: false });
-      
-      // 更新組件狀態
+  // Monitor session status from NextAuth.js
+  useEffect(() => {
+    if (status === 'loading') {
+      setLoading(true);
+      return;
+    }
+
+    // Session is loaded (authenticated or not)
+    setLoading(false);
+
+    if (status === 'authenticated' && session?.user) {
+      // Convert NextAuth session user to our User type
+      const authUser: User = {
+        id: session.user.id || '',
+        email: session.user.email || '',
+        // Property names must match User interface in src/lib/types/users.ts
+        preferred_language: 'en', // Default language
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        systemRole: session.user.systemRole || SystemRole.USER,
+      };
+
+      setUser(authUser);
+      setIsLoggedIn(true);
+    } else {
+      // Not authenticated
       setUser(null);
       setIsLoggedIn(false);
+    }
+  }, [session, status]);
+
+  // Handle logout
+  const handleLogout = useCallback(() => {
+    console.log("AuthProvider: Starting logout process");
+    
+    // Use next-auth's signOut method
+    try {
+      // Use next-auth to handle logout
+      signOut({ redirect: false });
       
-      console.log("AuthProvider: 登出完成，保留瀏覽狀態");
+      // Update component state (should be handled by the useEffect when session changes)
+      
+      console.log("AuthProvider: Logout complete, preserving navigation state");
     } catch (error) {
-      console.error('登出錯誤:', error);
+      console.error('Logout error:', error);
     }
   }, []);
 
-  // 完全使用Auth.js的認證狀態
-  useEffect(() => {
-    let isMounted = true;
-    
-    const checkAuth = async () => {
-      try {
-        if (status === 'authenticated' && session?.user) {
-          if (!isMounted) return;
-          
-          setIsLoggedIn(true);
-          
-          // 從session獲取用戶數據 - ID已在NextAuth JWT回調中統一格式化
-          const sessionUser: User = {
-            id: session.user.id,  // 不需要在這裡再處理ID格式
-            email: session.user.email || '',
-            // 使用類型斷言避免使用any
-            systemRole: session.user.systemRole as SystemRole || SystemRole.USER,
-            preferred_language: 'zh',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          };
-          
-          console.log(`[AuthProvider] 使用session數據創建用戶對象，ID: ${sessionUser.id}`);
-          
-          setUser(sessionUser);
-          
-          // 同步到localStorage，便於客戶端訪問
-          try {
-            localStorage.setItem('user', JSON.stringify(sessionUser));
-            console.log(`[AuthProvider] 已同步用戶數據到localStorage`);
-          } catch (err) {
-            console.error('[AuthProvider] 無法同步用戶到localStorage:', err);
-          }
-        } else if (status === 'unauthenticated') {
-          // 只更新狀態，不清除本地存儲
-          if (!isMounted) return;
-          setIsLoggedIn(false);
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('檢查認證時出錯:', error);
-        
-        // 發生錯誤時，假設未認證
-        if (isMounted) {
-          setIsLoggedIn(false);
-          setUser(null);
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-    
-    if (status !== 'loading') {
-      checkAuth();
-    }
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [session, status]);
+  // Check authentication status
+  const checkAuth = async () => {
+    // Just return the current auth state without returning a value (void)
+    // This maintains compatibility with the AuthContextType interface
+    Promise.resolve();
+  };
 
-  // 顯示登入彈窗的方法
-  const showLoginModal = (afterLoginCallback?: () => void) => {
-    if (afterLoginCallback) {
-      // 保存回調以便登入後使用
-      sessionStorage.setItem('afterLoginCallback', 'true');
-      // 還保存回調函數的序列化版本（如果可能）
-      try {
-        if (typeof afterLoginCallback === 'function') {
-          // 直接執行函數而不是序列化
-          console.log('保存回調函數，稍後執行');
-          window.afterLoginCallbackFn = afterLoginCallback;
-        }
-      } catch (error) {
-        console.error('無法保存回調函數:', error);
-      }
-    }
-    router.push('/login');
-  }
+  // Method to show login page
+  const showLoginModal = () => {
+    // Show login modal instead of redirecting
+    setLoginModalOpen(true);
+    setLoginModalTab('login');
+  };
 
   return (
-    <AuthContext.Provider value={{ 
-      isLoggedIn, 
-      showLoginModal, 
-      loading, 
-      user, 
-      handleLogout,
-      getResourceOwnerId 
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoggedIn, 
+        loading,
+        error,
+        checkAuth,
+        handleLogout,
+        showLoginModal, 
+      }}
+    >
       {children}
+      
+      {/* Add login modal */}
+      <LoginModal 
+        isOpen={loginModalOpen} 
+        onOpenChange={setLoginModalOpen} 
+        defaultTab={loginModalTab} 
+      />
     </AuthContext.Provider>
-  )
+  );
 } 

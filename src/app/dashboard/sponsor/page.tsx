@@ -12,11 +12,11 @@ import { getSponsorMeetings, getSponsorships, cancelMeeting } from "@/lib/servic
 import { getEventById } from "@/services/eventService";
 import { CartItem, Meeting, MEETING_STATUS } from "@/lib/types/users";
 import { SponsorshipPlan } from "@/types/event";
-import { getCurrentUser, isAuthenticated } from "@/lib/services/authService";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { toast } from "sonner";
 import { mockSponsorshipPlans } from '@/mocks/sponsorshipData';
 
-// 定義簡化的事件類型，只包含我們需要的屬性
+// Define simplified event type, only including properties we need
 interface EventData {
   id: string;
   title: string;
@@ -42,54 +42,32 @@ interface SponsorshipWithDetails {
 
 export default function SponsorDashboardPage() {
   const router = useRouter();
-  const [userId, setUserId] = useState<string | null>(null);
+  const { isLoggedIn, user, showLoginModal } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sponsorships, setSponsorships] = useState<SponsorshipWithDetails[]>([]);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isCancellingMeeting, setIsCancellingMeeting] = useState(false);
   
-  // 檢查用戶身份
+  // Check user identity and fetch data
   useEffect(() => {
-    const checkAuth = async () => {
-      if (!isAuthenticated()) {
-        router.push('/login');
+    async function fetchData() {
+      if (!isLoggedIn || !user) {
+        showLoginModal();
         return;
       }
       
       try {
-        const userData = await getCurrentUser();
-        if (!userData) {
-          router.push('/login');
-          return;
-        }
-        
-        setUserId(userData.id);
-      } catch (e) {
-        console.error("Error getting user data:", e);
-        router.push('/login');
-      }
-    };
-    
-    checkAuth();
-  }, [router]);
-  
-  // 獲取贊助和會議數據
-  useEffect(() => {
-    async function fetchData() {
-      if (!userId) return;
-      
-      try {
         setIsLoading(true);
         
-        // 獲取贊助
-        const sponsorshipsData = await getSponsorships(userId);
+        // Get sponsorships
+        const sponsorshipsData = await getSponsorships(user.id);
         
-        // 獲取每個贊助的詳細信息
+        // Get details for each sponsorship
         const sponsorshipsWithDetails = await Promise.all(
           sponsorshipsData.map(async (item) => {
             try {
-              // 直接從模擬數據中獲取贊助方案
+              // Get sponsorship plan directly from mock data
               const planData = mockSponsorshipPlans.find(
                 plan => plan.id === item.sponsorship_plan_id
               );
@@ -99,9 +77,9 @@ export default function SponsorDashboardPage() {
                 return null;
               }
               
-              // 獲取活動詳情 - 修正 event_id 格式
+              // Get event details - fix event_id format
               let eventId = planData.event_id;
-              // 如果 event_id 格式為 "event-1"，則轉換為 "1"
+              // If event_id format is "event-1", convert to "1"
               if (eventId && eventId.startsWith('event-')) {
                 eventId = eventId.replace('event-', '');
               }
@@ -120,15 +98,15 @@ export default function SponsorDashboardPage() {
           })
         );
         
-        // 過濾無效的贊助
+        // Filter invalid sponsorships
         const validSponsorships = sponsorshipsWithDetails.filter(
           (item): item is NonNullable<typeof item> => item !== null
         ) as SponsorshipWithDetails[];
         
         setSponsorships(validSponsorships);
         
-        // 獲取會議
-        const meetingsData = await getSponsorMeetings(userId);
+        // Get meetings
+        const meetingsData = await getSponsorMeetings(user.id);
         const filteredMeetings = meetingsData.filter(meeting => meeting.status !== MEETING_STATUS.CANCELLED);
         setMeetings(filteredMeetings);
         
@@ -140,12 +118,10 @@ export default function SponsorDashboardPage() {
       }
     }
     
-    if (userId) {
-      fetchData();
-    }
-  }, [userId]);
+    fetchData();
+  }, [isLoggedIn, user, router, showLoginModal]);
   
-  // 計算統計數據
+  // Calculate statistics
   const totalSponsored = sponsorships.length;
   const totalInvestment = sponsorships.reduce((sum, item) => sum + item.plan.price, 0);
   const upcomingMeetings = meetings.filter(meeting => 
@@ -154,14 +130,16 @@ export default function SponsorDashboardPage() {
     new Date(meeting.confirmed_time) > new Date()
   ).length;
   
-  // 取消會議
+  // Cancel meeting
   const handleCancelMeeting = async (meetingId: string) => {
+    if (!user) return;
+    
     try {
       setIsCancellingMeeting(true);
       await cancelMeeting(meetingId);
       
-      // 重新加載會議數據
-      const updatedMeetings = await getSponsorMeetings(userId as string);
+      // Reload meeting data
+      const updatedMeetings = await getSponsorMeetings(user.id);
       const filteredMeetings = updatedMeetings.filter(meeting => meeting.status !== MEETING_STATUS.CANCELLED);
       setMeetings(filteredMeetings);
       
@@ -193,7 +171,7 @@ export default function SponsorDashboardPage() {
           </div>
         )}
         
-        {/* 統計卡片 */}
+        {/* Statistics cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

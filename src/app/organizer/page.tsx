@@ -3,36 +3,22 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getCurrentUser } from '@/lib/services/authService';
-import { User } from '@/lib/types/users';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function OrganizerPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
+  // Using useAuth hook for authentication and user data
+  const { isLoggedIn, user, showLoginModal } = useAuth();
   
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        setIsLoading(true);
-        const currentUser = await getCurrentUser();
-        
-        if (!currentUser) {
-          router.push('/login');
-          return;
-        }
-        
-        setUser(currentUser);
-      } catch (error) {
-        console.error('Error checking user:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkUser();
-  }, [router]);
+    // End loading state when authentication status is determined
+    if (isLoggedIn !== undefined) {
+      setIsLoading(false);
+    }
+  }, [isLoggedIn]);
 
   if (isLoading) {
     return (
@@ -56,7 +42,7 @@ export default function OrganizerPage() {
               <nav className="hidden md:flex space-x-4">
                 <Link href="/organizer" className="py-1 px-2 border-b-2 border-white">My Events</Link>
                 <Link href="/organizer/create" className="py-1 px-2 border-b-2 border-transparent hover:border-white/60">Create Event</Link>
-                <Link href="/organizer/applications" className="py-1 px-2 border-b-2 border-transparent hover:border-white/60">Sponsor Applications</Link>
+                <Link href="/organizer/applications" className="py-1 px-2 border-b-2 border-transparent hover:border-white/60">Sponsorship Applications</Link>
               </nav>
             </div>
             <div className="flex items-center">
@@ -95,7 +81,15 @@ export default function OrganizerPage() {
                 <Link href="/organizer/events" className="block p-2 text-sm hover:bg-accent rounded">
                   My Events
                 </Link>
-                <Link href="/organizer/events/create" className="block p-2 text-sm hover:bg-accent rounded">
+                <Link href="/organizer/events/create" 
+                  className="block p-2 text-sm hover:bg-accent rounded" 
+                  onClick={(e) => {
+                    if (!isLoggedIn) {
+                      e.preventDefault();
+                      showLoginModal();
+                    }
+                  }}
+                >
                   Create Event
                 </Link>
                 <Link href="/meetings" className="block p-2 text-sm hover:bg-accent rounded">
@@ -105,14 +99,14 @@ export default function OrganizerPage() {
             </div>
             
             <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-              <h2 className="text-lg font-semibold mb-4">Organizer Stats</h2>
+              <h2 className="text-lg font-semibold mb-4">Organizer Statistics</h2>
               <div className="space-y-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Created Events</p>
                   <p className="text-xl font-semibold">0</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Active Events</p>
+                  <p className="text-sm text-muted-foreground">Ongoing Events</p>
                   <p className="text-xl font-semibold">0</p>
                 </div>
                 <div>
@@ -130,19 +124,19 @@ export default function OrganizerPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="border border-border rounded-lg p-4 hover:bg-accent/10 cursor-pointer">
                   <h3 className="font-medium">Online Webinar</h3>
-                  <p className="text-sm text-muted-foreground mt-2">Virtual event template suitable for remote participants</p>
+                  <p className="text-sm text-muted-foreground mt-2">Template suitable for remote participants in virtual events</p>
                 </div>
                 <div className="border border-border rounded-lg p-4 hover:bg-accent/10 cursor-pointer">
-                  <h3 className="font-medium">Offline Conference</h3>
-                  <p className="text-sm text-muted-foreground mt-2">Face-to-face event template for physical venues</p>
+                  <h3 className="font-medium">In-Person Conference</h3>
+                  <p className="text-sm text-muted-foreground mt-2">Template for face-to-face events at physical venues</p>
                 </div>
                 <div className="border border-border rounded-lg p-4 hover:bg-accent/10 cursor-pointer">
                   <h3 className="font-medium">Hybrid Event</h3>
-                  <p className="text-sm text-muted-foreground mt-2">Event template combining online and offline components</p>
+                  <p className="text-sm text-muted-foreground mt-2">Template combining online and offline components</p>
                 </div>
                 <div className="border border-border rounded-lg p-4 hover:bg-accent/10 cursor-pointer">
                   <h3 className="font-medium">Blockchain Summit</h3>
-                  <p className="text-sm text-muted-foreground mt-2">Event template designed for the blockchain industry</p>
+                  <p className="text-sm text-muted-foreground mt-2">Template designed for blockchain industry events</p>
                 </div>
               </div>
             </div>
@@ -178,21 +172,29 @@ export default function OrganizerPage() {
                 </svg>
                 <h3 className="mt-4 text-lg font-medium">No Events Yet</h3>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Create your first event now and begin your journey as an organizer!
+                  Create your first event now to start your organizer journey!
                 </p>
                 <div className="mt-6">
-                  <Link href="/organizer/events/create">
-                    <Button>Create Event</Button>
-                  </Link>
+                  <Button 
+                    onClick={() => {
+                      if (!isLoggedIn) {
+                        showLoginModal();
+                      } else {
+                        router.push('/organizer/events/create');
+                      }
+                    }}
+                  >
+                    Create Event
+                  </Button>
                 </div>
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
-                <h2 className="text-lg font-semibold mb-4">Sponsor Guide</h2>
+                <h2 className="text-lg font-semibold mb-4">Sponsorship Guide</h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Learn how to attract more sponsors to support your events and increase their value.
+                  Learn how to attract more sponsors to support your event and increase its value.
                 </p>
                 <Button variant="outline" size="sm">View Guide</Button>
               </div>
@@ -200,7 +202,7 @@ export default function OrganizerPage() {
               <div className="bg-card rounded-lg shadow-sm p-6 border border-border">
                 <h2 className="text-lg font-semibold mb-4">Event Promotion Tips</h2>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Explore effective strategies to promote your events and increase visibility and engagement.
+                  Explore effective strategies to promote your event and increase visibility and engagement.
                 </p>
                 <Button variant="outline" size="sm">View Tips</Button>
               </div>

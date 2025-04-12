@@ -7,21 +7,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3Icon, CalendarIcon, Users2Icon, WalletIcon } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const { status } = useSession();
+  const { isLoggedIn, loading: authLoading } = useAuth();
 
   useEffect(() => {
     // 只在認證狀態確定後繼續
-    if (status !== 'loading') {
+    if (!authLoading) {
       setIsLoading(false);
     }
-  }, [status]);
+  }, [authLoading]);
 
-  if (isLoading || status === 'loading') {
+  if (isLoading || authLoading) {
     return (
       <div className="min-h-screen flex justify-center items-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -30,7 +30,7 @@ function Dashboard() {
   }
 
   // 如果用戶未登入，顯示登入提示
-  if (status === 'unauthenticated') {
+  if (!isLoggedIn) {
     return (
       <div className="min-h-[calc(100vh-150px)] flex flex-col justify-center items-center">
         <h1 className="text-2xl font-bold mb-6">Welcome to Your Dashboard</h1>

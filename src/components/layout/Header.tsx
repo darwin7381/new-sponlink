@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { getCurrentUser } from '@/lib/services/authService';
 import { User } from '@/lib/types/users';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
-import migrateLegacyAuth from '@/lib/utils/migrateLegacyAuth';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { getNotifications } from '@/services/userPreferenceService';
@@ -14,11 +12,10 @@ import { Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function Header() {
-  const [user, setUser] = useState<User | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { isLoggedIn, showLoginModal, handleLogout } = useAuth();
+  const { isLoggedIn, user, showLoginModal, handleLogout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -36,15 +33,10 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 遷移舊版身份驗證數據
-  useEffect(() => {
-    migrateLegacyAuth();
-  }, []);
-
   // 獲取用戶未讀通知數量
   useEffect(() => {
     const fetchNotifications = async () => {
-      if (user && user.id) {
+      if (isLoggedIn && user && user.id) {
         try {
           const notifications = await getNotifications(user.id, { unreadOnly: true });
           setUnreadCount(notifications.length);
@@ -66,34 +58,7 @@ export default function Header() {
     return () => {
       window.removeEventListener('notificationsUpdate', handleNotificationsUpdate);
     };
-  }, [user]);
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        // 只在用戶數據發生變化時才更新狀態
-        if (JSON.stringify(currentUser) !== JSON.stringify(user)) {
-          setUser(currentUser);
-        }
-      } catch (error) {
-        console.error('Error fetching user:', error);
-      }
-    };
-
-    fetchUser();
-    
-    // 監聽登入狀態變更的自定義事件
-    const handleAuthChange = () => {
-      fetchUser();
-    };
-    
-    window.addEventListener('authChange', handleAuthChange);
-    
-    return () => {
-      window.removeEventListener('authChange', handleAuthChange);
-    };
-  }, [user]);
+  }, [isLoggedIn, user]);
 
   return (
     <header className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-background shadow-md' : 'bg-background/90'}`}>

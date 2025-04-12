@@ -10,7 +10,7 @@ import { getCartItems, removeFromCart, checkout } from "@/services/sponsorServic
 import { CartItem, CartItemStatus, CheckoutResult } from "@/types/sponsor";
 import { SponsorshipPlan } from "@/types/sponsorshipPlan";
 import { getEventById } from "@/services/eventService";
-import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 // Define cart item detail interface, allowing partial missing properties
 interface CartDetail {
@@ -37,44 +37,28 @@ export default function CartPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userId, setUserId] = useState<string | null>(null);
   const [checkoutResult, setCheckoutResult] = useState<CheckoutResult | null>(null);
+  const { isLoggedIn, user, showLoginModal } = useAuth();
 
-  // Check user identity
+  // End loading state when authentication status is determined
   useEffect(() => {
-    const checkAuth = async () => {
-      if (!isAuthenticated()) {
-        router.push('/login');
-        return;
-      }
-      
-      try {
-        const userData = await getCurrentUser();
-        if (!userData) {
-          router.push('/login');
-          return;
-        }
-        
-        setUserId(userData.id);
-      } catch (e) {
-        console.error("Error getting user data:", e);
-        router.push('/login');
-      }
-    };
-    
-    checkAuth();
-  }, [router]);
+    // If authentication status is known (whether logged in or not), end loading state
+    if (isLoggedIn !== undefined) {
+      setIsLoading(false);
+    }
+  }, [isLoggedIn]);
 
   // Get cart items
   useEffect(() => {
     async function fetchCartItems() {
-      if (!userId) return;
+      // Only fetch cart items if user is logged in and has ID
+      if (!isLoggedIn || !user?.id) return;
 
       try {
         setIsLoading(true);
-        console.log("Getting cart items, user ID:", userId);
+        console.log("Getting cart items, user ID:", user.id);
         
-        const items = await getCartItems(userId);
+        const items = await getCartItems(user.id);
         console.log("Original cart items:", items);
         
         // Only show items with PENDING status
@@ -97,7 +81,7 @@ export default function CartPage() {
                 
                 // Find items for current user
                 const userItems = parsedData.filter((item: CartItem) => 
-                  item.sponsor_id === userId && item.status === CartItemStatus.PENDING
+                  item.sponsor_id === user.id && item.status === CartItemStatus.PENDING
                 );
                 console.log("Current user's pending items in local storage:", userItems);
               }
@@ -127,7 +111,7 @@ export default function CartPage() {
     return () => {
       window.removeEventListener('cartUpdate', handleCartUpdate);
     };
-  }, [userId]);
+  }, [isLoggedIn, user]);
 
   // Get detailed information for cart items
   useEffect(() => {
@@ -225,7 +209,13 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
-    if (!userId || cartItems.length === 0) return;
+    // Check if user is logged in, show login modal if not
+    if (!isLoggedIn || !user?.id) {
+      showLoginModal();
+      return;
+    }
+    
+    if (cartItems.length === 0) return;
 
     try {
       setIsProcessing(true);
@@ -245,8 +235,8 @@ export default function CartPage() {
       console.log("Checkout total amount:", totalAmount);
 
       // Process checkout
-      console.log("Starting checkout process, user ID:", userId);
-      const result = await checkout(userId, { amount: totalAmount });
+      console.log("Starting checkout process, user ID:", user.id);
+      const result = await checkout(user.id, { amount: totalAmount });
       console.log("Checkout successful, result:", result);
       
       setCheckoutResult(result);

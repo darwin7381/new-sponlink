@@ -10,16 +10,17 @@ import { addToCart } from '@/services/sponsorService';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { getEventById } from '@/services/eventService';
 import { ComparisonSaveButton } from '@/components/common/ComparisonSaveButton';
+import { toast } from 'sonner';
 
 export default function ComparePage() {
   const [plansToCompare, setPlansToCompare] = useState<SponsorshipPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [eventNames, setEventNames] = useState<Record<string, string>>({});
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, showLoginModal } = useAuth();
   const router = useRouter();
   
   useEffect(() => {
-    // 從 localStorage 獲取要比較的計劃
+    // Load plans from localStorage
     const loadPlans = () => {
       try {
         const storedPlans = localStorage.getItem('plansToCompare');
@@ -27,7 +28,7 @@ export default function ComparePage() {
           const parsedPlans = JSON.parse(storedPlans) as SponsorshipPlan[];
           setPlansToCompare(parsedPlans);
           
-          // 獲取所有活動名稱
+          // Get all event names
           const fetchEventNames = async () => {
             const names: Record<string, string> = {};
             
@@ -39,8 +40,8 @@ export default function ComparePage() {
                     names[plan.event_id] = event.title;
                   }
                 } catch (error) {
-                  console.error(`無法獲取活動 ${plan.event_id} 的詳情`, error);
-                  names[plan.event_id] = '未知活動';
+                  console.error(`Unable to get details for event ${plan.event_id}`, error);
+                  names[plan.event_id] = 'Unknown Event';
                 }
               }
             }
@@ -51,7 +52,7 @@ export default function ComparePage() {
           fetchEventNames();
         }
       } catch (error) {
-        console.error('無法加載比較計劃:', error);
+        console.error('Unable to load comparison plans:', error);
       } finally {
         setIsLoading(false);
       }
@@ -59,7 +60,7 @@ export default function ComparePage() {
     
     loadPlans();
     
-    // 監聽計劃更新
+    // Listen for plan updates
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'plansToCompare') {
         loadPlans();
@@ -72,30 +73,67 @@ export default function ComparePage() {
     };
   }, []);
   
-  // 添加到購物車功能
+  // Add to cart functionality
   const handleAddToCart = async (plan: SponsorshipPlan) => {
-    if (!isLoggedIn || !user?.id) {
-      router.push('/login');
-      return;
-    }
-    
     try {
-      await addToCart(user.id, plan.id);
-      alert('已成功添加到購物車');
+      // Check if event name is available
+      const eventName = eventNames[plan.event_id] || 'Unknown Event';
+      
+      // For authenticated users
+      if (isLoggedIn && user?.id) {
+        await addToCart(user.id, plan.id);
+        toast.success('Successfully added to cart');
+      } else {
+        // For unauthenticated users, use local storage
+        // Define a type for local cart items
+        interface LocalCartItem {
+          plan_id: string;
+          event_id: string;
+          added_at: string;
+          event_title: string;
+          plan_title: string;
+          plan_price: number;
+        }
+        
+        // Get existing cart or create new one
+        const localCart: LocalCartItem[] = localStorage.getItem('localCart') ? 
+          JSON.parse(localStorage.getItem('localCart') || '[]') : [];
+        
+        // Add new item if not already in cart
+        if (!localCart.some(item => item.plan_id === plan.id)) {
+          localCart.push({
+            plan_id: plan.id,
+            event_id: plan.event_id,
+            added_at: new Date().toISOString(),
+            event_title: eventName,
+            plan_title: plan.title,
+            plan_price: plan.price
+          });
+          localStorage.setItem('localCart', JSON.stringify(localCart));
+          
+          // Optional: Trigger an event for other components to update
+          window.dispatchEvent(new CustomEvent('localCartUpdate'));
+        } else {
+          toast.error("This sponsorship plan is already in your cart");
+          return;
+        }
+        
+        toast.success('Successfully added to cart');
+      }
     } catch (error) {
-      console.error('添加到購物車錯誤:', error);
-      alert('無法添加到購物車，請稍後再試');
+      console.error('Error adding to cart:', error);
+      toast.error('Unable to add to cart, please try again later');
     }
   };
   
-  // 移除對比項目
+  // Remove comparison item
   const handleRemove = (planId: string) => {
     const updatedPlans = plansToCompare.filter(p => p.id !== planId);
     setPlansToCompare(updatedPlans);
     localStorage.setItem('plansToCompare', JSON.stringify(updatedPlans));
   };
   
-  // 清空所有比較項目
+  // Clear all comparison items
   const handleClearAll = () => {
     setPlansToCompare([]);
     localStorage.removeItem('plansToCompare');
@@ -104,7 +142,7 @@ export default function ComparePage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">贊助方案比較</h1>
+        <h1 className="text-2xl font-bold">Sponsorship Plan Comparison</h1>
         <div className="flex gap-3">
           {plansToCompare.length > 0 && (
             <>
@@ -116,12 +154,12 @@ export default function ComparePage() {
                     title: plan.title,
                     price: plan.price,
                     event_id: plan.event_id,
-                    event_name: eventNames[plan.event_id] || '未知活動'
+                    event_name: eventNames[plan.event_id] || 'Unknown Event'
                   }
                 }))}
                 comparisonCriteria={['price', 'benefits', 'max_sponsors']}
               />
-              <Button variant="outline" onClick={handleClearAll}>清空比較清單</Button>
+              <Button variant="outline" onClick={handleClearAll}>Clear Comparison</Button>
             </>
           )}
         </div>
@@ -139,13 +177,13 @@ export default function ComparePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-foreground">尚未添加任何方案進行比較</h3>
+            <h3 className="text-lg font-medium text-foreground">No plans added for comparison</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              瀏覽活動頁面並添加贊助方案到比較清單
+              Browse events and add sponsorship plans to your comparison list
             </p>
             <div className="mt-6">
               <Link href="/events">
-                <Button variant="default">瀏覽活動</Button>
+                <Button variant="default">Browse Events</Button>
               </Link>
             </div>
           </CardContent>
@@ -155,7 +193,7 @@ export default function ComparePage() {
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-muted">
-                <th className="p-3 border">比較項目</th>
+                <th className="p-3 border">Comparison Item</th>
                 {plansToCompare.map(plan => (
                   <th key={plan.id} className="p-3 border">
                     <div className="flex flex-col items-center">
@@ -166,7 +204,7 @@ export default function ComparePage() {
                         onClick={() => handleRemove(plan.id)}
                         className="mt-2"
                       >
-                        移除
+                        Remove
                       </Button>
                     </div>
                   </th>
@@ -175,25 +213,25 @@ export default function ComparePage() {
             </thead>
             <tbody>
               <tr>
-                <td className="p-3 border font-medium">活動名稱</td>
+                <td className="p-3 border font-medium">Event Name</td>
                 {plansToCompare.map(plan => (
                   <td key={plan.id} className="p-3 border text-center">
                     <Link href={`/events/${plan.event_id}`} className="text-primary hover:underline">
-                      {eventNames[plan.event_id] || '載入中...'}
+                      {eventNames[plan.event_id] || 'Loading...'}
                     </Link>
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-3 border font-medium">方案價格</td>
+                <td className="p-3 border font-medium">Plan Price</td>
                 {plansToCompare.map(plan => (
                   <td key={plan.id} className="p-3 border text-center">
-                    ¥{plan.price.toLocaleString()}
+                    ${plan.price.toLocaleString()}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-3 border font-medium">方案描述</td>
+                <td className="p-3 border font-medium">Description</td>
                 {plansToCompare.map(plan => (
                   <td key={plan.id} className="p-3 border">
                     {plan.description}
@@ -201,7 +239,7 @@ export default function ComparePage() {
                 ))}
               </tr>
               <tr>
-                <td className="p-3 border font-medium">福利內容</td>
+                <td className="p-3 border font-medium">Benefits</td>
                 {plansToCompare.map(plan => (
                   <td key={plan.id} className="p-3 border">
                     <ul className="list-disc pl-5">
@@ -213,24 +251,24 @@ export default function ComparePage() {
                 ))}
               </tr>
               <tr>
-                <td className="p-3 border font-medium">可用名額</td>
+                <td className="p-3 border font-medium">Available Slots</td>
                 {plansToCompare.map(plan => (
                   <td key={plan.id} className="p-3 border text-center">
                     {plan.max_sponsors && plan.current_sponsors !== undefined ? 
                       `${plan.max_sponsors - plan.current_sponsors}/${plan.max_sponsors}` : 
-                      '不限'}
+                      'Unlimited'}
                   </td>
                 ))}
               </tr>
               <tr>
-                <td className="p-3 border font-medium">操作</td>
+                <td className="p-3 border font-medium">Actions</td>
                 {plansToCompare.map(plan => (
                   <td key={plan.id} className="p-3 border text-center">
                     <Button 
                       onClick={() => handleAddToCart(plan)}
                       className="w-full"
                     >
-                      添加到購物車
+                      Add to Cart
                     </Button>
                   </td>
                 ))}

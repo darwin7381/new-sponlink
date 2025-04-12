@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { getEventById, getSponsorshipPlans, createSponsorshipPlan, updateSponsorshipPlan, deleteSponsorshipPlan } from "@/services/eventService";
 import { Event, SponsorshipPlan } from "@/types/event";
-import { isAuthenticated, getCurrentUser } from "@/lib/services/authService";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export default function ManagePlansPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
@@ -40,38 +40,13 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
     max_sponsors: 1,
     current_sponsors: 0
   });
-
-  // Check user authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      setIsLoading(true);
-      try {
-        if (!isAuthenticated()) {
-          router.push('/login');
-          return;
-        }
-        
-        const userData = await getCurrentUser();
-        if (!userData) {
-          router.push('/login');
-          return;
-        }
-      } catch (e) {
-        console.error("Error checking authentication:", e);
-        router.push('/login');
-      }
-    };
-    
-    checkAuth();
-  }, [router]);
+  // Using useAuth hook for authentication
+  const { isLoggedIn, user, showLoginModal } = useAuth();
 
   // Get event and sponsorship plans
   useEffect(() => {
     async function fetchEventAndPlans() {
-      if (!isAuthenticated()) {
-        return; // If user is not authenticated, don't fetch data
-      }
-      
+      // Get data regardless of user login status
       setError("");
       
       try {
@@ -84,6 +59,7 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
         const eventData = await getEventById(id);
         if (!eventData) {
           setError("Event not found");
+          setIsLoading(false);
           return;
         }
         
@@ -120,9 +96,24 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  // Check if user is logged in before creating a new sponsorship plan
+  const handleOpenAddDialog = () => {
+    if (!isLoggedIn) {
+      showLoginModal();
+      return;
+    }
+    setIsDialogOpen(true);
+  };
+
   // Handle creating new sponsorship plan
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check again if user is logged in
+    if (!isLoggedIn || !user?.id) {
+      showLoginModal();
+      return;
+    }
     
     try {
       setIsSaving(true);
@@ -172,8 +163,13 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  // 開始編輯贊助計劃
+  // Check if user is logged in before editing a sponsorship plan
   const handleEditClick = (plan: SponsorshipPlan) => {
+    if (!isLoggedIn) {
+      showLoginModal();
+      return;
+    }
+    
     setCurrentPlan(plan);
     setEditPlan({
       title: plan.title,
@@ -186,7 +182,7 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
     setIsEditDialogOpen(true);
   };
 
-  // 處理編輯表單輸入變化
+  // Handle edit form input changes
   const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
@@ -203,22 +199,28 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  // 處理更新贊助計劃
+  // Handle updating sponsorship plan
   const handleUpdatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!currentPlan) return;
     
+    // Check again if user is logged in
+    if (!isLoggedIn || !user?.id) {
+      showLoginModal();
+      return;
+    }
+    
     try {
       setIsSaving(true);
       
-      // 將福利字符串轉換為數組
+      // Convert benefits string to array
       const benefitsArray = editPlan.benefits
         .split('\n')
         .map(benefit => benefit.trim())
         .filter(benefit => benefit !== "");
       
-      // 準備更新數據
+      // Prepare update data
       const planData = {
         title: editPlan.title,
         price: Number(editPlan.price),
@@ -228,60 +230,62 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
         current_sponsors: Number(editPlan.current_sponsors)
       };
       
-      // 更新計劃
+      // Update plan
       const updatedPlan = await updateSponsorshipPlan(eventId, currentPlan.id, planData);
       
       if (updatedPlan) {
-        // 更新計劃列表
+        // Update plans list
         setPlans(prevPlans => 
           prevPlans.map(plan => 
             plan.id === updatedPlan.id ? updatedPlan : plan
           )
         );
         
-        // 關閉對話框
+        // Close dialog
         handleDialogClose();
       }
     } catch (error) {
-      console.error("更新贊助計劃時出錯:", error);
-      setError("更新贊助計劃失敗。請稍後再試。");
+      console.error("Error updating sponsorship plan:", error);
+      setError("Failed to update sponsorship plan. Please try again later.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  // 處理刪除贊助計劃
+  // Handle deleting sponsorship plan
   const handleDeletePlan = async (planId: string) => {
-    if (!confirm("確定要刪除此贊助計劃嗎？此操作無法撤銷。")) return;
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      showLoginModal();
+      return;
+    }
+    
+    if (!confirm("Are you sure you want to delete this sponsorship plan? This action cannot be undone.")) return;
     
     try {
       setIsDeleting(true);
       
-      // 刪除計劃
+      // Delete plan
       const success = await deleteSponsorshipPlan(eventId, planId);
       
       if (success) {
-        // 更新計劃列表
+        // Update plans list
         setPlans(prevPlans => prevPlans.filter(plan => plan.id !== planId));
       } else {
-        setError("刪除贊助計劃失敗。請稍後再試。");
+        setError("Failed to delete sponsorship plan. Please try again later.");
       }
     } catch (error) {
-      console.error("刪除贊助計劃時出錯:", error);
-      setError("刪除贊助計劃失敗。請稍後再試。");
+      console.error("Error deleting sponsorship plan:", error);
+      setError("Failed to delete sponsorship plan. Please try again later.");
     } finally {
       setIsDeleting(false);
     }
   };
 
-  // 在對話框關閉時
+  // When dialog is closed
   const handleDialogClose = () => {
     setIsEditDialogOpen(false);
     setCurrentPlan(null);
-  };
-
-  const handleOpenAddDialog = () => {
-    setIsDialogOpen(true);
   };
 
   const handleCloseAddDialog = () => {
@@ -512,16 +516,16 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
         </DialogContent>
       </Dialog>
 
-      {/* 編輯贊助計劃對話框 */}
+      {/* Edit Sponsorship Plan Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[500px]" data-remove-scroll-bar="keep-scroll-bar">
           <DialogHeader>
-            <DialogTitle>編輯贊助計劃</DialogTitle>
+            <DialogTitle>Edit Sponsorship Plan</DialogTitle>
           </DialogHeader>
           
           <form onSubmit={handleUpdatePlan} className="space-y-4 mt-4">
             <div>
-              <Label htmlFor="edit-title">計劃名稱</Label>
+              <Label htmlFor="edit-title">Plan Name</Label>
               <Input
                 id="edit-title"
                 name="title"
@@ -532,7 +536,7 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
             </div>
             
             <div>
-              <Label htmlFor="edit-description">計劃描述</Label>
+              <Label htmlFor="edit-description">Plan Description</Label>
               <Textarea
                 id="edit-description"
                 name="description"
@@ -544,7 +548,7 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
             </div>
             
             <div>
-              <Label htmlFor="edit-price">價格</Label>
+              <Label htmlFor="edit-price">Price</Label>
               <Input
                 id="edit-price"
                 name="price"
@@ -557,21 +561,21 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
             </div>
             
             <div>
-              <Label htmlFor="edit-benefits">福利（每行一項）</Label>
+              <Label htmlFor="edit-benefits">Benefits (one per line)</Label>
               <Textarea
                 id="edit-benefits"
                 name="benefits"
                 value={editPlan.benefits}
                 onChange={handleEditInputChange}
                 rows={4}
-                placeholder="主舞台演講機會&#10;VIP晚宴席位&#10;品牌在所有宣傳材料中突出顯示"
+                placeholder="Main stage speaking opportunity&#10;VIP dinner seats&#10;Brand prominently displayed in all promotional materials"
                 required
               />
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="edit-max_sponsors">最大贊助商數量</Label>
+                <Label htmlFor="edit-max_sponsors">Maximum Sponsors</Label>
                 <Input
                   id="edit-max_sponsors"
                   name="max_sponsors"
@@ -584,7 +588,7 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
               </div>
               
               <div>
-                <Label htmlFor="edit-current_sponsors">當前贊助商數量</Label>
+                <Label htmlFor="edit-current_sponsors">Current Sponsors</Label>
                 <Input
                   id="edit-current_sponsors"
                   name="current_sponsors"
@@ -600,10 +604,10 @@ export default function ManagePlansPage({ params }: { params: Promise<{ id: stri
             
             <DialogFooter className="mt-6">
               <Button type="button" variant="outline" onClick={handleDialogClose}>
-                取消
+                Cancel
               </Button>
               <Button type="submit" disabled={isSaving}>
-                {isSaving ? "更新中..." : "更新計劃"}
+                {isSaving ? "Updating..." : "Update Plan"}
               </Button>
             </DialogFooter>
           </form>
