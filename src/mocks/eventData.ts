@@ -4,16 +4,20 @@ import { Event, EventStatus, LocationType, OWNER_TYPE } from '@/types/event';
  * 模擬活動數據
  * 注意：這只是在數據遷移到實際數據庫前的臨時方案
  * 
- * ID對應關係說明（從Neon資料庫獲取的正確對應）：
- * - user_123：組織者帳號 (organizer@example.com)，擁有大多數活動
- * - user_124：贊助商帳號 (sponsor@example.com)，擁有少數活動
+ * 用戶UUID對應關係：
+ * - 組織者帳號 (organizer@example.com): '7f9e15a5-d7c1-4b8c-9db0-4ac3f0f3d0b3'
+ * - 贊助商帳號 (sponsor@example.com): '3e8d9176-d5b2-4e92-a20f-2f39f77d0bb9'
  */
+
+// 定義UUID常量確保一致性
+const ORGANIZER_UUID = '7f9e15a5-d7c1-4b8c-9db0-4ac3f0f3d0b3';
+const SPONSOR_UUID = '3e8d9176-d5b2-4e92-a20f-2f39f77d0bb9';
 
 export const mockEvents: Event[] = [
   {
     id: "1",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "區塊鏈週 2025 台北 - Main Event",
     description: "An annual gathering of global technology leaders and innovators to explore the latest technology trends and future development directions.",
@@ -58,7 +62,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 1,
         created_at: "2023-01-15T08:00:00Z",
         updated_at: "2023-01-15T08:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       },
       {
@@ -72,7 +76,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 3,
         created_at: "2023-01-15T08:30:00Z",
         updated_at: "2023-01-15T08:30:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -81,8 +85,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "2",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "Sustainable Development Forum",
     description: "An international forum discussing environmental protection, social responsibility, and sustainable economic development.",
@@ -119,7 +123,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 0,
         created_at: "2023-03-05T09:15:00Z",
         updated_at: "2023-03-05T09:15:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -128,8 +132,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "3",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "Global Marketing Conference",
     description: "A professional conference focused on the latest digital marketing trends, strategies, and tools.",
@@ -166,7 +170,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 2,
         created_at: "2023-05-12T10:30:00Z",
         updated_at: "2023-05-12T10:30:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       },
       {
@@ -180,7 +184,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 5,
         created_at: "2023-05-12T11:00:00Z",
         updated_at: "2023-05-12T11:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       },
       {
@@ -194,7 +198,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 8,
         created_at: "2023-05-12T11:30:00Z",
         updated_at: "2023-05-12T11:30:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -203,8 +207,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "4",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "AI & Healthcare Expo 2025",
     description: "探索人工智能如何徹底改變醫療保健行業的前沿會議。與領先的醫療科技公司、AI專家和醫療專業人士一起了解最新的研究和應用。",
@@ -247,7 +251,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 0,
         created_at: "2024-06-01T08:00:00Z",
         updated_at: "2024-06-01T08:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       },
       {
@@ -266,7 +270,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 2,
         created_at: "2024-06-01T08:30:00Z",
         updated_at: "2024-06-01T08:30:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -275,8 +279,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "5",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "區塊鏈週 2025 台北 - DeFi Summit",
     description: "深入探討去中心化金融的最新發展和應用，匯集DeFi項目、開發者和投資者。",
@@ -316,7 +320,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 0,
         created_at: "2025-02-15T08:00:00Z",
         updated_at: "2025-02-15T08:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -325,8 +329,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "6",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "Solana Hacker House 台北站",
     description: "Solana 亞洲巡迴黑客松的台北站活動，為期三天的編程馬拉松，開發者可以在這裡構建創新的 Solana 應用。",
@@ -366,7 +370,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 2,
         created_at: "2025-03-01T08:00:00Z",
         updated_at: "2025-03-01T08:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -375,8 +379,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "7",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "Web3 Summit - NFT & Metaverse Day",
     description: "Web3 全球創新峰會中專注於 NFT 與元宇宙的主題日，探討數字藝術、虛擬世界與品牌互動的未來。",
@@ -416,7 +420,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 3,
         created_at: "2025-04-01T08:00:00Z",
         updated_at: "2025-04-01T08:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -425,8 +429,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "8",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "區塊鏈週 2025 台北 - Crypto Trading Summit",
     description: "專為加密貨幣交易者和投資者設計的活動，探討交易策略、市場分析和風險管理。",
@@ -466,7 +470,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 1,
         created_at: "2025-02-20T08:00:00Z",
         updated_at: "2025-02-20T08:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -475,8 +479,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "9",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "Solana Hacker House 新加坡站",
     description: "Solana 亞洲巡迴黑客松的新加坡站活動，為期三天的編程馬拉松，匯集東南亞地區的開發人才。",
@@ -516,7 +520,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 1,
         created_at: "2025-03-15T08:00:00Z",
         updated_at: "2025-03-15T08:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -525,8 +529,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "loc-google",
-    organizer_id: "user_124",
-    ownerId: "user_124",
+    organizer_id: SPONSOR_UUID,
+    ownerId: SPONSOR_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "Location Google",
     description: "这个活动演示使用 Google 地址作为地点。展示如何利用 Google Maps 的地点 ID 和经纬度数据。",
@@ -567,7 +571,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 1,
         created_at: "2025-05-01T08:00:00Z",
         updated_at: "2025-05-01T08:00:00Z",
-        ownerId: "user_124",
+        ownerId: SPONSOR_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -576,8 +580,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "loc-virtual",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "Location Virtual",
     description: "这个活动演示使用虚拟线上会议作为地点。展示如何使用平台名称和会议链接。",
@@ -618,7 +622,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 2,
         created_at: "2025-06-01T10:00:00Z",
         updated_at: "2025-06-01T10:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -627,8 +631,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "loc-custom",
-    organizer_id: "user_123",
-    ownerId: "user_123",
+    organizer_id: ORGANIZER_UUID,
+    ownerId: ORGANIZER_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "Location Custom",
     description: "这个活动演示使用自定义地址作为地点。展示如何处理没有经纬度和地点ID的自定义位置。",
@@ -669,7 +673,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 3,
         created_at: "2025-07-01T09:00:00Z",
         updated_at: "2025-07-01T09:00:00Z",
-        ownerId: "user_123",
+        ownerId: ORGANIZER_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -678,8 +682,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "spon-event-1",
-    organizer_id: "user_124",
-    ownerId: "user_124",
+    organizer_id: SPONSOR_UUID,
+    ownerId: SPONSOR_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "贊助商主辦活動 2025",
     description: "由贊助商帳號建立的主要行銷活動，展示品牌價值和產品特色。",
@@ -716,7 +720,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 0,
         created_at: "2025-05-15T08:00:00Z",
         updated_at: "2025-05-15T08:00:00Z",
-        ownerId: "user_124",
+        ownerId: SPONSOR_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],
@@ -725,8 +729,8 @@ export const mockEvents: Event[] = [
   },
   {
     id: "spon-event-2",
-    organizer_id: "user_124",
-    ownerId: "user_124",
+    organizer_id: SPONSOR_UUID,
+    ownerId: SPONSOR_UUID,
     ownerType: OWNER_TYPE.USER,
     title: "贊助商科技研討會",
     description: "探討新興科技趨勢和市場發展的專業研討會，由贊助商帳號主辦。",
@@ -763,7 +767,7 @@ export const mockEvents: Event[] = [
         current_sponsors: 1,
         created_at: "2025-04-10T09:00:00Z",
         updated_at: "2025-04-10T09:00:00Z",
-        ownerId: "user_124",
+        ownerId: SPONSOR_UUID,
         ownerType: OWNER_TYPE.USER
       }
     ],

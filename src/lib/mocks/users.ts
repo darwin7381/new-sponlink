@@ -1,15 +1,19 @@
 import { User } from '../types/users';
 
+// 使用固定UUID常量確保系統內一致性
+const ORGANIZER_UUID = '7f9e15a5-d7c1-4b8c-9db0-4ac3f0f3d0b3';
+const SPONSOR_UUID = '3e8d9176-d5b2-4e92-a20f-2f39f77d0bb9';
+
 export const MOCK_USERS: User[] = [
   {
-    id: "user_124",
+    id: SPONSOR_UUID,
     email: "sponsor@example.com",
     preferred_language: "zh",
     created_at: "2024-01-01T00:00:00Z",
     updated_at: "2024-01-01T00:00:00Z"
   },
   {
-    id: "user_123",
+    id: ORGANIZER_UUID,
     email: "organizer@example.com",
     preferred_language: "zh",
     created_at: "2024-01-01T00:00:00Z",
@@ -20,7 +24,7 @@ export const MOCK_USERS: User[] = [
 // Mock profile data
 export const mockProfiles = {
   sponsor: {
-    userId: 'user_124',
+    userId: SPONSOR_UUID,
     bio: '全球科技公司，支持創新活動',
     contactInfo: 'sponsor@example.com',
     avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
@@ -40,7 +44,7 @@ export const mockProfiles = {
     }
   },
   organizer: {
-    userId: 'user_123',
+    userId: ORGANIZER_UUID,
     bio: '擁有超過10年經驗的活動組織者',
     contactInfo: 'organizer@example.com',
     avatar: 'https://randomuser.me/api/portraits/men/32.jpg',

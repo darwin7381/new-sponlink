@@ -1,37 +1,36 @@
 import NextAuth from "next-auth";
+import type { DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { verifyCredentials } from "@/lib/auth/authService";
 import { SystemRole } from "@/lib/types/users";
 
-// JWT回調函數：添加自定義數據到JWT
-const jwtCallback = async ({ token, user }: any) => {
-  // 當用戶登入時，將用戶數據添加到token中
-  if (user) {
-    token.id = user.id;
-    token.email = user.email;
-    token.name = user.name;
-    token.systemRole = user.systemRole;
+/**
+ * 擴展默認的 NextAuth Session 類型
+ */
+declare module "next-auth" {
+  interface Session extends DefaultSession {
+    user: {
+      id: string;
+      email?: string | null;
+      name?: string | null;
+      systemRole?: SystemRole;
+    } & DefaultSession["user"];
   }
-  return token;
-};
+}
 
-// Session回調函數：從JWT添加數據到Session
-const sessionCallback = async ({ session, token }: any) => {
-  if (token) {
-    session.user = {
-      ...session.user,
-      id: token.id,
-      email: token.email,
-      name: token.name,
-      systemRole: token.systemRole
-    };
-  }
-  return session;
-};
+/**
+ * 用戶對象類型定義
+ */
+interface UserPayload {
+  id: string;
+  email: string;
+  name?: string;
+  systemRole?: SystemRole;
+}
 
 // 認證配置
-export const { handlers: { GET, POST }, auth } = NextAuth({
+export const authOptions = {
   providers: [
     // 用戶名密碼認證
     CredentialsProvider({
@@ -64,15 +63,15 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
             return null;
           }
           
-          // 返回用戶資訊，設置系統角色
+          // 返回用戶資訊，使用原始UUID
           return {
             id: user.id,
             email: user.email,
             name: user.name || user.email,
-            systemRole: user.systemRole || SystemRole.USER // 設置默認系統角色
+            systemRole: user.systemRole || SystemRole.USER
           };
         } catch (error) {
-          console.error("登入驗證錯誤:", error);
+          console.error("[NextAuth] 登入驗證錯誤:", error);
           return null;
         }
       },
@@ -91,10 +90,35 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
   
   callbacks: {
     // 添加自定義數據到 JWT
-    jwt: jwtCallback,
+    jwt: ({ token, user }) => {
+      // 當用戶登入時，將用戶數據添加到token中
+      if (user) {
+        // 直接使用原始ID，不需要任何轉換
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+        token.systemRole = user.systemRole;
+        
+        console.log(`[NextAuth] JWT生成，用戶ID: ${user.id}`);
+      }
+      return token;
+    },
     
     // 添加自定義數據到 Session
-    session: sessionCallback,
+    session: ({ session, token }) => {
+      if (token) {
+        session.user = {
+          ...session.user,
+          id: token.id as string,
+          email: token.email,
+          name: token.name,
+          systemRole: token.systemRole as SystemRole
+        };
+        
+        console.log(`[NextAuth] Session更新，用戶ID: ${session.user.id}`);
+      }
+      return session;
+    },
   },
   
   // 自定義頁面
@@ -108,4 +132,6 @@ export const { handlers: { GET, POST }, auth } = NextAuth({
   
   // 調試模式
   debug: process.env.NODE_ENV === "development",
-}); 
+};
+
+export const { handlers: { GET, POST }, auth } = NextAuth(authOptions); 

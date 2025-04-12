@@ -1,16 +1,20 @@
 /**
  * 此文件已弃用 - 用户数据已迁移至Neon数据库
- * 保留此文件仅作参考，实际项目中不应使用
+ * 保留此文件仅作参考，實際項目不應使用
+ * 
+ * 注意：新系統使用UUID格式：
+ * - 組織者(organizer@example.com): '7f9e15a5-d7c1-4b8c-9db0-4ac3f0f3d0b3'
+ * - 贊助商(sponsor@example.com): '3e8d9176-d5b2-4e92-a20f-2f39f77d0bb9'
  */
 
 /*
 import { OrganizerProfile, SponsorProfile } from '@/types/user';
 import { SystemRole } from '@/lib/types/users';
 
-// 模擬使用者資料 - 使用與Neon數據庫匹配的ID
+// 模擬使用者資料 - 舊版格式，已不再使用
 export const mockUsers = [
   {
-    id: "user_124", // 贊助商帳號 (與Neon數據庫ID匹配)
+    id: "3e8d9176-d5b2-4e92-a20f-2f39f77d0bb9", // 贊助商帳號 UUID
     email: "sponsor@example.com",
     systemRole: SystemRole.USER,
     preferred_language: "en",
@@ -18,7 +22,7 @@ export const mockUsers = [
     updated_at: "2024-01-01T00:00:00Z"
   },
   {
-    id: "user_123", // 組織者帳號 (與Neon數據庫ID匹配)
+    id: "7f9e15a5-d7c1-4b8c-9db0-4ac3f0f3d0b3", // 組織者帳號 UUID
     email: "organizer@example.com",
     systemRole: SystemRole.USER,
     preferred_language: "en",
@@ -51,13 +55,13 @@ export const mockUsers = [
   }
 ];
 
-// 模擬用戶檔案資料 - 使用與Neon數據庫匹配的ID
+// 模擬用戶檔案資料 - 使用UUID格式
 export const mockProfiles: {
   organizer: OrganizerProfile;
   sponsor: SponsorProfile;
 } = {
   organizer: {
-    userId: 'user_123', // 與Neon數據庫ID匹配
+    userId: '7f9e15a5-d7c1-4b8c-9db0-4ac3f0f3d0b3', // 組織者UUID
     bio: 'Experienced event organizer with over 10 years of experience / 擁有超過10年經驗的活動組織者',
     contactInfo: 'organizer@example.com',
     avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
@@ -74,7 +78,7 @@ export const mockProfiles: {
     }
   },
   sponsor: {
-    userId: 'user_124', // 與Neon數據庫ID匹配
+    userId: '3e8d9176-d5b2-4e92-a20f-2f39f77d0bb9', // 贊助商UUID
     bio: 'Global technology company supporting innovative events / 全球科技公司，支持創新活動',
     contactInfo: 'sponsor@example.com',
     avatar: 'https://randomuser.me/api/portraits/women/44.jpg',

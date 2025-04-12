@@ -95,50 +95,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           setIsLoggedIn(true);
           
-          // 處理用戶ID格式，確保兼容Neon數據庫中的ID格式
-          let userId = session.user.id;
-          
-          // 檢查ID是否為數字或純數字字符串
-          if (typeof userId === 'number' || /^\d+$/.test(userId)) {
-            console.log(`[AuthProvider] 檢測到數字ID: ${userId}，轉換為正確格式`);
-            
-            // 檢查Neon系統中已知的測試用戶
-            if ((typeof userId === 'number' && userId === 1) || (typeof userId === 'string' && userId === '1')) {
-              if (session.user.email === 'organizer@example.com') {
-                userId = 'user_123'; // 組織者正確ID
-                console.log(`[AuthProvider] 將組織者用戶ID修正為: ${userId}`);
-              } else if (session.user.email === 'sponsor@example.com') {
-                userId = 'user_124'; // 贊助商正確ID
-                console.log(`[AuthProvider] 將贊助商用戶ID修正為: ${userId}`);
-              } else {
-                userId = `user_${userId}`; // 通用格式
-                console.log(`[AuthProvider] 將通用用戶ID修正為: ${userId}`);
-              }
-            } else {
-              userId = `user_${userId}`;
-              console.log(`[AuthProvider] 轉換一般數字ID為: ${userId}`);
-            }
-          }
-          
-          // 基於會話創建用戶對象
-          // 徹底移除角色概念，使用系統角色區分普通用戶和管理員
+          // 從session獲取用戶數據 - ID已在NextAuth JWT回調中統一格式化
           const sessionUser: User = {
-            id: userId,
+            id: session.user.id,  // 不需要在這裡再處理ID格式
             email: session.user.email || '',
-            systemRole: SystemRole.USER, // 默認為普通用戶
+            // 使用類型斷言避免使用any
+            systemRole: session.user.systemRole as SystemRole || SystemRole.USER,
             preferred_language: 'zh',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           };
           
-          console.log(`[AuthProvider] 創建用戶對象完成，ID: ${sessionUser.id}`);
+          console.log(`[AuthProvider] 使用session數據創建用戶對象，ID: ${sessionUser.id}`);
           
           setUser(sessionUser);
           
-          // 同步到localStorage，確保一致性
+          // 同步到localStorage，便於客戶端訪問
           try {
             localStorage.setItem('user', JSON.stringify(sessionUser));
-            console.log(`[AuthProvider] 已同步用戶數據到localStorage，ID: ${sessionUser.id}`);
+            console.log(`[AuthProvider] 已同步用戶數據到localStorage`);
           } catch (err) {
             console.error('[AuthProvider] 無法同步用戶到localStorage:', err);
           }

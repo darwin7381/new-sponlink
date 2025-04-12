@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     // 如果沒有提供任何參數，返回提示信息
     return NextResponse.json({
       message: '請提供 id 或 email 參數查詢特定用戶',
-      example: '/api/db-users?id=user_123 或 /api/db-users?email=example@mail.com'
+      example: '/api/db-users?id=7f9e15a5-d7c1-4b8c-9db0-4ac3f0f3d0b3 或 /api/db-users?email=example@mail.com'
     });
     
   } catch (error) {

@@ -31,15 +31,7 @@ export async function findUserByEmail(email: string) {
       const user = result[0];
       console.log(`[authService] 用戶詳情: ID=${user.id}, 郵箱=${user.email}`);
       
-      // 支持測試帳號
-      if (email === 'organizer@example.com' || email === 'sponsor@example.com') {
-        console.log(`[authService] 檢測到測試帳號: ${email}`);
-        // 確保ID格式正確
-        if (user.id && !String(user.id).startsWith('user_')) {
-          const correctId = email === 'organizer@example.com' ? 'user_123' : 'user_124';
-          console.log(`[authService] 測試帳號ID格式不正確，應為 ${correctId}，當前為 ${user.id}`);
-        }
-      }
+      // 不再需要測試帳號特殊處理，所有ID均為UUID格式
     }
     
     return result[0] || null;
@@ -98,19 +90,7 @@ export async function verifyCredentials(email: string, password: string) {
     const isPasswordValid = verifyPassword(password, user.password);
     console.log(`[authService] 密碼驗證結果: ${isPasswordValid ? '成功' : '失敗'}`);
     
-    // 如果是測試帳號且密碼正確，強制修正ID格式
-    if (isPasswordValid) {
-      // 確保ID是字符串格式
-      if (typeof user.id === 'number') {
-        console.log(`[authService] 發現數字ID (${user.id})，轉換為字符串格式`);
-        user.id = `user_${user.id}`;
-      } else {
-        // 確保現有ID是字符串
-        user.id = String(user.id);
-      }
-      console.log(`[authService] 最終使用的用戶ID: ${user.id}`);
-    }
-    
+    // 直接返回用戶對象，不做ID轉換
     return isPasswordValid ? user : null;
   } catch (error) {
     console.error('[authService] 憑證驗證失敗:', error);

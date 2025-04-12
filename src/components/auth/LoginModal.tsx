@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { LoginForm } from './LoginForm'
 import SocialLoginButtons from './SocialLoginButtons'
 import { SocialProvider } from '@/types/auth'
+import { RegisterForm } from './RegisterForm'
 
 interface LoginModalProps {
   isOpen: boolean
@@ -36,7 +37,7 @@ export default function LoginModal({
     setError(null)
 
     try {
-      console.log('開始登入:', email);
+      console.log('[LoginModal] 開始登入:', email);
       
       // 使用API登入流程
       const response = await fetch('/api/auth/login', {
@@ -49,50 +50,36 @@ export default function LoginModal({
 
       if (!response.ok) {
         const errorText = await response.text()
-        console.error('API登入錯誤:', errorText)
+        console.error('[LoginModal] API登入錯誤:', errorText)
         throw new Error('帳號或密碼錯誤')
       }
 
       const user = await response.json()
-      console.log('API登入成功，原始用戶數據:', user)
+      console.log('[LoginModal] API登入成功，原始用戶數據:', user)
 
       // 儲存用戶資料到 localStorage
       try {
         // 確保用戶ID有效
         if (!user.id) {
-          console.error('用戶ID缺失!');
+          console.error('[LoginModal] 用戶ID缺失!');
           throw new Error('用戶ID缺失');
         }
         
-        // 確保ID是字符串而非數字 - 這很關鍵！
-        if (typeof user.id === 'number') {
-          console.log(`將數字ID轉換為字符串: ${user.id} → "user_${user.id}"`);
-          user.id = `user_${user.id}`;
-        }
+        // 無需ID格式轉換，直接使用UUID
         
-        // 確保ID是字符串類型
-        user.id = String(user.id);
-        
-        // 輸出詳細ID信息幫助調試
-        console.log(`用戶ID: "${user.id}", 類型: ${typeof user.id}`);
-        
+        // 儲存用戶資料
         localStorage.setItem('user', JSON.stringify(user))
         localStorage.setItem('authToken', `mock-token-${Date.now()}`)
         
         // 驗證存儲是否成功
         const storedUser = localStorage.getItem('user');
         const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-        console.log('驗證存儲結果:', parsedUser);
-        
-        // 再次檢查ID
-        if (parsedUser) {
-          console.log(`存儲後的用戶ID: "${parsedUser.id}", 類型: ${typeof parsedUser.id}`);
-        }
+        console.log('[LoginModal] 儲存成功，用戶ID: ' + (parsedUser?.id || '未知'));
         
         // 分發登入事件
         window.dispatchEvent(new Event('authChange'))
       } catch (e) {
-        console.error('存儲用戶資料錯誤:', e)
+        console.error('[LoginModal] 存儲用戶資料錯誤:', e)
       }
 
       // 關閉彈窗
@@ -131,14 +118,40 @@ export default function LoginModal({
     }, 1000)
   }
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const handleRegister = async (name: string, email: string, password: string) => {
+    setLoading(true)
+    setError(null)
     
-    // 模擬註冊流程，實際項目中可以實現完整的註冊表單
-    setTimeout(() => {
-      // 成功註冊後返回登入頁面
+    try {
+      console.log('[LoginModal] 開始註冊:', email);
+      
+      // 使用API註冊流程
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('[LoginModal] API註冊錯誤:', errorData)
+        throw new Error(errorData.error || '註冊失敗')
+      }
+
+      const data = await response.json()
+      console.log('[LoginModal] 註冊成功:', data.success)
+      
+      // 成功註冊後切換到登入頁面
       setActiveTab('login')
-    }, 1000)
+      setError('註冊成功！請使用您的新帳號登入。')
+    } catch (error) {
+      console.error('註冊錯誤:', error)
+      setError(error instanceof Error ? error.message : '註冊失敗，請稍後再試')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -185,19 +198,11 @@ export default function LoginModal({
           </TabsContent>
           
           <TabsContent value="register" className="mt-4">
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="text-center text-muted-foreground py-8">
-                註冊功能即將上線，敬請期待！
-              </div>
-              <Button 
-                type="button" 
-                variant="outline" 
-                className="w-full"
-                onClick={() => setActiveTab('login')}
-              >
-                返回登入
-              </Button>
-            </form>
+            <RegisterForm 
+              onSubmit={handleRegister} 
+              loading={loading}
+              error={error}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>

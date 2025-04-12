@@ -77,9 +77,8 @@ export default function ProfilePage() {
   const getUserFromLocalStorage = () => {
     if (typeof window !== 'undefined') {
       try {
-        console.log('[profile] 開始從localStorage獲取用戶數據');
+        console.log('[profile] 從localStorage獲取用戶數據');
         const userJson = localStorage.getItem('user');
-        console.log('[profile] localStorage中的原始用戶數據:', userJson);
         
         if (!userJson) {
           console.log('[profile] localStorage中沒有用戶數據');
@@ -91,27 +90,15 @@ export default function ProfilePage() {
         
         // 檢查用戶ID
         if (!user.id) {
-          console.error('[profile] 解析後的用戶數據沒有ID');
+          console.error('[profile] 用戶數據中缺少ID');
           return null;
         }
         
-        // 確保ID格式正確
-        if (typeof user.id === 'number') {
-          console.log(`[profile] 發現數字ID (${user.id})，轉換為字符串格式`);
-          user.id = `user_${user.id}`;
-          
-          // 更新localStorage
-          localStorage.setItem('user', JSON.stringify(user));
-          console.log('[profile] 已更新localStorage中的用戶數據，新ID:', user.id);
-        } else {
-          // 確保是字符串
-          user.id = String(user.id);
-        }
-        
-        console.log('[profile] 最終使用的用戶數據:', user);
+        // UUID格式不需要任何處理，直接返回
         return user;
       } catch (e) {
         console.error('[profile] 從localStorage獲取用戶數據失敗:', e);
+        return null;
       }
     }
     return null;
@@ -122,39 +109,27 @@ export default function ProfilePage() {
     
     const checkAuth = async () => {
       try {
-        console.log("開始獲取用戶數據...");
+        console.log("[Profile] 開始獲取用戶數據...");
         
         // 直接從localStorage獲取用戶資料
         const localUser = getUserFromLocalStorage();
-        console.log("從localStorage直接獲取的用戶:", localUser);
+        console.log("[Profile] 從localStorage直接獲取的用戶:", localUser);
         
         if (!localUser) {
-          console.error("用戶未找到");
+          console.error("[Profile] 用戶未找到");
           router.push('/login');
           return;
         }
         
-        // ID格式檢查和修正 - 這是關鍵！
+        // ID格式檢查
         if (!localUser.id) {
-          console.error("用戶ID無效或未找到");
+          console.error("[Profile] 用戶ID無效或未找到");
           router.push('/login');
           return;
         }
         
-        // 確保ID是字符串且格式正確
-        if (typeof localUser.id === 'number') {
-          console.log(`修正數字ID: ${localUser.id} → "user_${localUser.id}"`);
-          localUser.id = `user_${localUser.id}`;
-          
-          // 更新存儲
-          localStorage.setItem('user', JSON.stringify(localUser));
-          console.log("已更新存儲的用戶ID格式");
-        } else {
-          // 確保ID是字符串
-          localUser.id = String(localUser.id);
-        }
-        
-        console.log(`實際使用的用戶ID: "${localUser.id}", 類型: ${typeof localUser.id}`);
+        // UUID無需格式轉換
+        console.log(`[Profile] 使用用戶ID: "${localUser.id}"`);
         
         if (isMounted) {
           setUser(localUser);

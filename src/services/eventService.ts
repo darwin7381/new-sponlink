@@ -248,21 +248,25 @@ export const getOrganizerEvents = async (organizerId: string, status?: EventStat
   console.log("getOrganizerEvents被调用，用户ID:", organizerId);
   console.log("总活动数量:", mockEvents.length);
   
-  // 為user_123和user_124分配特定的活動
-  if (organizerId === 'user_123') {
-    // 组织者账号 - 直接返回organizer_id为user_123的活动
-    let events = mockEvents.filter(event => event.organizer_id === 'user_123');
-    console.log(`找到${events.length}个user_123组织者活动`);
+  // 使用固定UUID
+  const ORGANIZER_UUID = '7f9e15a5-d7c1-4b8c-9db0-4ac3f0f3d0b3';
+  const SPONSOR_UUID = '3e8d9176-d5b2-4e92-a20f-2f39f77d0bb9';
+  
+  // 僅使用UUID格式查詢，不再兼容舊格式
+  if (organizerId === ORGANIZER_UUID) {
+    // 組織者帳號 - 僅查詢新UUID格式
+    let events = mockEvents.filter(event => event.organizer_id === ORGANIZER_UUID);
+    console.log(`找到${events.length}个組織者活动`);
     
     if (status !== undefined) {
       events = events.filter(event => event.status === status);
     }
     return events;
   } 
-  else if (organizerId === 'user_124') {
-    // 赞助商账号 - 直接返回organizer_id为user_124的活动
-    let events = mockEvents.filter(event => event.organizer_id === 'user_124');
-    console.log(`找到${events.length}个user_124赞助商活动`);
+  else if (organizerId === SPONSOR_UUID) {
+    // 贊助商帳號 - 僅查詢新UUID格式
+    let events = mockEvents.filter(event => event.organizer_id === SPONSOR_UUID);
+    console.log(`找到${events.length}个贊助商活动`);
     
     if (status !== undefined) {
       events = events.filter(event => event.status === status);
