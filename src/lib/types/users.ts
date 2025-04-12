@@ -16,16 +16,6 @@ export enum SystemRole {
   ADMIN = 'ADMIN'
 }
 
-/**
- * 視角類型枚舉
- * 控制用戶界面顯示，但不影響用戶權限
- * 用戶可以在不同視角間自由切換
- */
-export enum VIEW_TYPE {
-  ORGANIZER = 'ORGANIZER',
-  SPONSOR = 'SPONSOR'
-}
-
 export enum RESOURCE_TYPE {
   EVENT = 'EVENT',
   SPONSORSHIP = 'SPONSORSHIP',

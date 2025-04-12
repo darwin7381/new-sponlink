@@ -128,7 +128,7 @@ export default function ProfilePage() {
           return;
         }
         
-        // UUID無需格式轉換
+        // 使用UUID
         console.log(`[Profile] 使用用戶ID: "${localUser.id}"`);
         
         if (isMounted) {
@@ -143,7 +143,24 @@ export default function ProfilePage() {
             
             if (isMounted) {
               console.log("成功獲取到用戶資料:", profile);
-              setProfileData(profile);
+              
+              // 處理收到的資料格式
+              const formattedProfile = {
+                userId: profile.userId,
+                bio: profile.bio || '',
+                contactInfo: profile.contactInfo || '',
+                avatar: profile.avatar || '',
+                updatedAt: profile.updatedAt,
+                events: profile.events || [],
+                statistics: profile.statistics || {
+                  totalEvents: 0,
+                  upcomingEvents: 0,
+                  averageAttendees: 0,
+                  totalRevenue: '$0'
+                }
+              };
+              
+              setProfileData(formattedProfile);
               setError(null); // 清除錯誤
             }
           } catch (profileError) {

@@ -35,11 +35,11 @@ export default function LoginModal({
   const handleLogin = async (email: string, password: string) => {
     setLoading(true)
     setError(null)
-
+    
     try {
-      console.log('[LoginModal] 開始登入:', email);
-      
       // 使用API登入流程
+      console.log('[LoginModal] 開始登入:', email)
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -49,40 +49,24 @@ export default function LoginModal({
       })
 
       if (!response.ok) {
-        const errorText = await response.text()
-        console.error('[LoginModal] API登入錯誤:', errorText)
-        throw new Error('帳號或密碼錯誤')
+        const errorData = await response.json()
+        console.error('[LoginModal] API登入錯誤:', errorData)
+        throw new Error(errorData.error || '登入失敗')
       }
 
-      const user = await response.json()
-      console.log('[LoginModal] API登入成功，原始用戶數據:', user)
-
-      // 儲存用戶資料到 localStorage
-      try {
-        // 確保用戶ID有效
-        if (!user.id) {
-          console.error('[LoginModal] 用戶ID缺失!');
-          throw new Error('用戶ID缺失');
-        }
-        
-        // 無需ID格式轉換，直接使用UUID
-        
-        // 儲存用戶資料
-        localStorage.setItem('user', JSON.stringify(user))
-        localStorage.setItem('authToken', `mock-token-${Date.now()}`)
-        
-        // 驗證存儲是否成功
-        const storedUser = localStorage.getItem('user');
-        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
-        console.log('[LoginModal] 儲存成功，用戶ID: ' + (parsedUser?.id || '未知'));
-        
-        // 分發登入事件
-        window.dispatchEvent(new Event('authChange'))
-      } catch (e) {
-        console.error('[LoginModal] 存儲用戶資料錯誤:', e)
+      const data = await response.json()
+      console.log('[LoginModal] 登入成功，獲取的原始用戶數據:', data)
+      
+      // 將用戶數據存儲到 localStorage，用於客戶端檢查登入狀態
+      // UUID格式不需要轉換，直接使用原始ID
+      if (data.user && data.user.id) {
+        localStorage.setItem('user', JSON.stringify(data.user))
+        console.log('[LoginModal] 用戶數據已存儲到localStorage，ID:', data.user.id)
+      } else {
+        console.warn('[LoginModal] 警告：沒有有效的用戶ID')
       }
-
-      // 關閉彈窗
+      
+      // 關閉登入模態框
       onOpenChange(false)
       
       // 呼叫登入後的回調函數

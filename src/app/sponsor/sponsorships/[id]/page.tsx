@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { VIEW_TYPE } from '@/lib/services/authService';
 import { MOCK_SPONSORSHIP_PLANS, SponsorshipPlan } from '@/lib/mocks/sponsorships';
 import { Event } from '@/types/event';
 import { mockEvents as MOCK_EVENTS } from '@/mocks/eventData';

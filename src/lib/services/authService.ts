@@ -10,7 +10,6 @@ import {
   PERMISSION, 
   DYNAMIC_ROLE, 
   UserOrganization, 
-  VIEW_TYPE,
   SystemRole 
 } from '../types/users';
 
@@ -213,7 +212,4 @@ export const getUserRoleInOrganization = (): DYNAMIC_ROLE | null => {
 // 检查用户是否有特定动态角色
 export const hasDynamicRole = (): boolean => {
   return false;
-};
-
-// 重新導出 VIEW_TYPE 以供其他組件使用
-export { VIEW_TYPE }; 
+}; 

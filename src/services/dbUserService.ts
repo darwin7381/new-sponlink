@@ -2,7 +2,7 @@
  * 與資料庫交互的用戶服務，可逐步替代模擬數據
  */
 import { db } from '@/db';
-import { users, userProfiles, userSettings } from '@/db/schema';
+import { users, userProfiles, userSettings, userStatistics, organizationProfiles } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { SystemRole } from '@/lib/types/users';
 
@@ -170,5 +170,155 @@ export async function getUserProfile(userId: string) {
   } catch (error) {
     console.error('獲取用戶個人資料錯誤:', error);
     throw error;
+  }
+}
+
+/**
+ * 更新用戶個人資料
+ */
+export async function updateUserProfile(userId: string, profileData: Partial<typeof userProfiles.$inferInsert>) {
+  try {
+    const [updatedProfile] = await db.update(userProfiles)
+      .set(profileData)
+      .where(eq(userProfiles.user_id, userId))
+      .returning();
+    
+    return updatedProfile;
+  } catch (error) {
+    console.error('更新用戶個人資料錯誤:', error);
+    throw error;
+  }
+}
+
+/**
+ * 獲取用戶統計數據
+ */
+export async function getUserStatistics(userId: string) {
+  try {
+    const result = await db.select()
+      .from(userStatistics)
+      .where(eq(userStatistics.user_id, userId))
+      .limit(1);
+    
+    return result[0] || null;
+  } catch (error) {
+    console.error('獲取用戶統計數據錯誤:', error);
+    throw error;
+  }
+}
+
+/**
+ * 創建或更新用戶統計數據
+ */
+export async function updateUserStatistics(userId: string, statsData: Partial<typeof userStatistics.$inferInsert>) {
+  try {
+    // 檢查是否存在
+    const exists = await getUserStatistics(userId);
+    
+    if (exists) {
+      // 更新現有記錄
+      const [updated] = await db.update(userStatistics)
+        .set(statsData)
+        .where(eq(userStatistics.user_id, userId))
+        .returning();
+      
+      return updated;
+    } else {
+      // 創建新記錄
+      const [stats] = await db.insert(userStatistics)
+        .values({
+          user_id: userId,
+          ...statsData
+        })
+        .returning();
+      
+      return stats;
+    }
+  } catch (error) {
+    console.error('更新用戶統計數據錯誤:', error);
+    throw error;
+  }
+}
+
+/**
+ * 根據用戶ID獲取組織資料
+ */
+export async function getOrganizationProfileByUserId(userId: string) {
+  try {
+    const result = await db.select()
+      .from(organizationProfiles)
+      .where(eq(organizationProfiles.user_id, userId))
+      .limit(1);
+    
+    return result[0] || null;
+  } catch (error) {
+    console.error('獲取組織資料錯誤:', error);
+    throw error;
+  }
+}
+
+/**
+ * 更新組織資料
+ */
+export async function updateOrganizationProfile(userId: string, orgData: Partial<Omit<typeof organizationProfiles.$inferInsert, 'id' | 'user_id'>>) {
+  try {
+    // 檢查是否存在
+    const existing = await getOrganizationProfileByUserId(userId);
+    
+    if (existing) {
+      // 更新現有記錄
+      const [updated] = await db.update(organizationProfiles)
+        .set(orgData)
+        .where(eq(organizationProfiles.id, existing.id))
+        .returning();
+      
+      return updated;
+    } else {
+      // 如果不存在，創建新記錄
+      const { v4: uuidv4 } = await import('uuid');
+      const [created] = await db.insert(organizationProfiles)
+        .values({
+          id: uuidv4(),
+          user_id: userId,
+          name: (orgData.name as string) || '未命名組織',
+          description: orgData.description || null,
+          logo_url: orgData.logo_url || null,
+          website: orgData.website || null,
+        })
+        .returning();
+      
+      return created;
+    }
+  } catch (error) {
+    console.error('更新組織資料錯誤:', error);
+    throw error;
+  }
+}
+
+/**
+ * 獲取用戶的活動
+ */
+export async function getUserEvents(userId: string) {
+  try {
+    // 由於尚未實現實際的活動關係表，暫時返回空數組
+    // 實際實現應該從 events 表中查詢屬於該用戶的活動
+    return [];
+  } catch (error) {
+    console.error('獲取用戶活動錯誤:', error);
+    return [];
+  }
+}
+
+/**
+ * 獲取用戶的贊助
+ */
+export async function getUserSponsorships(userId: string) {
+  try {
+    // 由於尚未實現實際的贊助關係表，暫時返回空數組
+    // 實際實現應該從 sponsorships 表中查詢屬於該用戶的贊助
+    return [];
+  } catch (error) {
+    console.error('獲取用戶贊助錯誤:', error);
+    return [];
   }
 } 

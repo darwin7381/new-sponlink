@@ -1,4 +1,4 @@
-import { OrganizerProfile, SponsorProfile, VIEW_TYPE } from '../types/users';
+import { OrganizerProfile, SponsorProfile } from '../types/users';
 
 // 模拟网络延迟
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -40,46 +40,34 @@ const basicSponsorProfile: SponsorProfile = {
 /**
  * 获取用户资料
  * @param userId 用户ID
- * @param viewport 视图类型
  * @returns 用户资料
  */
-export const getUserProfile = async (userId: string, viewport: VIEW_TYPE): Promise<OrganizerProfile | SponsorProfile> => {
+export const getUserProfile = async (userId: string): Promise<OrganizerProfile> => {
   // 这里应该调用API获取用户资料
   await delay(300);
   
-  // 根据视图类型返回不同资料
-  if (viewport === VIEW_TYPE.ORGANIZER) {
-    return {
-      ...basicOrganizerProfile,
-      userId
-    };
-  } else if (viewport === VIEW_TYPE.SPONSOR) {
-    return {
-      ...basicSponsorProfile,
-      userId
-    };
-  } else {
-    throw new Error(`不支持的视图类型: ${viewport}`);
-  }
+  // 默認返回組織者視角
+  return {
+    ...basicOrganizerProfile,
+    userId
+  };
 };
 
 /**
  * 更新用户资料
  * @param userId 用户ID
  * @param profileData 要更新的资料
- * @param viewport 视图类型
  * @returns 更新后的用户资料
  */
 export const updateUserProfile = async (
   userId: string, 
-  profileData: Partial<OrganizerProfile | SponsorProfile>,
-  viewport: VIEW_TYPE
-): Promise<OrganizerProfile | SponsorProfile> => {
+  profileData: Partial<OrganizerProfile>
+): Promise<OrganizerProfile> => {
   // 这里应该调用API更新用户资料
   await delay(500);
   
   // 获取当前资料
-  const currentProfile = await getUserProfile(userId, viewport);
+  const currentProfile = await getUserProfile(userId);
   
   // 合并更新数据
   const updatedProfile = {
@@ -94,53 +82,35 @@ export const updateUserProfile = async (
 /**
  * 获取组织者活动
  * @param userId 用户ID
- * @param viewport 视图类型
  * @returns 活动列表
  */
-export const getOrganizerEvents = async (userId: string, viewport: VIEW_TYPE) => {
+export const getOrganizerEvents = async (userId: string) => {
   await delay(300);
   
-  if (viewport !== VIEW_TYPE.ORGANIZER) {
-    throw new Error('非组织者视图无法获取活动列表');
-  }
-  
-  const profile = await getUserProfile(userId, viewport);
-  return (profile as OrganizerProfile).events;
+  const profile = await getUserProfile(userId);
+  return profile.events;
 };
 
 /**
  * 获取赞助商赞助
  * @param userId 用户ID
- * @param viewport 视图类型
  * @returns 赞助列表
  */
-export const getSponsorships = async (userId: string, viewport: VIEW_TYPE) => {
+export const getSponsorships = async (userId: string) => {
   await delay(300);
   
-  if (viewport !== VIEW_TYPE.SPONSOR) {
-    throw new Error('非赞助商视图无法获取赞助列表');
-  }
-  
-  const profile = await getUserProfile(userId, viewport);
-  return (profile as SponsorProfile).sponsorships;
+  // 由於不再支持贊助商視角，返回空數組
+  return [];
 };
 
 /**
  * 获取分析数据
  * @param userId 用户ID
- * @param viewport 视图类型
  * @returns 分析数据
  */
-export const getAnalytics = async (userId: string, viewport: VIEW_TYPE) => {
+export const getAnalytics = async (userId: string) => {
   await delay(300);
   
-  if (viewport === VIEW_TYPE.ORGANIZER) {
-    const profile = await getUserProfile(userId, viewport);
-    return (profile as OrganizerProfile).statistics;
-  } else if (viewport === VIEW_TYPE.SPONSOR) {
-    const profile = await getUserProfile(userId, viewport);
-    return (profile as SponsorProfile).analytics;
-  } else {
-    throw new Error(`不支持的视图类型: ${viewport}`);
-  }
+  const profile = await getUserProfile(userId);
+  return profile.statistics;
 }; 

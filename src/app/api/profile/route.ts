@@ -1,22 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as dbUserService from '@/services/dbUserService';
-import { OrganizerProfile, SponsorProfile, OrganizerEvent, Sponsorship, OrganizerStatistics, SponsorAnalytics } from '@/types/user';
-
-/**
- * 定義 ProfileData 類型來表示 JSON 中存儲的資料
- */
-interface ProfileData {
-  userType?: 'organizer' | 'sponsor';
-  avatar?: string;
-  events?: OrganizerEvent[];
-  statistics?: OrganizerStatistics;
-  companyName?: string;
-  logo?: string;
-  description?: string;
-  sponsorships?: Sponsorship[];
-  analytics?: SponsorAnalytics;
-  [key: string]: string | number | boolean | object | undefined | null;
-}
 
 /**
  * 獲取用戶個人資料API
@@ -24,13 +7,11 @@ interface ProfileData {
  */
 export async function GET(request: NextRequest) {
   try {
-    // 改用URL參數獲取用戶ID
+    // 從URL參數獲取用戶ID
     const { searchParams } = new URL(request.url);
-    let userId = searchParams.get('userId') || '';
+    const userId = searchParams.get('userId') || '';
     
-    console.log('API獲取用戶資料，原始用戶ID:', JSON.stringify(userId), '長度:', userId.length);
-    console.log('請求URL:', request.url);
-    console.log('所有查詢參數:', Object.fromEntries(searchParams.entries()));
+    console.log('API獲取用戶資料，用戶ID:', userId);
     
     // 驗證用戶ID
     if (!userId) {
@@ -41,136 +22,58 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // ID格式修正 - 這是關鍵！
-    // 處理純數字ID的情況
-    if (/^\d+$/.test(userId)) {
-      console.log(`檢測到純數字ID: ${userId}, 將轉換為正確格式`);
-      userId = `user_${userId}`;
-      console.log(`轉換後的ID: ${userId}`);
-    }
-    
-    // 直接檢查此ID是否在資料庫中
     try {
-      // 從數據庫獲取用戶基本信息，確認用戶存在
+      // 1. 檢查用戶是否存在
       const user = await dbUserService.getUserById(userId);
-      console.log('數據庫中的用戶ID查詢結果:', user ? '找到用戶' : '未找到用戶', user ? `ID=${user.id}` : `查詢ID=${userId}`);
       
       if (!user) {
-        console.log('API錯誤：資料庫中找不到此用戶, 查詢ID:', userId);
+        console.log('API錯誤：找不到用戶, ID:', userId);
         return NextResponse.json(
           { error: '用戶不存在' },
           { status: 404 }
         );
       }
       
-      console.log('用戶存在，繼續獲取個人資料');
+      // 2. 獲取用戶資料
+      const profile = await dbUserService.getUserProfile(userId);
       
-      // 從數據庫獲取用戶個人資料
-      let dbProfile = await dbUserService.getUserProfile(userId);
-      console.log('數據庫中的用戶資料:', dbProfile ? '存在' : '不存在');
-      
-      // 如果找不到用戶資料，創建一個基本資料
-      if (!dbProfile) {
-        console.log('未找到用戶資料，嘗試創建初始資料:', userId);
-        
-        // 創建初始用戶資料
-        try {
-          // 預設為組織者類型
-          const defaultProfileData = {
-            user_id: userId,
-            bio: '',
-            contact_info: '',
-            profile_data: JSON.stringify({
-              userType: 'organizer',
-              avatar: '',
-              events: [],
-              statistics: {
-                totalEvents: 0,
-                upcomingEvents: 0,
-                averageAttendees: 0,
-                totalRevenue: '$0'
-              }
-            })
-          };
-          
-          console.log('創建初始用戶資料:', defaultProfileData);
-          dbProfile = await dbUserService.createUserProfile(userId, defaultProfileData);
-          console.log('已創建初始用戶資料:', dbProfile);
-        } catch (createError) {
-          console.error('創建用戶資料失敗:', createError);
-          return NextResponse.json(
-            { error: '創建用戶資料失敗' },
-            { status: 500 }
-          );
-        }
-      }
-      
-      if (!dbProfile) {
-        console.error('無法獲取或創建用戶資料');
+      if (!profile) {
+        console.log('API錯誤：找不到用戶資料, ID:', userId);
         return NextResponse.json(
-          { error: '無法獲取或創建用戶資料' },
-          { status: 500 }
+          { error: '用戶資料不存在' },
+          { status: 404 }
         );
       }
       
-      // 處理存儲在JSON中的profile_data
-      let profileData: ProfileData = {};
-      if (dbProfile.profile_data) {
-        try {
-          profileData = JSON.parse(dbProfile.profile_data);
-          console.log('成功解析profile_data');
-        } catch (e) {
-          console.error('解析profile_data失敗:', e, '原始數據:', dbProfile.profile_data);
-        }
-      } else {
-        console.log('profile_data為空');
-      }
+      // 3. 獲取用戶統計數據
+      const statistics = await dbUserService.getUserStatistics(userId);
       
-      // 確定用戶類型（主辦方或贊助商）
-      const isOrganizer = profileData.userType === 'organizer' || !profileData.userType;
-      console.log('用戶類型:', isOrganizer ? '主辦方' : '贊助商');
+      // 4. 獲取用戶活動
+      const events = await dbUserService.getUserEvents(userId);
       
-      // 構建標準化的用戶資料對象
-      let userProfile;
-      if (isOrganizer) {
-        // 主辦方資料
-        userProfile = {
-          userId: dbProfile.user_id,
-          bio: dbProfile.bio || '',
-          contactInfo: dbProfile.contact_info || '',
-          avatar: profileData.avatar || '',
-          updatedAt: dbProfile.updated_at.toISOString(),
-          events: profileData.events || [],
-          statistics: profileData.statistics || {
-            totalEvents: 0,
-            upcomingEvents: 0,
-            averageAttendees: 0,
-            totalRevenue: '$0'
-          }
-        } as OrganizerProfile;
-      } else {
-        // 贊助商資料
-        userProfile = {
-          userId: dbProfile.user_id,
-          bio: dbProfile.bio || '',
-          contactInfo: dbProfile.contact_info || '',
-          avatar: profileData.avatar || '',
-          updatedAt: dbProfile.updated_at.toISOString(),
-          companyName: profileData.companyName || '',
-          logo: profileData.logo || '',
-          description: profileData.description || '',
-          sponsorships: profileData.sponsorships || [],
-          analytics: profileData.analytics || {
-            totalSponsored: 0,
-            activeSponsorship: 0,
-            totalInvestment: '$0',
-            averageRoi: '0%'
-          }
-        } as SponsorProfile;
-      }
+      // 5. 獲取用戶贊助
+      const sponsorships = await dbUserService.getUserSponsorships(userId);
       
-      console.log('成功構建用戶資料，準備返回');
-      return NextResponse.json(userProfile);
+      // 構建回應數據
+      const responseData = {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        bio: profile.bio || '',
+        contactInfo: profile.contact_info || '',
+        avatar: profile.avatar_url || '',
+        updatedAt: profile.updated_at.toISOString(),
+        events: events,
+        statistics: {
+          totalEvents: statistics?.total_events || 0,
+          upcomingEvents: statistics?.upcoming_events || 0,
+          averageAttendees: statistics?.average_attendees || 0,
+          totalRevenue: statistics?.total_revenue || '0'
+        },
+        sponsorships: sponsorships
+      };
+      
+      return NextResponse.json(responseData);
       
     } catch (dbError) {
       console.error('資料庫操作錯誤:', dbError);

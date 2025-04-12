@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { VIEW_TYPE } from '@/lib/services/authService';
 import { mockEvents } from '@/mocks/eventData';
 import { Event } from '@/types/event';
 

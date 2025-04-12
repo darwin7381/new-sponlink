@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getOrganizerEvents } from "@/services/eventService";
 import { Event, EventStatus } from "@/types/event";
-import { getCurrentUser, VIEW_TYPE } from "@/lib/services/authService";
+import { getCurrentUser } from "@/lib/services/authService";
 import { useSession } from "next-auth/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 

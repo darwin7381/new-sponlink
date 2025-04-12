@@ -10,6 +10,9 @@ import { USER_ROLES } from '@/lib/types/users';
 import { createPasswordHash, verifyPassword } from './passwordUtils';
 import { v4 as uuidv4 } from 'uuid';
 import { SystemRole } from '@/lib/types/users';
+import { userProfiles } from '@/db/schema';
+import { userSettings } from '@/db/schema';
+import { userStatistics } from '@/db/schema';
 
 /**
  * 使用電子郵件查詢用戶
@@ -138,6 +141,53 @@ export async function createUser({
         updated_at: new Date()
       })
       .returning();
+    
+    // 為新用戶創建個人資料和設置
+    try {
+      console.log('正在為新用戶創建個人資料:', user.id);
+      
+      // 創建用戶個人資料 - 不再使用profile_data字段
+      await db.insert(userProfiles)
+        .values({
+          user_id: user.id,
+          bio: '',
+          contact_info: '',
+          avatar_url: '', // 使用avatar_url欄位替代JSON中的avatar
+          updated_at: new Date()
+        });
+        
+      // 創建用戶統計數據
+      await db.insert(userStatistics)
+        .values({
+          user_id: user.id,
+          total_events: 0,
+          upcoming_events: 0,
+          average_attendees: 0,
+          total_revenue: '$0',
+          total_sponsored: 0,
+          active_sponsorships: 0,
+          total_investment: '$0',
+          average_roi: '0%',
+          updated_at: new Date()
+        });
+        
+      // 創建用戶設置
+      await db.insert(userSettings)
+        .values({
+          user_id: user.id,
+          email_notifications: true,
+          browser_notifications: true,
+          in_app_notifications: true,
+          notification_frequency: 'immediately',
+          theme: 'system',
+          updated_at: new Date()
+        });
+        
+      console.log('成功創建用戶資料和設置');
+    } catch (profileError) {
+      console.error('創建用戶資料失敗，但用戶已創建:', profileError);
+      // 不阻止用戶創建，只記錄錯誤
+    }
     
     // 返回用戶數據(不含密碼)
     const { password: _, ...userWithoutPassword } = user;
