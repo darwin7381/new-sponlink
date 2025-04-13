@@ -13,12 +13,14 @@ const DEFAULT_LANGUAGE: SupportedLanguage = 'en';
 interface LanguageContextType {
   language: SupportedLanguage;
   setLanguage: (lang: SupportedLanguage) => void;
+  isProviderMounted: boolean;
 }
 
 // Create language context
 const LanguageContext = createContext<LanguageContextType>({
   language: DEFAULT_LANGUAGE,
   setLanguage: () => {},
+  isProviderMounted: false
 });
 
 // Language provider props
@@ -32,26 +34,7 @@ interface LanguageProviderProps {
  */
 export function LanguageProvider({ children }: LanguageProviderProps) {
   const [language, setLanguageState] = useState<SupportedLanguage>(DEFAULT_LANGUAGE);
-  const [initialized, setInitialized] = useState(false);
-
-  // Initialize language from localStorage on mount
-  useEffect(() => {
-    // Only run on client side
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-      if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'zh')) {
-        setLanguageState(savedLanguage);
-      }
-    } catch (error) {
-      console.error('Error retrieving language preference:', error);
-    } finally {
-      setInitialized(true);
-    }
-  }, []);
+  const parentContext = useContext(LanguageContext);
 
   // Set language handler
   const setLanguage = (lang: SupportedLanguage) => {
@@ -67,13 +50,38 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
   };
 
-  // Show children only after initialization
-  if (!initialized && typeof window !== 'undefined') {
-    return null;
+  // Initialize language from localStorage on mount
+  useEffect(() => {
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const savedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+      if (savedLanguage && (savedLanguage === 'en' || savedLanguage === 'zh')) {
+        setLanguageState(savedLanguage);
+      }
+    } catch (error) {
+      console.error('Error retrieving language preference:', error);
+    }
+  }, []);
+
+  // 檢查是否已有父級LanguageProvider
+  if (parentContext.isProviderMounted) {
+    console.warn('Nested LanguageProvider detected! Using the parent provider to avoid duplicate rendering.');
+    return <>{children}</>; // 直接渲染子元素，不創建新的Provider
   }
 
+  // 不再使用initialized狀態和條件渲染
+  // 移除: if (!initialized && typeof window !== 'undefined') { return null; }
+
   return (
-    <LanguageContext.Provider value={{ language, setLanguage }}>
+    <LanguageContext.Provider value={{ 
+      language, 
+      setLanguage,
+      isProviderMounted: true // 標記Provider已掛載
+    }}>
       {children}
     </LanguageContext.Provider>
   );
@@ -90,7 +98,10 @@ export function useLanguage() {
     throw new Error('useLanguage must be used within a LanguageProvider');
   }
   
-  return context;
+  return {
+    language: context.language,
+    setLanguage: context.setLanguage
+  };
 }
 
 /**

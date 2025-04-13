@@ -3,7 +3,6 @@ import { Providers } from "@/components/Providers";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthProvider } from "@/components/auth/AuthProvider";
-import { LanguageProvider } from "@/contexts/LanguageContext";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import ComparePanel from "@/components/comparison/ComparePanel";
@@ -25,17 +24,15 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} pt-16`}>
         <Providers>
-          <LanguageProvider>
-            <AuthProvider>
-              <Header />
-              <main className="min-h-[calc(100vh-theme(spacing.16)-theme(spacing.24))]">
-                {children}
-              </main>
-              <Footer />
-              <ComparePanel />
-              <Toaster />
-            </AuthProvider>
-          </LanguageProvider>
+          <AuthProvider>
+            <Header />
+            <main className="min-h-[calc(100vh-theme(spacing.16)-theme(spacing.24))]">
+              {children}
+            </main>
+            <Footer />
+            <ComparePanel />
+            <Toaster />
+          </AuthProvider>
         </Providers>
       </body>
     </html>
