@@ -1,6 +1,6 @@
-# EventConnect - All Features
+# BlockMeet - All Features
 
-This document provides a comprehensive overview of all features in the EventConnect platform - a system designed to connect event organizers with potential sponsors. Features are categorized by development status with clear indications of actual implementation state.
+This document provides a comprehensive overview of all features in the BlockMeet platform - a system designed to connect event organizers with potential sponsors. Features are categorized by development status with clear indications of actual implementation state.
 
 > **Legend**:  
 > ✅ - Fully implemented in code  
@@ -325,7 +325,7 @@ This document provides a comprehensive overview of all features in the EventConn
 - [Project Overview](docs/PROJECT_OVERVIEW.md) - Overall project architecture and design
 - [Event Management Platform System Design](docs/event_management_platform_system_design.md)
 - [Login System Integration Design](docs/login_system_integration_system_design.md)
-- [Spongo System Design](docs/spongo_system_design.md) (Legacy reference)
+- [BlockMeet System Design](docs/spongo_system_design.md) (Legacy reference)
 
 ### Requirements Documents
 - [Event Management Platform PRD](docs/活動管理平台_PRD.md)
@@ -351,3 +351,4 @@ This document provides a comprehensive overview of all features in the EventConn
 ---
 
 *Note: This document integrates both documented features and actual code implementation status. Features with ✅ symbols have full code implementation, 🔄 indicates partial implementation, 📝 indicates documented but not fully implemented features, and 🔮 represents planned future features. Last updated: April 2024.* 
+

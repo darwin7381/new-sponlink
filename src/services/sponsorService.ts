@@ -33,7 +33,7 @@ const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {
 };
 
 // 購物車本地存儲鍵
-const CART_STORAGE_KEY = 'sponlink_cart_items';
+const CART_STORAGE_KEY = 'blockmeet_cart_items';
 
 // Get cart items for the current sponsor
 export const getCartItems = async (sponsorId: string): Promise<CartItem[]> => {

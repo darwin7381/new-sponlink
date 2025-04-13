@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { getNotifications } from '@/services/userPreferenceService';
 import { Bell } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import Image from 'next/image';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -68,8 +69,9 @@ export default function Header() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/" className="text-xl font-bold text-primary">
-                SponLink
+              <Link href="/" className="flex items-center space-x-2">
+                <Image src="/logo.svg" alt="BlockMeet Logo" width={32} height={32} /> 
+                <span className="text-xl font-bold hidden md:inline-block">BlockMeet</span>
               </Link>
             </div>
             <nav className="hidden sm:ml-6 sm:flex sm:space-x-8">

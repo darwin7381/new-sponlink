@@ -1,8 +1,8 @@
-# EventConnect - 活動贊助平台
+# BlockMeet - 活動贊助平台
 
-EventConnect 是一個連接活動主辦方與潛在贊助商的平台，幫助建立互惠互利的合作關係。此專案使用 Next.js 框架進行開發，提供高效能的前後端整合解決方案。
+BlockMeet 是一個連接活動主辦方與潛在贊助商的平台，幫助建立互惠互利的合作關係。此專案使用 Next.js 框架進行開發，提供高效能的前後端整合解決方案。
 
-![EventConnect Banner](public/images/event-placeholder.jpg)
+![BlockMeet Banner](public/images/event-placeholder.jpg)
 
 ## 專案概述
 
@@ -93,12 +93,25 @@ node -v
 nvm use 18
 ```
 
-### 安裝依賴
+### 安裝步驟
+
+1.  **複製儲存庫:**
+
+    ```bash
+    # 注意：您需要先在 GitHub 上手動將倉庫 new-sponlink 重命名為 blockmeet
+    git clone https://github.com/darwin7381/blockmeet.git
+    
+    # 為了保留 Cursor 等工具的歷史記錄，本地目錄暫時保留為 new-sponlink。
+    # 在全新 clone 的情況下，目錄應為 blockmeet。
+    cd new-sponlink 
+    ```
+
+2.  **安裝依賴:**
 
 ```bash
 # 克隆倉庫
-git clone https://github.com/darwin7381/new-sponlink.git
-cd new-sponlink
+git clone https://github.com/darwin7381/blockmeet.git
+cd blockmeet
 
 # 安裝依賴
 npm install
@@ -192,7 +205,7 @@ const newEvents = adaptOldEventsToNew(oldEventsArray);
 
 ### 🔍 歷史參考文檔
 - [加密貨幣會議平台需求文檔](docs/crypto_conference_platform_prd.md) - 與現有功能有差異
-- [Spongo 系統設計](docs/spongo_system_design.md) - 舊版架構參考
+- [BlockMeet 系統設計](docs/spongo_system_design.md) - 舊版架構參考
 - [贊助購物車 UI 設計](docs/sponsor_cart_ui_mockup_updated.md) - UI設計參考
 - [贊助商平台需求摘要](docs/sponsor_platform_requirements_summary.md) - 已整合到其他文檔
 - [緊急問題分析](docs/urgent_issues_analysis.md) - 舊版專案問題分析

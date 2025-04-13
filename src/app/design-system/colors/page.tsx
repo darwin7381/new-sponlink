@@ -542,13 +542,13 @@ export default function ColorSystemPage() {
     <div className="container mx-auto py-12 px-4">
       <div className="mb-12">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold">SponLink 色彩系統</h1>
+          <h1 className="text-3xl font-bold">BlockMeet 色彩系統</h1>
           <Link href="/" className="text-brand-500 hover:text-brand-600 transition-colors">
             返回首頁
           </Link>
         </div>
         <p className="text-lg text-muted-foreground">
-          這是SponLink的品牌色彩系統設計指南，用於確保整個產品體驗的一致性和專業性。
+          這是BlockMeet的品牌色彩系統設計指南，用於確保整個產品體驗的一致性和專業性。
         </p>
       </div>
       

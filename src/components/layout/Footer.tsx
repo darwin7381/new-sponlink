@@ -21,10 +21,10 @@ export default function Footer() {
               <div className="bg-blue-500 text-white p-2 rounded mr-2">
                 <span className="font-bold text-xl">S</span>
               </div>
-              <span className="text-xl font-bold">SponLink</span>
+              <span className="text-xl font-bold">BlockMeet</span>
             </div>
             <p className="mt-6 text-base text-gray-300">
-              SponLink is a professional activity management platform that helps you easily create, manage and promote activities.
+              BlockMeet is a professional activity management platform that helps you easily create, manage and promote activities.
             </p>
             
             {/* Social Media Icons */}
@@ -134,7 +134,7 @@ export default function Footer() {
         <div className="mt-16 pt-8 border-t border-gray-700">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
             <p className="text-base text-gray-400 order-2 sm:order-1">
-              &copy; {currentYear} EventConnect, Inc. All rights reserved.
+              &copy; {currentYear} BlockMeet, Inc. All rights reserved.
             </p>
             <div className="flex flex-wrap justify-center gap-8 order-1 sm:order-2">
               <Link href="/privacy" className="text-base text-gray-400 hover:text-white transition-colors duration-300">

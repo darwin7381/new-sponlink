@@ -46,9 +46,9 @@ export const mockEvents: Event[] = [
     is_main_event: true,
     event_type: "Main Event",
     materials: {
-      deck_url: "https://storage.googleapis.com/sponlink-resources/events/blockchain-week-2025-deck.pdf",
-      brochure_url: "https://storage.googleapis.com/sponlink-resources/events/blockchain-week-2025-brochure.pdf",
-      agenda_url: "https://storage.googleapis.com/sponlink-resources/events/blockchain-week-2025-agenda.pdf",
+      deck_url: "https://storage.googleapis.com/blockmeet-resources/events/blockchain-week-2025-deck.pdf",
+      brochure_url: "https://storage.googleapis.com/blockmeet-resources/events/blockchain-week-2025-brochure.pdf",
+      agenda_url: "https://storage.googleapis.com/blockmeet-resources/events/blockchain-week-2025-agenda.pdf",
     },
     sponsorship_plans: [
       {

@@ -9,7 +9,7 @@ import { AuthProvider } from "@/components/auth/AuthProvider";
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
-      <ThemeProvider defaultTheme="system" storageKey="sponlink-theme">
+      <ThemeProvider defaultTheme="system" storageKey="blockmeet-theme">
         <AuthProvider>
           {children}
         </AuthProvider>

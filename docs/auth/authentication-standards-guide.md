@@ -1,8 +1,8 @@
-# SponLink 認證系統標準使用指南
+# BlockMeet 認證系統標準使用指南
 
 ## 1. 認證系統架構概述
 
-SponLink 平台採用現代化、安全的認證架構，基於以下核心技術和原則：
+BlockMeet 平台採用現代化、安全的認證架構，基於以下核心技術和原則：
 
 - **NextAuth.js** - 統一的身份驗證框架
 - **React Context API** - 應用層級的狀態管理
@@ -193,7 +193,7 @@ return (
 
 - [使用 NextAuth.js 的官方文檔](https://next-auth.js.org/)
 - [React Context API 文檔](https://reactjs.org/docs/context.html)
-- [SponLink 認證系統實現記錄](./login-wall-fixes-progress.md)
+- [BlockMeet 認證系統實現記錄](./login-wall-fixes-progress.md)
 
 ## 7. 技術債務與未來改進
 

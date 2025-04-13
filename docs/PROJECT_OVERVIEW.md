@@ -1,8 +1,8 @@
-# EventConnect 專案概述
+# BlockMeet 專案概述
 
 ## 專案簡介
 
-EventConnect 是一個連接活動主辦方與潛在贊助商的平台，旨在簡化贊助過程並促進雙方的合作。該平台提供了完整的活動管理、贊助套餐設定和交流工具，使雙方能夠更高效地尋找合適的合作伙伴。
+BlockMeet 是一個連接活動主辦方與潛在贊助商的平台，旨在簡化贊助過程並促進雙方的合作。該平台提供了完整的活動管理、贊助套餐設定和交流工具，使雙方能夠更高效地尋找合適的合作伙伴。
 
 ## 系統架構
 
@@ -124,7 +124,7 @@ EventConnect 是一個連接活動主辦方與潛在贊助商的平台，旨在�
 - [活動管理平台系統設計](./event_management_platform_system_design.md)
 - [活動平台系統設計](./event_platform_system_design.md)
 - [登入系統整合系統設計](./login_system_integration_system_design.md)
-- [Spongo 系統設計](./spongo_system_design.md)
+- [BlockMeet 系統設計](./spongo_system_design.md)
 
 ### 其他文檔
 - [緊急問題分析](./urgent_issues_analysis.md) 

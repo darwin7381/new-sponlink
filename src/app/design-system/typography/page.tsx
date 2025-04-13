@@ -65,7 +65,7 @@ function ResponsiveTypographyGuide() {
     <div className="mb-12">
       <h2 className="text-2xl font-bold mb-4">響應式排版</h2>
       <p className="mb-4">
-        SponLink 的排版系統是響應式的，使用 Tailwind CSS 的響應式前綴 (sm:, md:, lg:, xl:, 2xl:) 來針對不同螢幕尺寸調整文字大小。
+        BlockMeet 的排版系統是響應式的，使用 Tailwind CSS 的響應式前綴 (sm:, md:, lg:, xl:, 2xl:) 來針對不同螢幕尺寸調整文字大小。
       </p>
       
       <div className="p-4 bg-muted rounded-lg mb-6">
@@ -86,13 +86,13 @@ export default function TypographyPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold">文字排版</h1>
         <p className="text-lg text-muted-foreground mt-2">
-          SponLink 文字排版指南，確保整個平台上的文字呈現一致且易於閱讀。
+          BlockMeet 文字排版指南，確保整個平台上的文字呈現一致且易於閱讀。
         </p>
       </div>
       
       <section className="mb-12">
         <h2 className="text-2xl font-bold mb-4">字體家族</h2>
-        <p className="mb-6">SponLink 使用系統原生字體堆疊，確保最佳性能和在所有設備上的一致性。</p>
+        <p className="mb-6">BlockMeet 使用系統原生字體堆疊，確保最佳性能和在所有設備上的一致性。</p>
         
         <FontSample 
           name="主要字體" 
@@ -104,7 +104,7 @@ export default function TypographyPage() {
           name="等寬字體" 
           description="用於程式碼塊、代碼等" 
           className="font-mono"
-          sampleText="const message = 'Hello, SponLink!'; // 程式碼示範"
+          sampleText="const message = 'Hello, BlockMeet!'; // 程式碼示範"
         />
       </section>
       

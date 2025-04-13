@@ -1,4 +1,4 @@
-# SponGo Platform System Design
+# BlockMeet Platform System Design
 
 ## Implementation Approach
 

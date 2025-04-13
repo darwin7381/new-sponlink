@@ -1,16 +1,16 @@
-以下是針對專案 `sponlink.blockmeet.io` 的完整總結報告，整合過去三天的討論，納入 Open AI 的建議（特別是多租戶架構與 RAG 資料庫設計），並考慮快取策略（包括 Redis）。報告以 Markdown 格式撰寫，涵蓋需求總結、討論回顧、方案比較、最終推薦及實作建議。已淘汰的方案（如 Cloudflare D1、Supabase、DynamoDB、MongoDB Atlas、Xata）將不再提及。
+以下是針對專案 `blockmeet.io` 的完整總結報告，整合過去三天的討論，納入 Open AI 的建議（特別是多租戶架構與 RAG 資料庫設計），並考慮快取策略（包括 Redis）。報告以 Markdown 格式撰寫，涵蓋需求總結、討論回顧、方案比較、最終推薦及實作建議。已淘汰的方案（如 Cloudflare D1、Supabase、DynamoDB、MongoDB Atlas、Xata）將不再提及。
 
 
 - [discussion link](https://grok.com/share/bGVnYWN5_406b2191-9d6e-4364-bd6b-38149b316f57)
 - 資料庫推薦模式：Neon + Drizzle
 ---
 
-# 專案 `sponlink.blockmeet.io` 完整推薦方案報告 by Grok
+# 專案 `blockmeet.io` 完整推薦方案報告 by Grok
 
 ## 1. 專案背景與需求總結
 
 ### 1.1 專案背景
-- **網站**：`sponlink.blockmeet.io`，一個 B2C 和 B2B 應用，專注於區塊鏈活動贊助與行程規劃。
+- **網站**：`blockmeet.io`，一個 B2C 和 B2B 應用，專注於區塊鏈活動贊助與行程規劃。
 - **流量**：每月百萬用戶，高峰時 10 萬同時用戶。
 - **技術棧**：
   - 框架：Next.js（可能部署在 Vercel）。
@@ -275,7 +275,7 @@
 ### 一、背景概述
 
 本專案為百萬級用戶使用的 SaaS 平台，主要功能包括：
-- 每位使用者有個人化活動頁面（如 sponlink.blockmeet.io）
+- 每位使用者有個人化活動頁面（如 blockmeet.io）
 - 每個活動配有 AI 助理 Bot，可查詢活動相關知識
 - 前端架構：Next.js
 - 圖片與檔案儲存：Cloudflare R2

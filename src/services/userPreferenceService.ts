@@ -14,11 +14,11 @@ import {
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 // 本地存儲鍵
-const SAVED_ITEMS_KEY = 'sponlink_saved_items';
-const SUBSCRIPTIONS_KEY = 'sponlink_subscriptions';
-const NOTIFICATIONS_KEY = 'sponlink_notifications';
-const COMPARISON_RESULTS_KEY = 'sponlink_comparison_results';
-const CUSTOM_COLLECTIONS_KEY = 'sponlink_custom_collections';
+const SAVED_ITEMS_KEY = 'blockmeet_saved_items';
+const SUBSCRIPTIONS_KEY = 'blockmeet_subscriptions';
+const NOTIFICATIONS_KEY = 'blockmeet_notifications';
+const COMPARISON_RESULTS_KEY = 'blockmeet_comparison_results';
+const CUSTOM_COLLECTIONS_KEY = 'blockmeet_custom_collections';
 
 // 從本地存儲獲取數據的工具函數
 const getFromLocalStorage = <T>(key: string, defaultValue: T): T => {

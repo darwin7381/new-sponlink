@@ -92,7 +92,7 @@
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
-      <ThemeProvider defaultTheme="system" storageKey="sponlink-theme">
+      <ThemeProvider defaultTheme="system" storageKey="blockmeet-theme">
         <LanguageProvider>
           <AuthProvider>
             {children}
@@ -165,7 +165,7 @@ export function Providers({ children }: { children: ReactNode }) {
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
-      <ThemeProvider defaultTheme="system" storageKey="sponlink-theme">
+      <ThemeProvider defaultTheme="system" storageKey="blockmeet-theme">
         {children}
       </ThemeProvider>
     </SessionProvider>

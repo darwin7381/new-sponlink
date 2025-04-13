@@ -13,7 +13,7 @@ export default function DesignSystemLayout({ children }: { children: React.React
       <div className="bg-brand-600 text-white py-4">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">SponLink 設計系統</h1>
+            <h1 className="text-2xl font-bold">BlockMeet 設計系統</h1>
             <Link href="/" className="text-white hover:text-brand-200 transition-colors">
               返回應用
             </Link>

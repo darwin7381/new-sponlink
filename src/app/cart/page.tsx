@@ -73,7 +73,7 @@ export default function CartPage() {
           // No extra operations needed here, just logging for debugging
           try {
             if (typeof window !== 'undefined') {
-              const storageData = localStorage.getItem('sponlink_cart_items');
+              const storageData = localStorage.getItem('blockmeet_cart_items');
               console.log("Raw cart data in local storage:", storageData);
               if (storageData) {
                 const parsedData = JSON.parse(storageData);

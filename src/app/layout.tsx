@@ -11,7 +11,7 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SponLink - Connecting Events and Sponsors",
+  title: "BlockMeet - Connecting Events and Sponsors",
   description: "The ultimate platform for event organizers and sponsors to connect and collaborate",
 };
 

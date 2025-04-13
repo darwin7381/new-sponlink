@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Navigation Tests', () => {
   test('should navigate to the home page', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/EventConnect/);
+    await expect(page).toHaveTitle(/BlockMeet/);
   });
 
   test('should navigate to the events page', async ({ page }) => {

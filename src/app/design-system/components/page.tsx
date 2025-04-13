@@ -590,14 +590,12 @@ export default function ComponentsPage() {
   const [activeTab, setActiveTab] = useState<string>("showcase");
   
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">組件庫</h1>
-        <p className="text-lg text-neutral-700 dark:text-neutral-300 mt-2">
-          SponLink 界面組件的集合，用於構建一致且美觀的用戶界面。
-        </p>
-      </div>
-      
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8">BlockMeet 組件庫</h1>
+      <p className="text-lg text-muted-foreground mb-12">
+        BlockMeet 界面組件的集合，用於構建一致且美觀的用戶界面。
+      </p>
+
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
         <TabsList>
           <TabsTrigger value="showcase">組件展示</TabsTrigger>
