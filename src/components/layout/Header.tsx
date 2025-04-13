@@ -33,7 +33,7 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 獲取用戶未讀通知數量
+  // 獲取用戶未讀通知數量 - 只在用戶登入時執行
   useEffect(() => {
     const fetchNotifications = async () => {
       if (isLoggedIn && user && user.id) {
@@ -46,18 +46,20 @@ export default function Header() {
       }
     };
     
-    fetchNotifications();
-    
-    // 監聽通知狀態變更的自定義事件
-    const handleNotificationsUpdate = () => {
+    if (isLoggedIn) {
       fetchNotifications();
-    };
-    
-    window.addEventListener('notificationsUpdate', handleNotificationsUpdate);
-    
-    return () => {
-      window.removeEventListener('notificationsUpdate', handleNotificationsUpdate);
-    };
+      
+      // 監聽通知狀態變更的自定義事件
+      const handleNotificationsUpdate = () => {
+        fetchNotifications();
+      };
+      
+      window.addEventListener('notificationsUpdate', handleNotificationsUpdate);
+      
+      return () => {
+        window.removeEventListener('notificationsUpdate', handleNotificationsUpdate);
+      };
+    }
   }, [isLoggedIn, user]);
 
   return (
@@ -81,60 +83,56 @@ export default function Header() {
               >
                 Events
               </Link>
-              {user && (
-                <>
-                  <Link 
-                    href="/organizer/events" 
-                    className={`${
-                      pathname === "/organizer/events" || pathname.startsWith("/organizer/events/") 
-                        ? "border-primary text-foreground" 
-                        : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                  >
-                    My Events
-                  </Link>
-                  <Link 
-                    href="/organizer/events/create" 
-                    className={`${
-                      pathname === "/organizer/events/create" 
-                        ? "border-primary text-foreground" 
-                        : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                  >
-                    Create Event
-                  </Link>
-                  <Link 
-                    href="/sponsor/sponsorships" 
-                    className={`${
-                      pathname === "/sponsor/sponsorships" || pathname.startsWith("/sponsor/sponsorships/") 
-                        ? "border-primary text-foreground" 
-                        : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                  >
-                    My Sponsorships
-                  </Link>
-                  <Link 
-                    href="/cart" 
-                    className={`${
-                      pathname === "/cart" 
-                        ? "border-primary text-foreground" 
-                        : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                  >
-                    Cart
-                  </Link>
-                  <Link 
-                    href="/meetings" 
-                    className={`${
-                      pathname === "/meetings" 
-                        ? "border-primary text-foreground" 
-                        : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
-                    } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
-                  >
-                    Meetings
-                  </Link>
-                </>
-              )}
+              <Link 
+                href="/organizer/events" 
+                className={`${
+                  pathname === "/organizer/events" || pathname.startsWith("/organizer/events/") 
+                    ? "border-primary text-foreground" 
+                    : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
+                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                My Events
+              </Link>
+              <Link 
+                href="/organizer/events/create" 
+                className={`${
+                  pathname === "/organizer/events/create" 
+                    ? "border-primary text-foreground" 
+                    : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
+                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                Create Event
+              </Link>
+              <Link 
+                href="/sponsor/sponsorships" 
+                className={`${
+                  pathname === "/sponsor/sponsorships" || pathname.startsWith("/sponsor/sponsorships/") 
+                    ? "border-primary text-foreground" 
+                    : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
+                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                My Sponsorships
+              </Link>
+              <Link 
+                href="/cart" 
+                className={`${
+                  pathname === "/cart" 
+                    ? "border-primary text-foreground" 
+                    : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
+                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                Cart
+              </Link>
+              <Link 
+                href="/meetings" 
+                className={`${
+                  pathname === "/meetings" 
+                    ? "border-primary text-foreground" 
+                    : "border-transparent text-muted-foreground hover:border-gray-300 hover:text-foreground"
+                } inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                Meetings
+              </Link>
             </nav>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
@@ -158,7 +156,7 @@ export default function Header() {
                 <line x1="2" y1="12" x2="4" y2="12"></line>
                 <line x1="20" y1="12" x2="22" y2="12"></line>
               </svg>
-              設計系統
+              Design System
             </Link>
             <ThemeToggle />
             {isLoggedIn ? (
@@ -230,7 +228,7 @@ export default function Header() {
                         <span className="flex items-center justify-between w-full">
                           <span className="flex items-center">
                             <Bell className="h-4 w-4 mr-2" />
-                            通知中心
+                            Notifications
                           </span>
                           {unreadCount > 0 && (
                             <Badge variant="destructive" className="ml-2">
@@ -264,13 +262,12 @@ export default function Header() {
                 >
                   Sign in
                 </Button>
-                <Link href="/register">
-                  <Button
-                    className="bg-primary text-primary-foreground hover:bg-primary/90"
-                  >
-                    Sign up
-                  </Button>
-                </Link>
+                <Button
+                  onClick={() => showLoginModal()}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Sign up
+                </Button>
               </div>
             )}
           </div>
@@ -337,55 +334,50 @@ export default function Header() {
             Events
           </Link>
           
-          {user && (
-            <>
-              <Link
-                href="/organizer/events"
-                className={`${
-                  pathname === "/organizer/events" || pathname.startsWith("/organizer/events/")
-                    ? "bg-accent text-foreground border-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
-                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                My Events
-              </Link>
-              <Link
-                href="/organizer/events/create"
-                className={`${
-                  pathname === "/organizer/events/create"
-                    ? "bg-accent text-foreground border-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
-                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Create Event
-              </Link>
-              <Link
-                href="/sponsor/sponsorships"
-                className={`${
-                  pathname === "/sponsor/sponsorships" || pathname.startsWith("/sponsor/sponsorships/")
-                    ? "bg-accent text-foreground border-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
-                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                My Sponsorships
-              </Link>
-              <Link
-                href="/cart"
-                className={`${
-                  pathname === "/cart"
-                    ? "bg-accent text-foreground border-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
-                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Cart
-              </Link>
-            </>
-          )}
-          
+          <Link
+            href="/organizer/events"
+            className={`${
+              pathname === "/organizer/events" || pathname.startsWith("/organizer/events/")
+                ? "bg-accent text-foreground border-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
+            } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            My Events
+          </Link>
+          <Link
+            href="/organizer/events/create"
+            className={`${
+              pathname === "/organizer/events/create"
+                ? "bg-accent text-foreground border-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
+            } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Create Event
+          </Link>
+          <Link
+            href="/sponsor/sponsorships"
+            className={`${
+              pathname === "/sponsor/sponsorships" || pathname.startsWith("/sponsor/sponsorships/")
+                ? "bg-accent text-foreground border-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
+            } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            My Sponsorships
+          </Link>
+          <Link
+            href="/cart"
+            className={`${
+              pathname === "/cart"
+                ? "bg-accent text-foreground border-primary"
+                : "text-muted-foreground hover:bg-accent hover:text-foreground border-transparent"
+            } block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            Cart
+          </Link>
           <Link
             href="/meetings"
             className={`${
@@ -409,7 +401,7 @@ export default function Header() {
               </div>
               <div className="ml-3">
                 <div className="text-base font-medium text-foreground">
-                  {user?.email || '用戶'}
+                  {user?.email || 'User'}
                 </div>
               </div>
             </div>
@@ -436,7 +428,7 @@ export default function Header() {
                 <span className="flex items-center justify-between w-full">
                   <span className="flex items-center">
                     <Bell className="h-4 w-4 mr-2" />
-                    通知中心
+                    Notifications
                   </span>
                   {unreadCount > 0 && (
                     <Badge variant="destructive" className="ml-2">
@@ -471,14 +463,15 @@ export default function Header() {
             >
               Sign in
             </Button>
-            <Link href="/register">
-              <Button
-                onClick={() => setIsMenuOpen(false)}
-                className="w-full justify-center"
-              >
-                Sign up
-              </Button>
-            </Link>
+            <Button
+              onClick={() => {
+                setIsMenuOpen(false);
+                showLoginModal();
+              }}
+              className="w-full justify-center"
+            >
+              Sign up
+            </Button>
           </div>
         )}
       </div>
