@@ -8,7 +8,7 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { getNotifications } from '@/services/userPreferenceService';
-import { Bell } from 'lucide-react';
+import { BellIcon, Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Badge } from '@/components/ui/badge';
 import { Logo } from '@/components/theme/Logo';
 
@@ -165,7 +165,7 @@ export default function Header() {
               <>
                 {/* 通知圖標 */}
                 <Link href="/notifications" className="relative px-2 py-1 mx-2">
-                  <Bell className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                  <BellIcon className="h-5 w-5 text-muted-foreground hover:text-foreground" />
                   {unreadCount > 0 && (
                     <Badge 
                       variant="destructive" 
@@ -229,7 +229,7 @@ export default function Header() {
                       >
                         <span className="flex items-center justify-between w-full">
                           <span className="flex items-center">
-                            <Bell className="h-4 w-4 mr-2" />
+                            <BellIcon className="h-4 w-4 mr-2" />
                             Notifications
                           </span>
                           {unreadCount > 0 && (
@@ -283,36 +283,14 @@ export default function Header() {
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               <span className="sr-only">Open main menu</span>
-              <svg
+              <Bars3Icon
                 className={`${isMenuOpen ? 'hidden' : 'block'} h-6 w-6`}
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
                 aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M4 6h16M4 12h16M4 18h16"
-                />
-              </svg>
-              <svg
+              />
+              <XMarkIcon
                 className={`${isMenuOpen ? 'block' : 'hidden'} h-6 w-6`}
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
                 aria-hidden="true"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              />
             </button>
           </div>
         </div>
@@ -429,7 +407,7 @@ export default function Header() {
               >
                 <span className="flex items-center justify-between w-full">
                   <span className="flex items-center">
-                    <Bell className="h-4 w-4 mr-2" />
+                    <BellIcon className="h-4 w-4 mr-2" />
                     Notifications
                   </span>
                   {unreadCount > 0 && (

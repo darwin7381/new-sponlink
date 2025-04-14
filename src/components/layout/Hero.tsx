@@ -91,7 +91,7 @@ export function Hero({ user }: HeroProps) {
             containerClassName="shadow-lg rounded-md overflow-hidden"
             className="h-12 backdrop-blur-sm bg-white/20 border-white/30 text-white placeholder:text-white/70 focus:bg-white/20 rounded-r-none"
             buttonClassName="h-12 bg-white/30 hover:bg-white/40 text-white border-white/30 border-l-0 rounded-l-none min-w-[120px]"
-            iconClassName="bg-white/40 rounded-full p-1"
+            iconClassName="bg-white/30 rounded-full p-1.5"
             onSearch={handleSearch}
             showSearchButton={true}
             searchButtonText="Explore"

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, X } from "lucide-react";
+import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -47,31 +47,21 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         onSubmit={handleSubmit}
       >
         <div className="relative flex-grow">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <div className={cn("flex items-center justify-center", iconClassName)}>
-              <svg 
-                width="20" 
-                height="20" 
-                viewBox="0 0 20 20" 
-                fill="none" 
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path 
-                  d="M19 19L14.65 14.65M14.65 14.65C15.9942 13.3058 16.8 11.4885 16.8 9.4C16.8 5.2236 13.4764 1.9 9.3 1.9C5.1236 1.9 1.8 5.2236 1.8 9.4C1.8 13.5764 5.1236 16.9 9.3 16.9C11.3885 16.9 13.2058 16.0942 14.55 14.75L14.65 14.65Z" 
-                  stroke="black" 
-                  strokeWidth="3" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-20">
+            <MagnifyingGlassIcon
+              width="26"
+              height="26"
+              className="text-white/70"
+              aria-hidden="true"
+              style={{ background: 'none', padding: 0 }}
+            />
           </div>
           <input
             ref={ref}
             type="text"
             className={cn(
               "block w-full pl-11 pr-12 py-2 rounded-md",
-              "border border-input bg-background shadow-sm",
+              "border border-input shadow-sm",
               "placeholder:text-muted-foreground/70",
               "text-foreground",
               "focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
@@ -92,25 +82,27 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           />
           
           {value && (
-            <button
-              type="button"
-              className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground transition-colors"
-              onClick={() => {
-                setValue("");
-                if (props.onChange) {
-                  const event = {
-                    target: { value: "" }
-                  } as React.ChangeEvent<HTMLInputElement>;
-                  props.onChange(event);
-                }
-                if (onSearch) {
-                  onSearch("");
-                }
-              }}
-              aria-label="Clear search"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            <div className="absolute inset-y-0 right-2 flex items-center z-20">
+              <button
+                type="button"
+                className="text-white/70 hover:text-white transition-colors"
+                onClick={() => {
+                  setValue("");
+                  if (props.onChange) {
+                    const event = {
+                      target: { value: "" }
+                    } as React.ChangeEvent<HTMLInputElement>;
+                    props.onChange(event);
+                  }
+                  if (onSearch) {
+                    onSearch("");
+                  }
+                }}
+                aria-label="Clear search"
+              >
+                <XMarkIcon className="h-5 w-5" style={{ background: 'none' }} />
+              </button>
+            </div>
           )}
         </div>
         

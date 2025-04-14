@@ -116,8 +116,7 @@ export default function EventsPage() {
                 placeholder="Search events by title, description, or location"
                 containerClassName="shadow-lg rounded-md overflow-hidden"
                 className="h-12 backdrop-blur-sm bg-white/20 border-white/30 text-white placeholder:text-white/70 rounded-r-none"
-                buttonClassName="h-12 bg-white/30 hover:bg-white/40 text-white border-white/30 rounded-l-none min-w-[100px]"
-                iconClassName="bg-white/40 rounded-full p-1"
+                buttonClassName="h-12 bg-white/40 hover:bg-white/50 text-white border-white/30 rounded-l-none min-w-[100px]"
                 searchButtonText="Search"
               />
             </div>
