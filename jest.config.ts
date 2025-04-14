@@ -18,4 +18,4 @@ const config: Config = {
 };
 
 // 創建並導出 Jest 配置
-export default createJestConfig(config); 
+export default createJestConfig(config);

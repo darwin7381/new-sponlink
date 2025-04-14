@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Auth Rules
+
+- 登入和驗證相關的功能，請遵照 [login-wall-fixes-progress.md](mdc:docs/auth/login-wall-fixes-progress.md) 文件裡的規則
+- 我們已經整合了過去許多混亂的登入和驗證模式，統一改用 useAuth 的方式進行處理，以確保是最正規的流程
