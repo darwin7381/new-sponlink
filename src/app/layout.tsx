@@ -13,6 +13,14 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "BlockMeet - Connecting Events and Sponsors",
   description: "The ultimate platform for event organizers and sponsors to connect and collaborate",
+  icons: {
+    icon: [
+      { url: "https://img.blockmeet.io/square-dark-logo.png" },
+    ],
+    apple: [
+      { url: "https://img.blockmeet.io/square-dark-logo.png" },
+    ],
+  },
 };
 
 export default function RootLayout({

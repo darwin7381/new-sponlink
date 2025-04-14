@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Logo } from "@/components/theme/Logo";
 
 export default function Footer() {
   const [currentYear, setCurrentYear] = useState("2025");
@@ -17,13 +18,17 @@ export default function Footer() {
         <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-x-12 gap-y-16">
           {/* Logo and Description */}
           <div className="col-span-2 sm:col-span-2 md:col-span-1">
-            <div className="flex items-center">
-              <div className="bg-blue-500 text-white p-2 rounded mr-2">
-                <span className="font-bold text-xl">S</span>
-              </div>
-              <span className="text-xl font-bold">BlockMeet</span>
+            <div className="flex justify-center md:justify-start w-full mb-6">
+              {/* 深色背景上使用dark logo (白字) */}
+              <Logo 
+                variant="horizontal" 
+                width={240} 
+                height={60} 
+                useWhiteLogo={true} // true使用dark-logo (白字)，适合深色背景
+                className="w-full max-w-[240px]" 
+              />
             </div>
-            <p className="mt-6 text-base text-gray-300">
+            <p className="text-base text-gray-300">
               BlockMeet is a professional activity management platform that helps you easily create, manage and promote activities.
             </p>
             
