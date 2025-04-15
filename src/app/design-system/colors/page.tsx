@@ -151,33 +151,51 @@ const copyToClipboard = (text: string) => {
   toast.success(`已複製 ${text} 到剪貼簿`);
 };
 
-// 顏色展示卡片元件
+// 新增一個動態生成的類名來表示顏色背景
+const getColorDisplayClass = (color: string) => {
+  // 在運行時生成一個唯一的類名
+  return {
+    backgroundColor: color
+  };
+};
+
+// 顏色展示卡片元件 - 解決方法1：使用類和內嵌CSS
 function ColorCard({ colorName, shade, color }: { colorName: string; shade: number; color: string }) {
+  // 創建一個唯一的ID來避免CSS類名衝突
+  const colorId = `color-${colorName}-${shade}`.replace(/[^a-z0-9-]/gi, '');
+  
+  // 在組件渲染時插入動態樣式
   return (
-    <div className="flex flex-col rounded-lg overflow-hidden border border-border dark:border-neutral-700 w-full transition-shadow hover:shadow-md">
-      <div 
-        className="h-12 w-full cursor-pointer relative group" 
-        style={{ backgroundColor: color }}
-        onClick={() => copyToClipboard(color)}
-      >
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 text-white transition-opacity">
-          <Copy size={16} />
-        </div>
-      </div>
-      <div className="p-2 text-xs bg-background flex items-center justify-between">
-        <div>
-          <div className="font-semibold">{colorName}-{shade}</div>
-          <div className="text-muted-foreground truncate">{color}</div>
-        </div>
-        <button 
+    <>
+      <style jsx>{`
+        .color-display-${colorId} {
+          background-color: ${color};
+        }
+      `}</style>
+      <div className="flex flex-col rounded-lg overflow-hidden border border-border dark:border-neutral-700 w-full transition-shadow hover:shadow-md">
+        <div 
+          className={`h-12 w-full cursor-pointer relative group color-display-${colorId}`}
           onClick={() => copyToClipboard(color)}
-          className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
-          aria-label={`Copy color value ${color}`}
         >
-          <Copy size={14} />
-        </button>
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/20 text-white transition-opacity">
+            <Copy size={16} />
+          </div>
+        </div>
+        <div className="p-2 text-xs bg-background flex items-center justify-between">
+          <div>
+            <div className="font-semibold">{colorName}-{shade}</div>
+            <div className="text-muted-foreground truncate">{color}</div>
+          </div>
+          <button 
+            onClick={() => copyToClipboard(color)}
+            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+            aria-label={`Copy color value ${color}`}
+          >
+            <Copy size={14} />
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -223,7 +241,7 @@ function CssVariablesGuide() {
   );
 }
 
-// 自定義按鈕元件，避免使用內聯樣式
+// 自定義按鈕元件 - 解決方法2：CSS變數和動態類名
 function ThemedButton({ 
   children, 
   bgColor, 
@@ -239,25 +257,124 @@ function ThemedButton({
   borderColor?: string; 
   className?: string;
 }) {
-  const [isHovered, setIsHovered] = useState(false);
+  // 用CSS變數解決內聯樣式問題
+  return (
+    <>
+      <style jsx>{`
+        .themed-button {
+          background-color: ${bgColor};
+          color: ${textColor};
+          border: ${borderColor ? `1px solid ${borderColor}` : 'none'};
+        }
+        .themed-button:hover {
+          background-color: ${hoverBgColor};
+        }
+      `}</style>
+      <button 
+        className={cn(
+          "themed-button px-4 py-2 rounded-md transition-colors duration-200",
+          className
+        )}
+      >
+        {children}
+      </button>
+    </>
+  );
+}
+
+// 自定義標籤組件 - 解決方法3：CSS變數和動態類名
+interface StyledTagProps {
+  bgColor: string;
+  textColor: string;
+  children: React.ReactNode;
+  className?: string;
+  hoverShadow?: boolean;
+}
+
+function StyledTag({ bgColor, textColor, children, className, hoverShadow = false }: StyledTagProps) {
+  // 使用唯一ID來避免CSS衝突
+  const tagId = Math.random().toString(36).substring(2, 10);
   
   return (
-    <button 
-      className={cn(
-        "px-4 py-2 rounded-md transition-colors duration-200",
-        className
-      )}
-      style={{ 
-        backgroundColor: isHovered ? hoverBgColor : bgColor,
-        color: textColor,
-        border: borderColor ? `1px solid ${borderColor}` : 'none'
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {children}
-    </button>
+    <>
+      <style jsx>{`
+        .styled-tag-${tagId} {
+          background-color: ${bgColor};
+          color: ${textColor};
+        }
+      `}</style>
+      <span 
+        className={cn(
+          `styled-tag-${tagId} px-3 py-1 rounded-full text-xs font-medium inline-flex items-center`,
+          hoverShadow && "transition-all duration-200 hover:shadow-sm",
+          className
+        )}
+      >
+        {children}
+      </span>
+    </>
   );
+}
+
+// 自定義警告/通知組件 - 解決方法4：CSS變數和動態類名
+interface AlertCardProps {
+  bgColor: string;
+  borderLeftColor?: string;
+  icon: React.ReactNode;
+  title: string;
+  message: string;
+  className?: string;
+  titleColor?: string;
+  messageColor?: string;
+  hoverEffect?: boolean;
+  borderStyle?: "left-only" | "all";
+}
+
+function AlertCard({ 
+  bgColor, 
+  borderLeftColor, 
+  icon, 
+  title, 
+  message, 
+  className,
+  titleColor = "text-error-800",
+  messageColor = "text-error-700",
+  hoverEffect = false,
+  borderStyle = "left-only"
+}: AlertCardProps) {
+  // 使用唯一ID來避免CSS衝突
+  const alertId = Math.random().toString(36).substring(2, 10);
+  
+  return (
+    <>
+      <style jsx>{`
+        .alert-card-${alertId} {
+          background-color: ${bgColor};
+          ${borderLeftColor ? `border-left-color: ${borderLeftColor};` : ''}
+        }
+      `}</style>
+      <div 
+        className={cn(
+          `alert-card-${alertId} rounded-md`,
+          hoverEffect && "transition-all duration-200 hover:shadow-md",
+          borderStyle === "left-only" 
+            ? "border-l-4" 
+            : "border border-error-300 border-l-3",
+          className
+        )}
+      >
+        <div className="flex p-4">
+          <div className="mr-3 flex-shrink-0">
+            {icon}
+          </div>
+          <div>
+            <p className={cn("font-medium", titleColor)}>{title}</p>
+            <p className={cn("text-sm", messageColor)}>{message}</p>
+          </div>
+        </div>
+      </div>
+    </>
+  )
 }
 
 // 主題應用案例展示元件
@@ -311,54 +428,62 @@ function ThemeApplicationExamples() {
               <p className="text-sm text-neutral-500 mb-3">訊息提示</p>
               
               {/* 成功訊息提示 - 更顯眼的設計 */}
-              <div className="mb-3 rounded-md border border-success-300 border-l-3" 
-                   style={{ backgroundColor: 'rgba(46, 204, 113, 0.08)' }}>
-                <div className="flex p-4">
-                  <div className="mr-3 flex-shrink-0">
-                    <svg className="w-5 h-5" viewBox="0 0 20 20" fill="#219653">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium text-success-800">成功訊息提示</p>
-                    <p className="text-sm text-success-700">操作已成功完成，您的變更已保存。</p>
-                  </div>
-                </div>
-              </div>
+              <AlertCard
+                bgColor="rgba(46, 204, 113, 0.08)"
+                borderLeftColor="#219653"
+                icon={
+                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="#219653">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                }
+                title="成功訊息提示"
+                message="操作已成功完成，您的變更已保存。"
+                titleColor="text-success-800"
+                messageColor="text-success-700"
+                className="mb-3"
+                borderStyle="left-only"
+              />
               
               {/* 錯誤訊息提示 - 更顯眼的設計 */}
-              <div className="rounded-md border border-error-300 border-l-3" 
-                   style={{ backgroundColor: 'rgba(231, 76, 60, 0.08)' }}>
-                <div className="flex p-4">
-                  <div className="mr-3 flex-shrink-0">
-                    <svg className="w-5 h-5" viewBox="0 0 20 20" fill="#E74C4C">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium text-error-800">錯誤訊息提示</p>
-                    <p className="text-sm text-error-700">操作失敗，請檢查輸入並重試。</p>
-                  </div>
-                </div>
-              </div>
+              <AlertCard
+                bgColor="rgba(231, 76, 60, 0.08)"
+                borderLeftColor="#E74C4C"
+                icon={
+                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="#E74C4C">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                }
+                title="錯誤訊息提示"
+                message="操作失敗，請檢查輸入並重試。"
+                borderStyle="all"
+              />
             </div>
             
             {/* 標籤區域 */}
             <div>
               <p className="text-sm text-neutral-500 mb-3">標籤元件</p>
               <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 rounded-full text-xs font-medium inline-flex items-center" 
-                      style={{ backgroundColor: '#F0FAFC', color: '#178EAA' }}>
+                <StyledTag 
+                  bgColor="#F0FAFC" 
+                  textColor="#178EAA" 
+                  hoverShadow
+                >
                   品牌標籤
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-medium inline-flex items-center" 
-                      style={{ backgroundColor: '#FFF0F0', color: '#B01F1F' }}>
+                </StyledTag>
+                <StyledTag 
+                  bgColor="#FFF0F0" 
+                  textColor="#B01F1F" 
+                  hoverShadow
+                >
                   特殊標籤
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-medium inline-flex items-center" 
-                      style={{ backgroundColor: '#F8F9FB', color: '#63666C' }}>
+                </StyledTag>
+                <StyledTag 
+                  bgColor="#F8F9FB" 
+                  textColor="#63666C" 
+                  hoverShadow
+                >
                   資訊標籤
-                </span>
+                </StyledTag>
               </div>
             </div>
           </div>
@@ -410,60 +535,66 @@ function ThemeApplicationExamples() {
               <p className="text-sm text-neutral-300 mb-3">訊息提示</p>
               
               {/* 成功訊息提示 - 深色主題 */}
-              <div className="mb-3 rounded-md transition-all duration-200 hover:shadow-md" 
-                   style={{ 
-                     backgroundColor: 'rgba(15, 100, 53, 0.2)', 
-                     borderLeft: '4px solid #219653' 
-                   }}>
-                <div className="flex p-4">
-                  <div className="mr-3 flex-shrink-0">
-                    <svg className="w-5 h-5" viewBox="0 0 20 20" fill="#92DCB7">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium text-white">成功訊息提示</p>
-                    <p className="text-sm text-neutral-200">操作已成功完成，您的變更已保存。</p>
-                  </div>
-                </div>
-              </div>
+              <AlertCard
+                bgColor="rgba(15, 100, 53, 0.2)"
+                borderLeftColor="#219653"
+                icon={
+                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="#92DCB7">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                }
+                title="成功訊息提示"
+                message="操作已成功完成，您的變更已保存。"
+                titleColor="text-white"
+                messageColor="text-neutral-200"
+                className="mb-3"
+                hoverEffect
+                borderStyle="left-only"
+              />
               
               {/* 錯誤訊息提示 - 深色主題 */}
-              <div className="rounded-md transition-all duration-200 hover:shadow-md" 
-                   style={{ 
-                     backgroundColor: 'rgba(153, 0, 0, 0.2)', 
-                     borderLeft: '4px solid #E74C4C' 
-                   }}>
-                <div className="flex p-4">
-                  <div className="mr-3 flex-shrink-0">
-                    <svg className="w-5 h-5" viewBox="0 0 20 20" fill="#FF9999">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="font-medium text-white">錯誤訊息提示</p>
-                    <p className="text-sm text-neutral-200">操作失敗，請檢查輸入並重試。</p>
-                  </div>
-                </div>
-              </div>
+              <AlertCard
+                bgColor="rgba(153, 0, 0, 0.2)"
+                borderLeftColor="#E74C4C"
+                icon={
+                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="#FF9999">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                }
+                title="錯誤訊息提示"
+                message="操作失敗，請檢查輸入並重試。"
+                titleColor="text-white"
+                messageColor="text-neutral-200"
+                hoverEffect
+                borderStyle="left-only"
+              />
             </div>
             
             {/* 標籤區域 */}
             <div>
               <p className="text-sm text-neutral-300 mb-3">標籤元件</p>
               <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 rounded-full text-xs font-medium inline-flex items-center transition-all duration-200 hover:shadow-sm" 
-                      style={{ backgroundColor: 'rgba(28, 179, 208, 0.2)', color: '#7FD9EE' }}>
+                <StyledTag 
+                  bgColor="rgba(28, 179, 208, 0.2)" 
+                  textColor="#7FD9EE" 
+                  hoverShadow
+                >
                   品牌標籤
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-medium inline-flex items-center transition-all duration-200 hover:shadow-sm" 
-                      style={{ backgroundColor: 'rgba(217, 46, 46, 0.2)', color: '#F68F8F' }}>
+                </StyledTag>
+                <StyledTag 
+                  bgColor="rgba(217, 46, 46, 0.2)" 
+                  textColor="#F68F8F" 
+                  hoverShadow
+                >
                   特殊標籤
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-medium inline-flex items-center transition-all duration-200 hover:shadow-sm" 
-                      style={{ backgroundColor: '#2A2C31', color: '#C2C5CC' }}>
+                </StyledTag>
+                <StyledTag 
+                  bgColor="#2A2C31" 
+                  textColor="#C2C5CC" 
+                  hoverShadow
+                >
                   資訊標籤
-                </span>
+                </StyledTag>
               </div>
             </div>
           </div>
