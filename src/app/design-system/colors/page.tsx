@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Copy } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from "@/lib/utils";
 
 // 顏色組名稱常量
 const COLOR_GROUPS = {
@@ -171,6 +172,7 @@ function ColorCard({ colorName, shade, color }: { colorName: string; shade: numb
         <button 
           onClick={() => copyToClipboard(color)}
           className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors"
+          aria-label={`Copy color value ${color}`}
         >
           <Copy size={14} />
         </button>
@@ -221,6 +223,43 @@ function CssVariablesGuide() {
   );
 }
 
+// 自定義按鈕元件，避免使用內聯樣式
+function ThemedButton({ 
+  children, 
+  bgColor, 
+  textColor, 
+  hoverBgColor, 
+  borderColor, 
+  className 
+}: { 
+  children: React.ReactNode; 
+  bgColor: string; 
+  textColor: string; 
+  hoverBgColor: string; 
+  borderColor?: string; 
+  className?: string;
+}) {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  return (
+    <button 
+      className={cn(
+        "px-4 py-2 rounded-md transition-colors duration-200",
+        className
+      )}
+      style={{ 
+        backgroundColor: isHovered ? hoverBgColor : bgColor,
+        color: textColor,
+        border: borderColor ? `1px solid ${borderColor}` : 'none'
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {children}
+    </button>
+  );
+}
+
 // 主題應用案例展示元件
 function ThemeApplicationExamples() {
   return (
@@ -240,52 +279,30 @@ function ThemeApplicationExamples() {
             <div className="mb-5">
               <p className="text-sm text-neutral-500 mb-3">按鈕元件</p>
               <div className="flex flex-wrap gap-4 mb-3">
-                <button 
-                  className="px-4 py-2 rounded-md transition-colors duration-200"
-                  style={{ 
-                    backgroundColor: '#1CB3D0', 
-                    color: 'white'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#178EAA'
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#1CB3D0'
-                  }}
+                <ThemedButton 
+                  bgColor="#1CB3D0" 
+                  textColor="white" 
+                  hoverBgColor="#178EAA"
                 >
                   主要按鈕
-                </button>
-                <button 
-                  className="px-4 py-2 rounded-md transition-colors duration-200"
-                  style={{ 
-                    backgroundColor: 'white', 
-                    color: '#178EAA',
-                    border: '1px solid #B2E8F5'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#F0FAFC'
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = 'white'
-                  }}
+                </ThemedButton>
+                
+                <ThemedButton 
+                  bgColor="white" 
+                  textColor="#178EAA" 
+                  hoverBgColor="#F0FAFC"
+                  borderColor="#B2E8F5"
                 >
                   次要按鈕
-                </button>
-                <button 
-                  className="px-4 py-2 rounded-md transition-colors duration-200"
-                  style={{ 
-                    backgroundColor: '#F8F9FB', 
-                    color: '#63666C',
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#ECEEF2'
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#F8F9FB'
-                  }}
+                </ThemedButton>
+                
+                <ThemedButton 
+                  bgColor="#F8F9FB" 
+                  textColor="#63666C" 
+                  hoverBgColor="#ECEEF2"
                 >
                   基本按鈕
-                </button>
+                </ThemedButton>
               </div>
             </div>
             
@@ -358,58 +375,33 @@ function ThemeApplicationExamples() {
             <div className="mb-5">
               <p className="text-sm text-neutral-300 mb-3">按鈕元件</p>
               <div className="flex flex-wrap gap-4 mb-3">
-                <button 
-                  className="px-4 py-2 rounded-md transition-colors duration-200"
-                  style={{ 
-                    backgroundColor: '#40C6E0', 
-                    color: '#072A33',
-                    fontWeight: 500,
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#7FD9EE'
-                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)'
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#40C6E0'
-                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)'
-                  }}
+                <ThemedButton 
+                  bgColor="#40C6E0" 
+                  textColor="#072A33" 
+                  hoverBgColor="#7FD9EE"
+                  className="font-medium shadow-sm hover:shadow-md"
                 >
                   主要按鈕
-                </button>
-                <button 
-                  className="px-4 py-2 rounded-md transition-colors duration-200"
-                  style={{ 
-                    backgroundColor: 'rgba(28, 179, 208, 0.15)', 
-                    color: '#7FD9EE',
-                    border: '1px solid #12738B',
-                    fontWeight: 500
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(28, 179, 208, 0.25)'
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(28, 179, 208, 0.15)'
-                  }}
+                </ThemedButton>
+                
+                <ThemedButton 
+                  bgColor="rgba(28, 179, 208, 0.15)" 
+                  textColor="#7FD9EE" 
+                  hoverBgColor="rgba(28, 179, 208, 0.25)"
+                  borderColor="#12738B"
+                  className="font-medium"
                 >
                   次要按鈕
-                </button>
-                <button 
-                  className="px-4 py-2 rounded-md transition-colors duration-200"
-                  style={{ 
-                    backgroundColor: '#2A2C31', 
-                    color: '#ECEEF2',
-                    fontWeight: 500
-                  }}
-                  onMouseOver={(e) => {
-                    e.currentTarget.style.backgroundColor = '#3A3C41'
-                  }}
-                  onMouseOut={(e) => {
-                    e.currentTarget.style.backgroundColor = '#2A2C31'
-                  }}
+                </ThemedButton>
+                
+                <ThemedButton 
+                  bgColor="#2A2C31" 
+                  textColor="#ECEEF2" 
+                  hoverBgColor="#3A3C41"
+                  className="font-medium"
                 >
                   基本按鈕
-                </button>
+                </ThemedButton>
               </div>
             </div>
             

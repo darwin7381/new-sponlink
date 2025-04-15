@@ -199,58 +199,66 @@ export default function Header() {
                       aria-labelledby="user-menu-button"
                       tabIndex={-1}
                     >
-                      <Link
-                        href="/dashboard"
-                        className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
-                        role="menuitem"
-                        tabIndex={-1}
-                        id="user-menu-item-0"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Dashboard
-                      </Link>
-                      <Link
-                        href="/profile"
-                        className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
-                        role="menuitem"
-                        tabIndex={-1}
-                        id="user-menu-item-1"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Profile
-                      </Link>
-                      <Link
-                        href="/notifications"
-                        className="block px-4 py-2 text-sm text-foreground hover:bg-accent"
-                        role="menuitem"
-                        tabIndex={-1}
-                        id="user-menu-item-2"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        <span className="flex items-center justify-between w-full">
-                          <span className="flex items-center">
-                            <BellIcon className="h-4 w-4 mr-2" />
-                            Notifications
+                      <div className="flex items-center px-4 py-2">
+                        <div className="flex-shrink-0">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                            {user?.email?.charAt(0).toUpperCase() || '?'}
+                          </div>
+                        </div>
+                        <div className="ml-3">
+                          <div className="text-base font-medium text-foreground">
+                            {user?.email || 'User'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-1" role="menu" aria-label="用户菜单">
+                        <Link
+                          href="/dashboard"
+                          className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                          onClick={() => setIsMenuOpen(false)}
+                          role="menuitem"
+                        >
+                          Dashboard
+                        </Link>
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                          onClick={() => setIsMenuOpen(false)}
+                          role="menuitem"
+                        >
+                          Profile
+                        </Link>
+                        <Link
+                          href="/notifications"
+                          className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                          onClick={() => setIsMenuOpen(false)}
+                          role="menuitem"
+                        >
+                          <span className="flex items-center justify-between w-full">
+                            <span className="flex items-center">
+                              <BellIcon className="h-4 w-4 mr-2" />
+                              Notifications
+                            </span>
+                            {unreadCount > 0 && (
+                              <Badge variant="destructive" className="ml-2">
+                                {unreadCount}
+                              </Badge>
+                            )}
                           </span>
-                          {unreadCount > 0 && (
-                            <Badge variant="destructive" className="ml-2">
-                              {unreadCount}
-                            </Badge>
-                          )}
-                        </span>
-                      </Link>
-                      <button
-                        className="block w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent"
-                        role="menuitem"
-                        tabIndex={-1}
-                        id="user-menu-item-3"
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          handleLogout();
-                        }}
-                      >
-                        Sign out
-                      </button>
+                        </Link>
+                        <button
+                          className="block w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
+                          role="menuitem"
+                          tabIndex={-1}
+                          id="user-menu-item-3"
+                          onClick={() => {
+                            setIsMenuOpen(false);
+                            handleLogout();
+                          }}
+                        >
+                          Sign out
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -385,11 +393,12 @@ export default function Header() {
                 </div>
               </div>
             </div>
-            <div className="mt-3 space-y-1">
+            <div className="mt-3 space-y-1" role="menu" aria-label="用户菜单">
               <Link
                 href="/dashboard"
                 className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
                 onClick={() => setIsMenuOpen(false)}
+                role="menuitem"
               >
                 Dashboard
               </Link>
@@ -397,6 +406,7 @@ export default function Header() {
                 href="/profile"
                 className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
                 onClick={() => setIsMenuOpen(false)}
+                role="menuitem"
               >
                 Profile
               </Link>
@@ -404,6 +414,7 @@ export default function Header() {
                 href="/notifications"
                 className="block px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
                 onClick={() => setIsMenuOpen(false)}
+                role="menuitem"
               >
                 <span className="flex items-center justify-between w-full">
                   <span className="flex items-center">

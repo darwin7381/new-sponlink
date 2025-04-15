@@ -346,7 +346,10 @@ function AlertsShowcase() {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="relative p-5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 shadow-lg backdrop-blur-sm">
           <div className="absolute right-2 top-2">
-            <button className="p-1 rounded-full text-neutral-500 hover:text-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors">
+            <button 
+              className="p-1 rounded-full text-neutral-500 hover:text-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-800 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+              aria-label="關閉通知"
+            >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="18" y1="6" x2="6" y2="18"></line>
                 <line x1="6" y1="6" x2="18" y2="18"></line>
