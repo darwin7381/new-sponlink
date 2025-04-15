@@ -90,19 +90,22 @@ const SeriesInfo: React.FC<SeriesInfoProps> = ({ series }) => {
             <div className="mt-4 flex items-center gap-3">
               {series.website && (
                 <a href={series.website} target="_blank" rel="noopener noreferrer" 
-                  className="text-muted-foreground hover:text-primary">
+                  className="text-muted-foreground hover:text-primary"
+                  aria-label={`${series.title}官方網站`}>
                   <Globe className="h-5 w-5" />
                 </a>
               )}
               {series.twitter && (
                 <a href={`https://twitter.com/${series.twitter}`} target="_blank" rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary">
+                  className="text-muted-foreground hover:text-primary"
+                  aria-label={`${series.title} Twitter`}>
                   <Twitter className="h-5 w-5" />
                 </a>
               )}
               {series.instagram && (
                 <a href={`https://instagram.com/${series.instagram}`} target="_blank" rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-primary">
+                  className="text-muted-foreground hover:text-primary"
+                  aria-label={`${series.title} Instagram`}>
                   <Instagram className="h-5 w-5" />
                 </a>
               )}

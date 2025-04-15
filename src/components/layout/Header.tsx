@@ -250,7 +250,7 @@ export default function Header() {
                           className="block w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
                           role="menuitem"
                           tabIndex={-1}
-                          id="user-menu-item-3"
+                          id="desktop-menu-sign-out"
                           onClick={() => {
                             setIsMenuOpen(false);
                             handleLogout();
@@ -432,7 +432,7 @@ export default function Header() {
                 className="block w-full text-left px-4 py-2 text-base font-medium text-muted-foreground hover:text-foreground hover:bg-accent"
                 role="menuitem"
                 tabIndex={-1}
-                id="user-menu-item-3"
+                id="mobile-menu-sign-out"
                 onClick={() => {
                   setIsMenuOpen(false);
                   handleLogout();

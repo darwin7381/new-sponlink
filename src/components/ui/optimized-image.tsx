@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 interface OptimizedImageProps {
   src: string;
@@ -83,19 +84,39 @@ export function OptimizedImage({
     }
   };
 
+  // 生成尺寸相關的類名
+  const dimensionClasses = cn({
+    'w-full': !width,
+    'h-full': !height,
+    [`w-[${width}px]`]: !!width,
+    [`h-[${height}px]`]: !!height,
+  });
+
+  // 生成對象適應的類名
+  const objectFitClass = cn({
+    'object-cover': objectFit === 'cover',
+    'object-contain': objectFit === 'contain',
+    'object-fill': objectFit === 'fill',
+    'object-none': objectFit === 'none',
+    'object-scale-down': objectFit === 'scale-down',
+  });
+
   // 如果還沒有準備好 imgSrc，顯示一個佔位元素
   if (!imgSrc) {
     return (
       <div 
-        className={`bg-gray-200 animate-pulse ${className}`}
-        style={{ width: width || '100%', height: height || '100%' }}
+        className={cn(
+          'bg-gray-200 animate-pulse',
+          dimensionClasses,
+          className
+        )}
         aria-label={alt}
       />
     );
   }
 
   return (
-    <div className={`relative overflow-hidden ${className}`}>
+    <div className={cn('relative overflow-hidden', className)}>
       <Image
         src={imgSrc}
         alt={alt}
@@ -107,11 +128,7 @@ export function OptimizedImage({
         loading={loading}
         placeholder={placeholder}
         onError={handleError}
-        style={{ 
-          objectFit,
-          width: width ? width : '100%',
-          height: height ? height : '100%',
-        }}
+        className={cn(objectFitClass, dimensionClasses)}
         unoptimized={false} // 讓 Next.js 也進行優化
       />
       
